@@ -25,5 +25,5 @@ python3 -m venv .venv
 - Explicit odds, telegraphed hazard clocks, and a small embodied base.
 - Permadeath, persistent world/bones, and respawn from a vat.
 
-Voice, additional layers, and AI-authored rules are deferred. The working design document currently lives outside this
-public repository; its open questions are not settled by this scaffold.
+Voice, additional layers, and AI-authored rules are deferred. See the [working design document](docs/design.md) for the
+full vision and open questions. The Python choice is settled for this implementation; other open questions remain.
