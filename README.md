@@ -8,14 +8,16 @@ player intent and narrate resolved events, but may not change the rules or state
 
 ## Development
 
-Requires Python 3.11 or newer.
+Requires [uv](https://docs.astral.sh/uv/), which provides Python 3.14 and the pinned dev tools.
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -e '.[dev]'
-.venv/bin/python -m pytest
-.venv/bin/vat-born
+uv sync                                                                # create .venv from uv.lock
+uv run vat-born                                                        # run the scaffold
+uv run ruff check --fix && uv run ruff format && uv run basedpyright   # lint, format, type-check
+uv run pytest
 ```
+
+Coding agents: read [AGENTS.md](AGENTS.md) first.
 
 ## First slice
 

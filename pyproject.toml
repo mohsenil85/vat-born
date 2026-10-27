@@ -1,23 +1,70 @@
-[build-system]
-requires = ["setuptools>=75"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "vat-born"
 version = "0.1.0"
 description = "A text-first colony-ship survival roguelike"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = []
-
-[project.optional-dependencies]
-dev = ["pytest>=8"]
 
 [project.scripts]
 vat-born = "vat_born.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[dependency-groups]
+dev = [
+    "basedpyright>=1.40.2",
+    "pytest>=9.1.1",
+    "ruff>=0.17.3",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.1,<0.11.0"]
+build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",                     # conflicts with the formatter
+    "CPY",                        # no copyright headers
+    "D",                          # docstrings where they add something, not on everything
+    "TD", "FIX",                  # TODO comments are allowed
+    "EM", "TRY003",               # `raise ValueError(f"...")` is fine
+    "S101",                       # assert is fine for invariants and type narrowing
+    "S311",                       # flags random.Random itself; banned-api below polices the global RNG instead
+    "PLR2004",                    # magic-value comparisons
+    "C901", "PLR0911", "PLR0912", # misfire on exhaustive `match` dispatch, which we want
+    "TC",                         # keep imports at runtime; no TYPE_CHECKING blocks
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/vat_born/cli.py" = ["T201"] # frontends print; the engine emits events
+"tests/**" = ["INP001"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"random.binomialvariate".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.choice".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.choices".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.expovariate".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.gauss".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.normalvariate".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.randint".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.random".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.randrange".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.sample".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.seed".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.shuffle".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.triangular".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random.uniform".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+
+[tool.basedpyright]
+typeCheckingMode = "recommended"          # every rule on; warnings fail the run too
+reportUnusedCallResult = false            # sqlite3's execute() returns a cursor nobody needs
+reportImplicitStringConcatenation = false # adjacent literals are how long prose wraps
