@@ -6,8 +6,9 @@ scaffold: there is no playable game yet. The tooling is strict on purpose, so le
 - `docs/design.md` is the source of truth for what we're building. Read the sections your task touches before you
   start. If a change would contradict it, stop and ask. If a change settles one of its open questions (§16), update
   the doc in the same change.
-- `docs/plan.md` records the first slice's decisions and build order. Build to its decisions; don't re-decide them
-  in code. If a task needs a decision the plan doesn't make, report it as a question instead of guessing.
+- `docs/plan.md` narrows the design for the first build and sets the build order. Where the two differ (no morale
+  yet, typed commands before free text), follow the plan. Build to its decisions; don't re-decide them in code. If a
+  task needs a decision the plan doesn't make, report it as a question instead of guessing.
 - `src/vat_born/` is the package (src layout); `vat_born.cli:main` is the `vat-born` command.
 
 ## Commands
@@ -46,9 +47,9 @@ zmx kill "$s"                         # done
 - Every commit reruns the check on exactly what is staged, in a throwaway copy (`.githooks/pre-commit`), so `git add`
   every file your change needs. Never commit with `--no-verify`.
 - If you changed something a player can see, play it through zmx (see Running the game) and look at it.
-- No unit tests. Integration tests are being set up separately in `tests/`; leave that directory alone, and until this
-  file says how to run them, there is no test step. To try something out, run the game or a throwaway script outside
-  the repo.
+- No unit tests. The orchestrator owns the integration tests in `tests/`; leave that directory alone unless your task
+  says otherwise. Until this file says how to run them, there is no test step. To try something out, run the game or
+  a throwaway script outside the repo.
 - `docs/design.md` and `README.md` still match the code.
 
 ## Python and tooling

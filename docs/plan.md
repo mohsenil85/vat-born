@@ -62,6 +62,8 @@ change.
 ## People and content
 
 - **PC needs:** hydration, calories, fatigue, and injuries. Morale waits until allies and the narrator can drive it.
+- *Proposed:* **no skills in the slice.** Odds modifiers come from tools, conditions, needs, and injuries. Skills
+  that improve with use (§8.1) wait until the playtest shows whether the loop needs them.
 - **Allies follow standing orders unless a need or their own goal wins out**, and the engine decides refusals and
   desertion (§8.2). *Proposed:* in the slice, allies come only from other vats (§16 Q18).
 - **The faction is a wary scavenger clan.** Neutral at first, they trade, compete for the same salvage, and can tip
@@ -72,24 +74,59 @@ change.
 
 ## How the engine is driven
 
-*Proposed, and shared with the integration-test effort:*
+*Proposed:*
 
-- `vat-born [--seed N] [--world PATH]` starts or resumes the world stored in the SQLite file at `PATH`, by default
-  one file per seed under the user data directory. A new world without `--seed` gets a random one.
-- Commands arrive one per line on stdin, from a terminal or a pipe, and end of input exits cleanly. Agents play
-  interactively through zmx (see AGENTS.md).
+- `vat-born [--seed N] [--world PATH]` plays one persistent world, stored in a SQLite file that is created on first
+  use. `--world` names the file. Without it, worlds live in the user data directory, one per seed (§3.2): `--seed N`
+  opens world N, and with neither flag the last world played resumes, or a new one starts with a random seed.
+- Commands arrive one per line on stdin, from a terminal or a pipe, and end of input exits cleanly.
+- Agents and tests always pass `--world` with a scratch path, so they never touch the player's worlds or each
+  other's. Agents play interactively through zmx (see AGENTS.md).
 - Every roll and state change lands in the append-only event log, so the same seed and the same commands produce
-  the same log. Replay tests assert on that log.
+  the same log.
+
+## Invariants in code
+
+*Proposed:* M0 builds the engine invariants from AGENTS.md into the engine's structure, so a worker can't break one
+by missing a sentence:
+
+- **Randomness comes from named streams.** Game code never holds a `random.Random`; it asks the world's dice for a
+  draw keyed by what the draw is for (seed, purpose, tick, subject). A new roll in one system then doesn't shift
+  every later roll on the seed, a resumed world needs no saved generator state, and transcripts change only where
+  behavior did.
+- **Every chance is rolled against odds:** a base rate plus named modifiers. The dice log each roll with its
+  breakdown, so the log and the player see the same numbers.
+- **The schema keeps the log append-only:** triggers reject updates and deletes.
+- **Free actions get a read-only view** of the world, so they can't change state or create knowledge.
+
+## Testing
+
+The orchestrator is also the integration tester (decided 2026-10-27). There are no unit tests.
+
+- **Scenarios are transcripts.** Each file in `tests/scenarios/` holds a seed, a line saying what it covers, and a
+  session: each command, then the text the player saw and the events it logged. `uv run pytest` replays every
+  scenario in a fresh scratch world and compares. One command regenerates the files when a change is meant to alter
+  them, so review reads behavior changes as transcript diffs.
+- **Each scenario also replays under a different hash seed, and split across two processes** (stop halfway, then
+  resume). Both must give the same transcript, which catches set-order bugs and state that isn't saved.
+- **A crash sweep** plays many seeds for a few in-game days and checks only that nothing crashes, the engine's own
+  assertions included.
+- **Every commit runs the suite** through the pre-commit hook, so the suite has to stay fast.
+- **The orchestrator writes the scenarios,** usually as a task's acceptance criteria. Workers regenerate the
+  transcripts their change is meant to alter and list each one in their report. They don't add, delete, or
+  hand-edit scenarios unless the task says to.
 
 ## Milestones
 
 - **M0 Skeleton** (written by the orchestrator; workers build on it):
   - package layout and core types: IDs, ticks and game time, events, commands and intents;
-  - the world seed and the `random.Random` passed through the engine;
+  - the world seed and the dice (see Invariants in code), with AGENTS.md and the lint messages updated to match;
   - the SQLite schema, data access, and the append-only event log;
   - the TOML content loader;
   - the REPL (stdin line → command parser → engine → events → text), with `--seed` and `--world`;
-  - `status` and `where` as the first free actions, with deterministic replay.
+  - `status` and `where` as the first free actions;
+  - the transcript harness and the first scenarios, replacing the placeholder `tests/test_cli.py`, with the suite
+    added to the pre-commit hook.
 - **M1 World:** worldgen for the decks layer (region graph, vat-bay spawn), timed movement, `look`, `map`, and
   `where`, with exits in a fixed order ("Paths: north to …").
 - **M2 Time and needs:** the scheduler, interruptible long actions, the PC's needs, and the actions that answer them
@@ -97,25 +134,28 @@ change.
 - **M3 Search and items:** hidden pools, `search`, items and inventory, and explicit odds with their breakdown.
 - **M4 Danger:** both hazard clocks with their telegraphs, odds in `status`, confirmations, `fight`, and injuries.
 - **M5 Death:** permadeath, bones, the respawn gap and its report, and clone knowledge.
+- **Playtest** (*proposed*): the designer plays the death-and-respawn loop on one seed, with template text. This is
+  the §14 success test, run early on purpose: if the loop isn't fun, we change course before building M6–M9.
 - **M6 Base:** the four rooms, construction with saved progress, and upgrades with their effects on the clocks.
 - **M7 People:** one ally from another vat (orders, needs, jobs, reports), the scavenger faction, and both set pieces.
 - **M8 End of the slice:** the locked captain's-seat door.
 - **M9 LLM:** the intent parser (free text to schema-validated intents) and the narrator (resolved outcomes to
   prose), with the model-free path kept for tests.
-- Then the success test (§14): is a death-and-respawn loop on one seed fun as text alone?
+- Then the success test (§14) again, on the whole slice with the narrator: is a death-and-respawn loop on one seed
+  fun as text alone?
 
 Status: M0 not started.
 
 ## Running the work
 
-- **Orchestrator** (Claude Code): plans, writes task specs, owns the architecture and integration, reviews and
-  merges, and keeps this file current.
+- **Orchestrator** (Claude Code): plans, writes task specs and their scenarios, owns the architecture, integration,
+  and tests, reviews and merges, and keeps this file current.
 - **Workers:** GLM 5.3 through `pi-worker -b glm`, one task per worktree (`.worktrees/<task>`, branch `pi/<task>`),
   committed through the pre-commit hook. The first two or three tasks run one at a time to calibrate; after that, two
   or three run in parallel on independent units.
-- **Review before merge:** rerun the check, read the diff (new suppressions, `cast(`, edits to config or `tests/`),
-  and play the change through zmx. At most three rounds of fixes; after two failed rounds, escalate to a stronger
-  model or do the task directly.
+- **Review before merge:** rerun the check and the tests, read the diff (new suppressions, `cast(`, edits to config
+  or `tests/`) and every changed transcript, and play the change through zmx. At most three rounds of fixes; after
+  two failed rounds, escalate to a stronger model or do the task directly.
 - **Merging:** squash into `main` with a message naming the task and the worker run, and push after each chunk of
   work.
 - **Budget:** the Z.ai Silver plan allows 12K credits per 5 hours and 60K per week. Credits per task get measured
