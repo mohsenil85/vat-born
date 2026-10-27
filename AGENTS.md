@@ -19,14 +19,18 @@ uv run vat-born             # run the game
 uv run ruff check --fix && uv run ruff format && uv run basedpyright   # the check
 uv add <pkg>                # add a runtime dependency (ask first)
 uv add --dev <pkg>          # add a dev-only tool
+git config core.hooksPath .githooks   # once per clone: every commit runs the check
 ```
 
 ## Done means
 
 - The check passes clean. basedpyright warnings fail the run, same as errors.
+- Every commit reruns the check on exactly what is staged, in a throwaway copy (`.githooks/pre-commit`), so `git add`
+  every file your change needs. Never commit with `--no-verify`.
 - If you changed something a player can see, run `uv run vat-born` and look at it.
-- No unit tests. Integration tests are being set up separately; until this file says how to run them, there is no
-  test step. To try something out, run the game or a throwaway script outside the repo.
+- No unit tests. Integration tests are being set up separately in `tests/`; leave that directory alone, and until this
+  file says how to run them, there is no test step. To try something out, run the game or a throwaway script outside
+  the repo.
 - `docs/design.md` and `README.md` still match the code.
 
 ## Python and tooling
@@ -38,7 +42,8 @@ uv add --dev <pkg>          # add a dev-only tool
   in `recommended` mode: nearly every rule on, including `reportAny`.
 - Fix the code, not the checker. If a suppression is truly warranted, scope it to one line and one rule, and give the
   reason: `# noqa: PLR0913 - <why>` or `# pyright: ignore[reportAny] - <why>`. Bare `# type: ignore` is not honored.
-  Don't loosen `pyproject.toml` to get a clean run; propose the change instead.
+  Don't loosen `pyproject.toml`, edit `.githooks/`, or change this file to get a clean run; propose the change
+  instead.
 - Dependencies: stdlib first. Ask before adding a runtime dependency, and check the exact name on PyPI before you
   install it (hallucinated package names get squatted). Use `uv add` and `uv remove`; never edit `uv.lock` by hand.
 

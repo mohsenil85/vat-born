@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Runs the AGENTS.md check on exactly what is being committed: a snapshot of the index (code, config, and lockfile)
+# with its own throwaway venv, so a commit that leaves out a file the staged code needs fails here instead of on main.
+# Enable once per clone:
+#   git config core.hooksPath .githooks
+set -euo pipefail
+
+snapshot=$(mktemp -d "${TMPDIR:-/tmp}/vat-born-pre-commit.XXXXXX")
+trap 'rm -rf "$snapshot"' EXIT
+snapshot=$(cd "$snapshot" && pwd -P)
+
+fail() {
+    echo "pre-commit: the check failed on the staged files. Fix them, stage the fixes, and commit again." >&2
+    echo "pre-commit: never bypass this hook with --no-verify." >&2
+    exit 1
+}
+
+git checkout-index --all --prefix="$snapshot/"
+cd "$snapshot"
+uv sync --locked --quiet || fail
+
+status=0
+check() {
+    # Paths are printed relative to the repo root, not the throwaway snapshot.
+    uv run --no-sync "$@" 2>&1 | sed "s|$snapshot/||g" || status=1
+}
+check ruff check --no-cache
+check ruff format --check --no-cache
+check basedpyright
+[ "$status" -eq 0 ] || fail

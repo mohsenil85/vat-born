@@ -15,6 +15,7 @@ uv sync                                                                # create 
 uv run vat-born                                                        # run the scaffold
 uv run ruff check --fix && uv run ruff format && uv run basedpyright   # lint, format, type-check
 uv run pytest
+git config core.hooksPath .githooks                                    # once per clone: commits run the check
 ```
 
 Coding agents: read [AGENTS.md](AGENTS.md) first.

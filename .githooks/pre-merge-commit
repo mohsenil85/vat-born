@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Merge commits get the same check as ordinary commits.
+exec "$(dirname "$0")/pre-commit"
