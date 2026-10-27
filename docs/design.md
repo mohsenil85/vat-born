@@ -71,7 +71,7 @@ input ──► engine command?  ──yes──► resolve deterministically (n
 
 ### 3.3 Language
 
-Open between **Python** and **Common Lisp**:
+**Python**, decided 2026-10-27 (§16 Q1). The comparison that settled it:
 
 | | Python | Common Lisp (SBCL) |
 |---|---|---|
@@ -128,7 +128,7 @@ A seeded, layered pipeline, run once per world and hidden from the player:
 - **Roguelike pacing:** time advances only when the player acts.
 - **Free actions:** `look`, `examine`, `inventory`, `map`, `status`, `where`, log review. These may only describe **what is already in the DB at the PC's knowledge level.**
 - **Timed actions:** move, `search` / `investigate`, craft, build, fight, eat, rest. Only timed actions can *create* new knowledge. This split stops the narrator from inventing discoveries in response to repeated free looks.
-- **Ticks:** a base unit (for example ~10 minutes). Day phases (morning / afternoon / night) are derived from the tick counter.
+- **Ticks:** 10 minutes. Day phases (morning / afternoon / evening / night) are derived from the tick counter.
 - **Variable action costs:** searching might take an hour; building a palisade takes days.
 - **Long actions are interruptible,** in the style of DCSS travel and Cataclysm: DDA activities. Hazard checks, threshold alerts, returning allies and arrivals all stop the action and return control to the player.
 - **A single scheduler** (priority queue) holds PC turns, ally jobs, faction moves, clocks and weather. Events pop in time order until it's the PC's turn.
@@ -315,27 +315,29 @@ log(tick, kind, payload_json)                     -- append-only
 
 ## 16. Open questions
 
+Answers for the first build are noted inline (decided 2026-10-27; **Proposed** marks a default not yet confirmed). [plan.md](plan.md) has the detail.
+
 **Core identity**
-1. Engine language: Python or Common Lisp.
-2. Engine scope: a general roguelike engine with lore packs, or one game with a clean engine? ("Build the game" argues for the latter; lore packs argue for some generality.)
-3. Lore-pack interface: what exactly a pack must provide, and in what format.
+1. Engine language: Python or Common Lisp. **Decided:** Python.
+2. Engine scope: a general roguelike engine with lore packs, or one game with a clean engine? ("Build the game" argues for the latter; lore packs argue for some generality.) **Decided:** one game with clean seams; no lore-pack machinery yet.
+3. Lore-pack interface: what exactly a pack must provide, and in what format. **Decided for now:** content is TOML in this repo, loaded into typed objects; the pack interface waits for a second setting.
 4. Canon direction: can anything generated in play ever feed back into the book's canon, or is the game explicitly non-canonical?
 
 **Fiction and runs**
 
-5. Do clones remember across runs? (In-fiction meta-knowledge, as in *Outer Wilds* / *Returnal* / *Hades*, vs. amnesia.)
+5. Do clones remember across runs? (In-fiction meta-knowledge, as in *Outer Wilds* / *Returnal* / *Hades*, vs. amnesia.) **Decided:** places, not details. A new clone keeps the explored map; items, people and hazards must be rediscovered.
 6. Is the ship a revelation (Wolfe-style: inhabitants don't know) or a known premise?
-7. Does the world tick forward between a death and the next vat waking? How much?
-8. Which worldgen parameters are exposed to the player?
+7. Does the world tick forward between a death and the next vat waking? How much? **Decided:** yes, a seeded 1–3 days, with a "while you were gone" report.
+8. Which worldgen parameters are exposed to the player? **Proposed:** only the seed, for the first build.
 9. Do shared seeds need identical prose (share the DB), or is identical structure enough?
 
 **Time and odds**
 
-10. Tick length, and whether players see ticks or only phases.
-11. Is partial progress on an interrupted long action saved?
-12. Does `search` have diminishing returns in one spot?
-13. Per threat: rising hazard, PRD, or hard ceiling? Which tick does each clock roll on?
-14. Are clocks and their stages visible, hidden, or only conveyed through telegraphing?
+10. Tick length, and whether players see ticks or only phases. **Decided:** 10-minute ticks. Players see the day, the phase and plain durations, never ticks. Free actions take no time and are unlimited.
+11. Is partial progress on an interrupted long action saved? **Decided:** where natural. Building and crafting keep progress; travel stops where you are; rest recovers partially; an interrupted search finds nothing.
+12. Does `search` have diminishing returns in one spot? **Decided:** yes. Each place holds a finite pool of hidden things, revealed one search at a time.
+13. Per threat: rising hazard, PRD, or hard ceiling? Which tick does each clock roll on? **Decided:** a rising hazard with a hard ceiling, rolled every tick, escalating through telegraph stages.
+14. Are clocks and their stages visible, hidden, or only conveyed through telegraphing? **Decided:** stages show as signs in the world, and the current odds show in `status` and before risky actions.
 
 **Narration**
 
@@ -344,20 +346,20 @@ log(tick, kind, payload_json)                     -- append-only
 
 **Characters**
 
-17. Allies: standing orders, autonomous needs, or both?
-18. Ally sources beyond other vats.
-19. Factions: is the language barrier a mechanic? What is the first faction's disposition and agenda?
+17. Allies: standing orders, autonomous needs, or both? **Decided:** both. Standing orders, overridden by needs and the ally's own goals.
+18. Ally sources beyond other vats. **Proposed:** other vats only, for the first build.
+19. Factions: is the language barrier a mechanic? What is the first faction's disposition and agenda? **Decided:** a wary scavenger clan, neutral at first, that trades and competes for salvage. **Proposed:** the language barrier waits.
 
 **Base**
 
-20. Which 3–4 rooms make up the first base, and how does each upgrade modify which hazards?
+20. Which 3–4 rooms make up the first base, and how does each upgrade modify which hazards? **Decided:** vat bay, workshop, store and bulkhead. The bulkhead lowers the predator clock, the store cuts spoilage and scent exposure, the workshop unlocks recipes and speeds crafting, and the vat bay improves waking.
 21. Where is the fortress/adventure boundary: a mode switch, or distance from base?
 
 **Interface**
 
 22. Voice: when does it become first-class?
 23. Sonification: none, alerts only, or ambient clocks?
-24. Confirmation threshold: all risky actions, or only lethal ones?
+24. Confirmation threshold: all risky actions, or only lethal ones? **Decided:** only lethal or irreversible actions, with the odds in the prompt.
 
 **Deferred layers**
 

@@ -29,4 +29,4 @@ Coding agents: read [AGENTS.md](AGENTS.md) first.
 - Permadeath, persistent world/bones, and respawn from a vat.
 
 Voice, additional layers, and AI-authored rules are deferred. See the [working design document](docs/design.md) for the
-full vision and open questions. The Python choice is settled for this implementation; other open questions remain.
+full vision, and the [build plan](docs/plan.md) for the slice's decisions and build order.

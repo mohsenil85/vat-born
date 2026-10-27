@@ -6,6 +6,8 @@ scaffold: there is no playable game yet. The tooling is strict on purpose, so le
 - `docs/design.md` is the source of truth for what we're building. Read the sections your task touches before you
   start. If a change would contradict it, stop and ask. If a change settles one of its open questions (§16), update
   the doc in the same change.
+- `docs/plan.md` records the first slice's decisions and build order. Build to its decisions; don't re-decide them
+  in code. If a task needs a decision the plan doesn't make, report it as a question instead of guessing.
 - `src/vat_born/` is the package (src layout); `vat_born.cli:main` is the `vat-born` command.
 
 ## Commands
