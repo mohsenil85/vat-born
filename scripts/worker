@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Starts a GLM worker on a task spec, the way docs/plan.md ("Running the work") runs them: its own worktree
-# (.worktrees/NAME on branch pi/NAME), this repo's AGENTS.md as its only context, high thinking, and a commit
+# (.worktrees/NAME on branch pi/NAME), this repo's AGENTS.md as its only context, medium thinking, and a commit
 # through the pre-commit hook when it finishes. Prints the worker's report.
 # Usage: scripts/worker NAME TASK.md [more pi-worker flags]
 set -euo pipefail
@@ -8,6 +8,14 @@ set -euo pipefail
 name=$1 task=$2
 shift 2
 root=$(git rev-parse --show-toplevel)
-# CMUX_PI_HOOKS_DISABLED keeps the cmux terminal's pi extension out of headless runs.
-CMUX_PI_HOOKS_DISABLED=1 exec pi-worker -C "$root" -b glm -w "$name" --commit --thinking high --no-context \
-    --no-skills --append-system-prompt "$root/.worktrees/$name/AGENTS.md" -f "$task" "$@"
+tree=$root/.worktrees/$name
+# A long run can compact the worker's context and lose the task's text, so a copy waits in the worktree as TASK.md
+# for it to reread. The repo's info/exclude keeps it out of every commit.
+[ -d "$tree" ] || git -C "$root" worktree add -q -b "pi/$name" "$tree"
+cp "$task" "$tree/TASK.md"
+exclude=$(git -C "$root" rev-parse --path-format=absolute --git-common-dir)/info/exclude
+grep -qxF /TASK.md "$exclude" || echo /TASK.md >> "$exclude"
+# CMUX_PI_HOOKS_DISABLED keeps the cmux terminal's pi extension out of headless runs. High thinking can spend a
+# whole turn's output planning a big task, so medium is the default; pass --thinking high for small, exact ones.
+CMUX_PI_HOOKS_DISABLED=1 exec pi-worker -C "$root" -b glm -w "$name" --commit --thinking medium --no-context \
+    --no-skills --append-system-prompt "$tree/AGENTS.md" -f "$task" "$@"

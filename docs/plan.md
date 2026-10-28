@@ -216,11 +216,11 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
 - Then the success test (§14) again, on the whole slice with the narrator: is a death-and-respawn loop on one seed
   fun as text alone?
 
-Status: M0 to M4 done (2026-10-28): the generated decks, walking, `look`, `map`, `where` with the way home, needs
+Status: M0 to M5 done (2026-10-28): the generated decks, walking, `look`, `map`, `where` with the way home, needs
 on a tick loop, drinking at the tap, resting, hidden finds and searching with visible odds, carrying, eating, the
-canteen, the lamp, and both hazard clocks with their signs, the predator's attacks, fighting and fleeing with
-confirmed odds, wounds, the failing air, and repairs. M4 was built on the proposed defaults above, which are still
-the designer's to confirm. Next: M5.
+canteen, the lamp, both hazard clocks with their signs, the predator's attacks, fighting and fleeing with confirmed
+odds, wounds, the failing air and its repair, and death: bones, the respawn gap, and the next clone. M4 and M5 were
+built on the proposed defaults above, which are still the designer's to confirm. Next: the designer's playtest.
 
 ## Running the work
 
@@ -233,6 +233,12 @@ the designer's to confirm. Next: M5.
 - **Review before merge:** rerun the check and the tests, read the diff (new suppressions, `cast(`, edits to config
   or `tests/`) and every changed transcript, and play the change through zmx. At most three rounds of fixes; after
   two failed rounds, escalate to a stronger model or do the task directly.
+- **What M3 to M5 taught** (2026-10-28): on a big spec at high thinking, a worker can spend a turn's whole output
+  planning and stop with nothing written ("no final text"); resume it, asking for small steps. Runs past about 80
+  turns get their context compacted and lose the spec's exact words and scenario lines, hence the `TASK.md` copy in
+  the worktree. Medium thinking is now the default. A scenario walkthrough worked out tick by tick catches most
+  mistakes, but check its arithmetic against the engine first; long scenarios about the hazards are easier to build
+  by playing a simple policy against the engine API in a throwaway script and recording its commands.
 - **Merging:** `scripts/land <task> < message` squash-merges into `main` with a message naming the task and the
   worker run, pushes, and removes the worktree. The run ID finds the spec and the session in pi-worker's run log.
 - **Budget:** the Z.ai Silver plan allows 12K credits per 5 hours and 60K per week. Calibration measured about 55

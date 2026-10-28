@@ -55,8 +55,8 @@ All in `src/vat_born/`:
    - a timed action records facts on the `Txn`. Each new fact needs a dataclass in `events.py`, a case in
      `store.py`'s `_apply` (bump `SCHEMA_VERSION` if the schema changes), and a case in `render.py`. Time passes
      only through `engine._pass`, the tick loop where the PC's needs and the hazard clocks (and later the allies)
-     take their turns; never record `TimePassed` yourself. A timed action that can't be done records nothing and returns
-     a report saying why; no time passes.
+     take their turns; never record `TimePassed` yourself. A timed action that can't be done records nothing and
+     returns a report saying why; no time passes.
 4. basedpyright fails until every `match` covers the new types, which is how you find the places left to change.
 5. Your task names the scenarios that show the action. Regenerate them and read every line.
 
@@ -105,6 +105,8 @@ If an orchestrator gave you a task, these hold unless the task says otherwise:
   Questions.
 - Work in small steps: make each edit as soon as you know it and run the check as you go. Planning a whole task in
   one turn can use up the turn's output before anything is written.
+- Your task is also in `TASK.md` at the root of your worktree, kept out of git. Reread it whenever you've lost its
+  exact words, scenario lines, or numbers; don't reinvent them.
 
 ## Python and tooling
 
