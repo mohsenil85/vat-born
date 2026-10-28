@@ -195,7 +195,17 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
   - wounds: wounded, then badly wounded, and a third wound kills. A wound heals in a day and a half awake, or half a
     day resting, and also costs 10 points a level on searches;
   - death ends the run, with its cause. Until M5 builds what follows, a dead clone can only quit.
-- **M5 Death:** permadeath, bones, the respawn gap and its report, and clone knowledge.
+- **M5 Death:** permadeath, bones, the respawn gap and its report, and clone knowledge. *Proposed* 2026-10-27, the
+  orchestrator's defaults:
+  - needs kill at last: thirst after three days without a drink, hunger after two weeks without food. Fatigue
+    never kills; exhausted just keeps costing odds;
+  - the body stays where it fell, with everything it carried lying around it, and `look` shows it: "The body of
+    clone 1 lies here", then only bones after a few days. Killed by the predator, the predator keeps hunting;
+  - the next clone wakes in the vat bay after a seeded one to three days, in the same turn as the death. The
+    world runs through the gap tick by tick: the clocks climb and leave their signs, with nobody there to see
+    them. A short report says who died, where, of what, and how long ago;
+  - the new clone keeps the map (the places visited); what was searched bare and which signs were seen it must
+    learn again, and it starts with fresh needs and no wounds.
 - **Playtest:** the designer plays the death-and-respawn loop on one seed, with template text. This is the §14
   success test, run early on purpose: if the loop isn't fun, we change course before building M6–M9.
 - **M6 Base:** the four rooms, construction with saved progress, and upgrades with their effects on the clocks.
