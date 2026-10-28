@@ -141,8 +141,18 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
     pools, the predator's lair, the scavengers, the captain's door) on this map;
   - the bulkhead stands open from the start; shutting and reinforcing it is M6's upgrade.
 - **M2 Time and needs:** the scheduler, interruptible long actions, the PC's needs, and the actions that answer them
-  (eat, drink, rest).
-- **M3 Search and items:** hidden pools, `search`, items and inventory, and explicit odds with their breakdown.
+  (drink, rest). Decided 2026-10-27:
+  - the needs are thirst, hunger, and fatigue (injuries come with fighting, in M4). Each counts the ticks since it
+    was last answered and reads as a level: thirsty after 12 hours, very thirsty after a day, dying of thirst
+    after two; hungry after a day, very hungry after three, starving after a week; tired after 16 hours awake, very
+    tired after a day, exhausted after a day and a half. What comes after the last level waits for death (M5);
+  - water comes from a tap in the vat bay, so home is where you drink; `eat` moves to M3, where food is found;
+  - resting brings fatigue down twice as fast as being awake builds it;
+  - the scheduler is a tick loop: a timed action runs tick by tick, and every time-driven system (needs now, the
+    hazard clocks in M4, allies in M7) takes its turn each tick in a fixed order. A need getting worse stops a
+    long wait or rest. A priority queue can replace the loop if sparse events ever need one.
+- **M3 Search and items:** hidden pools, `search`, items and inventory, eating what you find, and explicit odds with
+  their breakdown.
 - **M4 Danger:** both hazard clocks with their telegraphs, odds in `status`, confirmations, `fight`, and injuries.
 - **M5 Death:** permadeath, bones, the respawn gap and its report, and clone knowledge.
 - **Playtest:** the designer plays the death-and-respawn loop on one seed, with template text. This is the §14
@@ -155,9 +165,8 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
 - Then the success test (§14) again, on the whole slice with the narrator: is a death-and-respawn loop on one seed
   fun as text alone?
 
-Status: M0 done (2026-10-27). M1 in progress: `look`, and paths and walking in the home section, are done. Next is
-worldgen beyond the bulkhead, with word wrapping for the terminal alongside; then what the PC knows, `map`, and the
-route home.
+Status: M0 and M1 done (2026-10-27): the generated decks, walking, `look`, `map`, and `where` with the way home.
+M2 in progress: next, the needs and the tick loop; then drinking and resting.
 
 ## Running the work
 
