@@ -2,8 +2,9 @@
 under another hash seed, and stopped halfway and resumed in a new process.
 
 A transcript is `#` header lines, one of them `# seed: N`, then a blank line and the session as the player saw it.
-Lines starting with `> ` are the commands. To add a scenario, write the header and the commands, run
-`uv run pytest --regen`, and read what the game filled in."""
+Lines starting with `> ` are the commands, and each command's log entries follow its text. A `# show-log: all`
+header line adds the log of making the world, which only scenarios about worldgen want. To add a scenario, write the
+header and the commands, run `uv run pytest --regen`, and read what the game filled in."""
 
 import difflib
 from dataclasses import dataclass
@@ -22,16 +23,21 @@ class Scenario:
     path: Path
     header: str
     seed: int
+    log: str  # what --show-log shows: "turns", or "all" to include making the world
     body: str
 
     @classmethod
     def read(cls, path: Path) -> Self:
         lines = path.read_text().splitlines(keepends=True)
         n = next((i for i, line in enumerate(lines) if not line.startswith("#")), len(lines))
-        seeds = [line.removeprefix("# seed:").strip() for line in lines[:n] if line.startswith("# seed:")]
+        seeds = _header(lines[:n], "seed")
         if len(seeds) != 1 or not seeds[0].isdecimal():
             pytest.fail(f"{path.name}: the header needs exactly one '# seed: N' line", pytrace=False)
-        return cls(path, "".join(lines[:n]), int(seeds[0]), "".join(lines[n:]).removeprefix("\n"))
+        logs = _header(lines[:n], "show-log")
+        if logs not in ([], ["all"]):
+            pytest.fail(f"{path.name}: '# show-log: all' is the only show-log header", pytrace=False)
+        log = logs[0] if logs else "turns"
+        return cls(path, "".join(lines[:n]), int(seeds[0]), log, "".join(lines[n:]).removeprefix("\n"))
 
     @property
     def commands(self) -> list[str]:
@@ -45,7 +51,7 @@ class Scenario:
 def test_scenario(path: Path, tmp_path: Path, request: pytest.FixtureRequest) -> None:
     scenario = Scenario.read(path)
     commands = scenario.commands
-    straight = play(tmp_path / "straight.db", scenario.seed, commands)
+    straight = play(tmp_path / "straight.db", scenario.seed, commands, log=scenario.log)
     if cast("bool", request.config.getoption("--regen")):
         if straight != scenario.body:
             scenario.rewrite(straight)
@@ -56,12 +62,17 @@ def test_scenario(path: Path, tmp_path: Path, request: pytest.FixtureRequest) ->
             "The game no longer plays this transcript. If your change means to alter it, run "
             "`uv run pytest --regen` and review the diff.",
         )
-    hashed = play(tmp_path / "hashed.db", scenario.seed, commands, hash_seed=1)
+    hashed = play(tmp_path / "hashed.db", scenario.seed, commands, hash_seed=1, log=scenario.log)
     _same(straight, hashed, "Under another PYTHONHASHSEED the game played differently: set order or hash() leaks.")
     half = len(commands) // 2
-    first = play(tmp_path / "split.db", scenario.seed, commands[:half])
-    second = play(tmp_path / "split.db", scenario.seed, commands[half:])
+    first = play(tmp_path / "split.db", scenario.seed, commands[:half], log=scenario.log)
+    second = play(tmp_path / "split.db", scenario.seed, commands[half:], log=scenario.log)
     _same(straight, first + _after_startup(second), "Stopped halfway and resumed, the game played differently.")
+
+
+def _header(lines: list[str], key: str) -> list[str]:
+    """The values of the `# KEY: value` header lines."""
+    return [line.removeprefix(f"# {key}:").strip() for line in lines if line.startswith(f"# {key}:")]
 
 
 def _after_startup(transcript: str) -> str:

@@ -107,7 +107,9 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
 - **Scenarios are transcripts.** Each file in `tests/scenarios/` holds a seed, a line saying what it covers, and a
   session: each command, then the text the player saw and the events it logged (`vat-born --show-log`).
   `uv run pytest` replays every scenario in a fresh scratch world and compares; `uv run pytest --regen` rewrites the
-  files when a change is meant to alter them, so review reads behavior changes as transcript diffs.
+  files when a change is meant to alter them, so review reads behavior changes as transcript diffs. Only scenarios
+  about worldgen include the log of making the world (`# show-log: all`), so a worldgen change leaves the rest
+  alone.
 - **Each scenario also replays under a different hash seed, and split across two processes** (stop halfway, then
   resume). Both must give the same transcript, which catches set-order bugs and state that isn't saved.
 - **A crash sweep** plays many seeds for a few in-game days and checks only that nothing crashes, the engine's own
@@ -129,10 +131,15 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
   - the transcript harness and the first scenarios, replacing the placeholder `tests/test_cli.py`, with the suite
     added to the pre-commit hook.
 - **M1 World:** worldgen for the decks layer (region graph, vat-bay spawn), timed movement, `look`, `map`, and
-  `where`, with exits in a fixed order ("Paths: north to …"). Directions are compass words: north, south, east,
-  west, up, and down (n, s, e, w, u, d). *Proposed:* the home section is fixed content, the same on every seed: the
-  vat bay with the workshop, the store, and the bulkhead around it, the rooms M6 turns into the base. Worldgen builds
-  the decks beyond the bulkhead.
+  `where`, with exits in a fixed order ("Paths: north to …"). Decided 2026-10-27:
+  - directions are compass words: north, south, east, west, up, and down (n, s, e, w, u, d);
+  - the home section is fixed content, the same on every seed: the vat bay with the workshop, the store, and the
+    bulkhead around it, the rooms M6 turns into the base;
+  - beyond the bulkhead, worldgen lays a corridor, one segment per frame of the hull, with side rooms off it and one
+    ladder down to a lower deck: 20–30 places in all, a few hours' walk end to end. Content tables hold the places;
+    the seed picks which appear, where, and how long each walk is. Later milestones place their own things (search
+    pools, the predator's lair, the scavengers, the captain's door) on this map;
+  - the bulkhead stands open from the start; shutting and reinforcing it is M6's upgrade.
 - **M2 Time and needs:** the scheduler, interruptible long actions, the PC's needs, and the actions that answer them
   (eat, drink, rest).
 - **M3 Search and items:** hidden pools, `search`, items and inventory, and explicit odds with their breakdown.
@@ -148,8 +155,9 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
 - Then the success test (§14) again, on the whole slice with the narrator: is a death-and-respawn loop on one seed
   fun as text alone?
 
-Status: M0 done (2026-10-27). M1 in progress: `look` is done. Next come paths and movement in the home section, then
-worldgen beyond the bulkhead, then what the PC knows, `map`, and the route home.
+Status: M0 done (2026-10-27). M1 in progress: `look`, and paths and walking in the home section, are done. Next is
+worldgen beyond the bulkhead, with word wrapping for the terminal alongside; then what the PC knows, `map`, and the
+route home.
 
 ## Running the work
 
@@ -163,6 +171,7 @@ worldgen beyond the bulkhead, then what the PC knows, `map`, and the route home.
   two failed rounds, escalate to a stronger model or do the task directly.
 - **Merging:** squash into `main` with a message naming the task and the worker run, and push after each chunk of
   work.
-- **Budget:** the Z.ai Silver plan allows 12K credits per 5 hours and 60K per week. Calibration task 1 (`look`: 3
-  minutes, 23 turns) used about 55 credits, so the limits are far off at this pace. `or-glm` (OpenRouter, pay per
-  token) is the overflow.
+- **Budget:** the Z.ai Silver plan allows 12K credits per 5 hours and 60K per week. Calibration measured about 55
+  credits for a small task (`look`: 3 minutes, 23 turns) and 290 for a medium one (paths and walking: 13 minutes, 52
+  turns), roughly 40 medium tasks per 5 hours, so the limits are far off. Both tasks came back right from precise
+  specs. `or-glm` (OpenRouter, pay per token) is the overflow.

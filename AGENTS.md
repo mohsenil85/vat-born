@@ -67,7 +67,8 @@ zmx kill "$s"; rm -rf "$w"            # done
 ```
 
 `zmx wait "$s"` blocks until the game exits, so only use it after you've quit. Add `--show-log` to see what each
-command adds to the event log. For a quick look without a terminal, pipe the commands in:
+command adds to the event log, or `--show-log=all` to see the world being made as well. For a quick look without a
+terminal, pipe the commands in:
 `printf 'status\nwait 2 hours\n' | uv run vat-born --world "$w/world.db" --seed 1`.
 
 ## Done means

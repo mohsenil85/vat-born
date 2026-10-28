@@ -6,15 +6,6 @@ You wake in a clone vat in the vat bay.
 The vat bay
 It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
-  | t0 world_created {"seed": 5}
-  | t0 place_added {"place": 1, "layer": "decks", "kind": "vat_bay", "name": "the vat bay", "description": "It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath."}
-  | t0 place_added {"place": 2, "layer": "decks", "kind": "workshop", "name": "the workshop", "description": "Workbenches stand under drifts of grit, their vises rusted open. A dead fabricator fills one corner, its screen cracked into a web. Whoever stripped this place left in a hurry."}
-  | t0 place_added {"place": 3, "layer": "decks", "kind": "store", "name": "the storeroom", "description": "Empty shelves run floor to ceiling. Scrape marks on the deck show where crates were dragged out, and a cold draft stirs the dust."}
-  | t0 place_added {"place": 4, "layer": "decks", "kind": "bulkhead", "name": "the bulkhead", "description": "A pressure door twice your height closes this section off from the rest of the ship. Something on the far side has scored its paint in long, parallel lines."}
-  | t0 path_added {"place": 1, "to": 2, "direction": "east", "ticks": 1}
-  | t0 path_added {"place": 1, "to": 3, "direction": "west", "ticks": 1}
-  | t0 path_added {"place": 1, "to": 4, "direction": "north", "ticks": 2}
-  | t0 clone_woke {"run": 1, "pc": 1, "place": 1, "place_name": "the vat bay"}
 Type "help" for the commands.
 > look
 The vat bay

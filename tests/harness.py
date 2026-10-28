@@ -31,10 +31,10 @@ def run(args: Sequence[str], commands: Sequence[str], *, data_home: Path, hash_s
     return Result(done.returncode, done.stdout, done.stderr)
 
 
-def play(world: Path, seed: int, commands: Sequence[str], *, hash_seed: int = 0) -> str:
-    """Play COMMANDS on the world file WORLD, with the log shown, and return the transcript. Fails the test if the
-    game exits with an error or writes anything to stderr."""
-    args = ["--world", str(world), "--seed", str(seed), "--show-log"]
+def play(world: Path, seed: int, commands: Sequence[str], *, hash_seed: int = 0, log: str = "turns") -> str:
+    """Play COMMANDS on the world file WORLD, with the log shown (`--show-log=LOG`), and return the transcript. Fails
+    the test if the game exits with an error or writes anything to stderr."""
+    args = ["--world", str(world), "--seed", str(seed), f"--show-log={log}"]
     result = run(args, commands, data_home=world.parent / "data", hash_seed=hash_seed)
     if result.code != 0 or result.err:
         pytest.fail(f"vat-born exited with {result.code}:\n{result.err}", pytrace=False)

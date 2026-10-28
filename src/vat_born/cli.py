@@ -8,6 +8,7 @@ import os
 import secrets
 import sys
 from collections.abc import Sequence
+from enum import StrEnum
 from pathlib import Path
 from typing import cast
 
@@ -20,20 +21,27 @@ from vat_born.store import WorldError
 _NEW_SEEDS = 1_000_000  # random seeds for new worlds stay below this, so they're easy to read and type
 
 
+class ShowLog(StrEnum):
+    """How much of the event log to print. Making a world logs every place and path, so only `ALL` shows that."""
+
+    TURNS = "turns"
+    ALL = "all"
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _arguments().parse_args(argv)
     world = cast("Path | None", args.world)
     seed = cast("int | None", args.seed)
-    show_log = cast("bool", args.show_log)
+    show_log = cast("ShowLog | None", args.show_log)
     try:
         game, turn = _open(world, seed, load_content())
     except WorldError as error:
         print(f"vat-born: {error}", file=sys.stderr)
         return 2
     try:
-        _show(turn, show_log=show_log)
+        _show(turn, log=show_log is ShowLog.ALL)
         print('Type "help" for the commands.')
-        _play(game, show_log=show_log)
+        _play(game, log=show_log is not None)
     except KeyboardInterrupt:
         print()
         return 130
@@ -56,7 +64,14 @@ def _arguments() -> argparse.ArgumentParser:
         help="play the world in this file, making it if it doesn't exist yet (default: one file per seed in "
         "$XDG_DATA_HOME/vat-born, resuming the last world played)",
     )
-    parser.add_argument("--show-log", action="store_true", help="after each command, print what it added to the log")
+    parser.add_argument(
+        "--show-log",
+        nargs="?",
+        const=ShowLog.TURNS,
+        type=ShowLog,
+        choices=list(ShowLog),
+        help="after each command, print what it added to the event log; with =all, the world's making too",
+    )
     return parser
 
 
@@ -114,7 +129,7 @@ def _unused_seed(worlds: Path) -> int:
             return seed
 
 
-def _play(game: Game, *, show_log: bool) -> None:
+def _play(game: Game, *, log: bool) -> None:
     interactive = sys.stdin.isatty()
     if interactive:
         with contextlib.suppress(ImportError):  # line editing and history, where the platform has readline
@@ -133,7 +148,7 @@ def _play(game: Game, *, show_log: bool) -> None:
             case Rejected(message=message):
                 print(message)
             case intent:
-                _show(game.act(intent), show_log=show_log)
+                _show(game.act(intent), log=log)
 
 
 def _read(*, interactive: bool) -> str | None:
@@ -147,11 +162,11 @@ def _read(*, interactive: bool) -> str | None:
         return None
 
 
-def _show(turn: Turn, *, show_log: bool) -> None:
+def _show(turn: Turn, *, log: bool) -> None:
     for event in turn.events:
         for text in render(event):
             print(text)
-    if show_log:
+    if log:
         for entry in turn.logged:
             print(f"  | t{entry.tick} {entry.kind} {entry.payload}")
 
