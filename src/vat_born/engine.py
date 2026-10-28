@@ -12,6 +12,7 @@ from vat_born.events import (
     Activity,
     CloneWoke,
     Event,
+    LookReport,
     PhaseChanged,
     PlaceAdded,
     PlaceReport,
@@ -20,7 +21,7 @@ from vat_born.events import (
     TimePassed,
     WorldCreated,
 )
-from vat_born.intents import FreeIntent, Intent, Status, TimedIntent, Wait, Where
+from vat_born.intents import FreeIntent, Intent, Look, Status, TimedIntent, Wait, Where
 from vat_born.store import LogEntry, Store, Txn, View, WorldError
 from vat_born.world import CharacterId, Layer, NodeId, PlaceKind
 
@@ -52,7 +53,7 @@ class Game:
         try:
             with store.transaction(dice) as txn:
                 txn.record(WorldCreated(seed))
-                txn.record(PlaceAdded(NodeId(1), Layer.DECKS, START_PLACE, start.name))
+                txn.record(PlaceAdded(NodeId(1), Layer.DECKS, START_PLACE, start.name, start.description))
                 txn.record(CloneWoke(run=1, pc=CharacterId(1), place=NodeId(1), place_name=start.name))
         except BaseException:
             store.close()
@@ -74,7 +75,7 @@ class Game:
 
     def act(self, intent: Intent) -> Turn:
         match intent:
-            case Status() | Where():
+            case Status() | Where() | Look():
                 return Turn(_resolve_free(intent, self._store.view()))
             case Wait():
                 return self._timed(intent)
@@ -103,6 +104,9 @@ def _resolve_free(intent: FreeIntent, view: View) -> tuple[Event, ...]:
             return (StatusReport(game_time(view.tick()), view.run()),)
         case Where():
             return (PlaceReport(view.pc_place().name),)
+        case Look():
+            place = view.pc_place()
+            return (LookReport(place.name, place.description),)
         case _:
             assert_never(intent)
 

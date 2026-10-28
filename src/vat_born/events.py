@@ -32,6 +32,7 @@ class PlaceAdded:
     layer: Layer
     kind: PlaceKind
     name: str
+    description: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,11 +86,17 @@ class PlaceReport:
 
 
 @dataclass(frozen=True, slots=True)
+class LookReport:
+    place_name: str
+    description: str
+
+
+@dataclass(frozen=True, slots=True)
 class PhaseChanged:
     before: GameTime
     after: GameTime
 
 
-type Report = Resumed | StatusReport | PlaceReport | PhaseChanged
+type Report = Resumed | StatusReport | PlaceReport | LookReport | PhaseChanged
 
 type Event = Fact | Report

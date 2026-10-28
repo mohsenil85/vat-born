@@ -19,6 +19,7 @@ class ContentError(Exception):
 class PlaceDef:
     kind: PlaceKind
     name: str  # as it reads mid-sentence: "the vat bay"
+    description: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,8 +50,10 @@ def _places(data: dict[str, object]) -> Mapping[PlaceKind, PlaceDef]:
     for key, value in data.items():
         where = f"places.toml [{key}]"
         table = _table(value, where)
-        _only(table, {"name"}, where)
-        places[PlaceKind(key)] = PlaceDef(PlaceKind(key), _string(table, "name", where))
+        _only(table, {"name", "description"}, where)
+        places[PlaceKind(key)] = PlaceDef(
+            PlaceKind(key), _string(table, "name", where), _string(table, "description", where)
+        )
     return MappingProxyType(places)
 
 

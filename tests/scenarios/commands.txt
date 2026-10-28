@@ -4,13 +4,14 @@
 A new world, seed 3.
 You wake in a clone vat in the vat bay.
   | t0 world_created {"seed": 3}
-  | t0 place_added {"place": 1, "layer": "decks", "kind": "vat_bay", "name": "the vat bay"}
+  | t0 place_added {"place": 1, "layer": "decks", "kind": "vat_bay", "name": "the vat bay", "description": "It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath."}
   | t0 clone_woke {"run": 1, "pc": 1, "place": 1, "place_name": "the vat bay"}
 Type "help" for the commands.
 > help
 Commands:
   status       the day, the time of day, and how you are; takes no time
   where        where you are; takes no time
+  look         describe where you are; takes no time
   wait [time]  let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait a day"
   help         this list
   quit         stop playing; the world keeps your place

@@ -19,3 +19,4 @@ class Layer(StrEnum):
 class Place:
     id: NodeId
     name: str
+    description: str

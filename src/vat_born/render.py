@@ -9,6 +9,7 @@ from vat_born.events import (
     Activity,
     CloneWoke,
     Event,
+    LookReport,
     PhaseChanged,
     PlaceAdded,
     PlaceReport,
@@ -42,6 +43,8 @@ def render(event: Event) -> list[str]:
             return [f"{describe_time(time)}. You are clone {run}."]
         case PlaceReport(place_name=place):
             return [f"You are in {place}."]
+        case LookReport(place_name=place, description=description):
+            return [place[:1].upper() + place[1:], description]
         case PhaseChanged(before=before, after=after):
             if after.day == before.day:
                 return [f"It is now {after.phase}."]

@@ -16,6 +16,11 @@ class Where:
 
 
 @dataclass(frozen=True, slots=True)
+class Look:
+    """A description of the place the PC is in."""
+
+
+@dataclass(frozen=True, slots=True)
 class Wait:
     """Let time pass."""
 
@@ -25,6 +30,6 @@ class Wait:
         assert self.ticks > 0, "a wait takes at least one tick"
 
 
-type FreeIntent = Status | Where
+type FreeIntent = Status | Where | Look
 type TimedIntent = Wait
 type Intent = FreeIntent | TimedIntent

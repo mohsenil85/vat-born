@@ -19,7 +19,7 @@ from vat_born.world import NodeId, Place
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -33,7 +33,8 @@ CREATE TABLE nodes (
     id INTEGER PRIMARY KEY,
     layer TEXT NOT NULL,
     kind TEXT NOT NULL,
-    name TEXT NOT NULL
+    name TEXT NOT NULL,
+    description TEXT NOT NULL
 ) STRICT;
 
 CREATE TABLE characters (
@@ -103,16 +104,16 @@ class View:
 
     def pc_place(self) -> Place:
         row = cast(
-            "tuple[int, str] | None",
+            "tuple[int, str, str] | None",
             self._conn.execute(
-                "SELECT nodes.id, nodes.name FROM runs"
+                "SELECT nodes.id, nodes.name, nodes.description FROM runs"
                 " JOIN characters ON characters.id = runs.pc"
                 " JOIN nodes ON nodes.id = characters.node"
                 " ORDER BY runs.n DESC LIMIT 1",
             ).fetchone(),
         )
         assert row is not None, "no clone has woken"
-        return Place(NodeId(row[0]), row[1])
+        return Place(NodeId(row[0]), row[1], row[2])
 
 
 @final
@@ -237,8 +238,11 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             conn.execute(
                 "INSERT INTO world (id, seed, schema_version, tick) VALUES (1, ?, ?, 0)", (seed, SCHEMA_VERSION)
             )
-        case PlaceAdded(place=place, layer=layer, kind=kind, name=name):
-            conn.execute("INSERT INTO nodes (id, layer, kind, name) VALUES (?, ?, ?, ?)", (place, layer, kind, name))
+        case PlaceAdded(place=place, layer=layer, kind=kind, name=name, description=description):
+            conn.execute(
+                "INSERT INTO nodes (id, layer, kind, name, description) VALUES (?, ?, ?, ?, ?)",
+                (place, layer, kind, name, description),
+            )
         case CloneWoke(run=run, pc=pc, place=place):
             conn.execute("INSERT INTO characters (id, kind, node) VALUES (?, 'pc', ?)", (pc, place))
             conn.execute("INSERT INTO runs (n, pc, started_tick) SELECT ?, ?, tick FROM world", (run, pc))

@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 
 from vat_born.clock import MINUTES_PER_TICK
-from vat_born.intents import Intent, Status, Wait, Where
+from vat_born.intents import Intent, Look, Status, Wait, Where
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +35,7 @@ class Usage:
 HELP = (
     Usage("status", "the day, the time of day, and how you are; takes no time"),
     Usage("where", "where you are; takes no time"),
+    Usage("look", "describe where you are; takes no time"),
     Usage("wait [time]", 'let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait a day"'),
     Usage("help", "this list"),
     Usage("quit", "stop playing; the world keeps your place"),
@@ -61,6 +62,8 @@ def parse(line: str) -> Command:
             return Status()
         case "where":
             return Where()
+        case "look" | "l":
+            return Look()
         case "wait":
             return _wait(rest)
         case "help" | "?":
