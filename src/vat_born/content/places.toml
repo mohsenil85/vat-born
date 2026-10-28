@@ -15,4 +15,68 @@ description = "Empty shelves run floor to ceiling. Scrape marks on the deck show
 
 [bulkhead]
 name = "the bulkhead"
-description = "A pressure door twice your height closes this section off from the rest of the ship. Something on the far side has scored its paint in long, parallel lines."
+description = "A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines."
+
+[corridor]
+name = "the corridor"
+description = "A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water."
+
+[galley]
+name = "the galley"
+description = "Long steel tables are bolted to the deck in rows, and the serving hatch hangs half torn from its runners. The ovens are cold. Someone has scratched tally marks into the nearest tabletop."
+
+[hydroponics]
+name = "the hydroponics bay"
+description = "Racks of grow trays climb toward a ceiling of dead lamps. Most of the plants are brown husks, but a few pale shoots still reach for light that isn't coming."
+
+[med_bay]
+name = "the med bay"
+description = "Three surgical cradles sit under a cracked observation dome. The cabinets hang open and empty, and the floor is tacky around the drain."
+
+[crew_quarters]
+name = "the crew quarters"
+description = "Bunks are stacked four high, curtains drawn across most of them. Personal things are still here: a cracked photo frame, a single boot, a child's drawing of a sun."
+
+[cargo_hold]
+name = "the cargo hold"
+description = "Containers stand in rows under a gantry crane, their doors sealed with rusted clamps. Your footsteps ring out and come back changed."
+
+[machine_shop]
+name = "the machine shop"
+description = "Lathes and presses wait under tarps, and a parts cage fills the far wall, its lock shot through. The air tastes of metal."
+
+[chapel]
+name = "the chapel"
+description = "A dozen benches face a window painted over in gold and blue. Candles have burned down to stubs on the sill, and not so long ago."
+
+[laundry]
+name = "the laundry"
+description = "Drums the size of escape pods line the walls, their lids hanging open. In one corner, a drift of grey uniforms has been raked into something like a nest."
+
+[armory]
+name = "the armory"
+description = "Weapon racks line the walls, every slot empty, every lock cut. Spent casings crunch underfoot, green with age."
+
+[schoolroom]
+name = "the schoolroom"
+description = "Small desks face a wall screen gone dark. A paper star chart is pinned beside it, with the ship drawn as a tiny cylinder halfway between two suns."
+
+[records_office]
+name = "the records office"
+description = "Filing drawers have been pulled out and upended, and paper lies drifted against the walls. Someone searched this room page by page."
+
+[gymnasium]
+name = "the gymnasium"
+description = "A running track circles a sunken court, its lane lines still bright. A climbing rope hangs from the ceiling, swaying, though nothing stirs the air."
+
+[pump_room]
+name = "the pump room"
+description = "Pipes as thick as your waist run off into the dark, sweating and ticking. Somewhere below the grating, water moves."
+
+[reclamation]
+name = "the reclamation tanks"
+description = "Three tanks the size of houses loom over a narrow catwalk, their gauges frozen. A ladder climbs the nearest to a hatch that has been welded shut."
+
+[cable_vault]
+name = "the cable vault"
+description = "Bundles of cable as thick as your arm run off into the dark on both sides. Some have been cut, cleanly, and the ends taped off."

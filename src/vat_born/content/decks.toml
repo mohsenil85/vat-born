@@ -1,0 +1,24 @@
+# Worldgen's tables for the decks beyond the home section's gate. The corridor runs on from the gate, in the gate's
+# direction, one segment per frame of the hull; each segment is named for its frame ("the corridor at frame 13").
+# Side rooms open off the corridor at right angles to it. One segment, never the first, has a ladder down to the
+# lower deck, whose rooms run east from the foot of the ladder, one after another.
+# A pair like [5, 7] is a range, least first. Minutes are in ten-minute steps.
+
+[corridor]
+kind = "corridor"
+segments = [5, 7]
+first_frame = 10
+frame_step = [2, 4]
+minutes = [10, 30]
+
+[side_rooms]
+count = [8, 10]
+minutes = 10
+kinds = [
+    "galley", "hydroponics", "med_bay", "crew_quarters", "cargo_hold", "machine_shop",
+    "chapel", "laundry", "armory", "schoolroom", "records_office", "gymnasium",
+]
+
+[lower_deck]
+minutes = 10
+kinds = ["pump_room", "reclamation", "cable_vault"]

@@ -1,8 +1,10 @@
 # The section every clone wakes in: the vat bay and the rooms around it, the same on every seed. Each path runs
-# both ways; `minutes` is the walk either way, in ten-minute steps.
+# both ways; `minutes` is the walk either way, in ten-minute steps. Worldgen joins the decks to the gate: the
+# corridor starts from that place, going that way.
 
 start = "vat_bay"
 places = ["vat_bay", "workshop", "store", "bulkhead"]
+gate = { place = "bulkhead", direction = "north" }
 
 [[paths]]
 from = "vat_bay"

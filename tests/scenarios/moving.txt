@@ -28,16 +28,16 @@ Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the
 > n
 You head north to the bulkhead.
 The bulkhead
-A pressure door twice your height closes this section off from the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
-Paths: south to the vat bay (twenty minutes).
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10, south to the vat bay (twenty minutes).
   | t4 time_passed {"start": 2, "end": 4, "activity": "walking"}
   | t4 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
 > status
 Day 1, morning. You are clone 1.
 > look
 The bulkhead
-A pressure door twice your height closes this section off from the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
-Paths: south to the vat bay (twenty minutes).
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10, south to the vat bay (twenty minutes).
 > up
 You can't go up from here.
 > go

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Self, assert_never, final
 
+from vat_born import worldgen
 from vat_born.clock import Tick, game_time, ticks_until
 from vat_born.content import Content
 from vat_born.dice import Dice
@@ -72,6 +73,10 @@ class Game:
                     txn.record(PlaceAdded(nodes[kind], Layer.DECKS, kind, place.name, place.description))
                 for way in home.paths:
                     txn.record(PathAdded(nodes[way.origin], nodes[way.to], way.direction, way.ticks))
+                stream = txn.stream("worldgen", "decks")
+                beyond = worldgen.decks(content, stream, nodes[home.gate.place], NodeId(len(home.places) + 1))
+                for fact in beyond:
+                    txn.record(fact)
                 txn.record(CloneWoke(run=1, pc=CharacterId(1), place=nodes[home.start], place_name=start.name))
             turn = Turn((*txn.facts, _look(store.view())), txn.logged)
         except BaseException:

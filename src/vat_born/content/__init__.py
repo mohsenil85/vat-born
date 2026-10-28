@@ -34,18 +34,73 @@ class PathDef:
 
 
 @dataclass(frozen=True, slots=True)
+class Gate:
+    """Where worldgen joins a section to what lies beyond it: the corridor runs from PLACE, going DIRECTION."""
+
+    place: PlaceKind
+    direction: Direction
+
+
+@dataclass(frozen=True, slots=True)
 class Section:
     """A laid-out section of the map: the places in it and the paths joining them."""
 
     start: PlaceKind
     places: tuple[PlaceKind, ...]
     paths: tuple[PathDef, ...]
+    gate: Gate
+
+
+@dataclass(frozen=True, slots=True)
+class Span:
+    """A range of whole numbers, least first, as written in a content pair like [5, 7]."""
+
+    least: int
+    most: int
+
+
+@dataclass(frozen=True, slots=True)
+class Corridor:
+    """The corridor beyond the gate: one segment per frame of the hull, each walk lasting TICKS."""
+
+    kind: PlaceKind
+    segments: Span
+    first_frame: int
+    frame_step: Span
+    ticks: Span
+
+
+@dataclass(frozen=True, slots=True)
+class SideRooms:
+    """The rooms off the corridor: up to COUNT of them, each a walk of TICKS from its segment."""
+
+    count: Span
+    ticks: int
+    kinds: tuple[PlaceKind, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class LowerDeck:
+    """The rooms under the ladder: a walk of TICKS between neighbours, running east from the foot of it."""
+
+    ticks: int
+    kinds: tuple[PlaceKind, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Decks:
+    """Worldgen's tables for the decks beyond a section's gate."""
+
+    corridor: Corridor
+    side_rooms: SideRooms
+    lower_deck: LowerDeck
 
 
 @dataclass(frozen=True, slots=True)
 class Content:
     places: Mapping[PlaceKind, PlaceDef]
     home: Section
+    decks: Decks
 
     def place(self, kind: PlaceKind) -> PlaceDef:
         if kind not in self.places:
@@ -55,7 +110,8 @@ class Content:
 
 def load_content() -> Content:
     places = _places(_read("places.toml"))
-    return Content(places=places, home=_home(_read("home.toml"), places))
+    home = _home(_read("home.toml"), places)
+    return Content(places=places, home=home, decks=_decks(_read("decks.toml"), places, home))
 
 
 def _read(name: str) -> dict[str, object]:
@@ -81,7 +137,7 @@ def _places(data: dict[str, object]) -> Mapping[PlaceKind, PlaceDef]:
 
 def _home(data: dict[str, object], places: Mapping[PlaceKind, PlaceDef]) -> Section:
     """home.toml into a `Section`, checked: the section it describes must be a walkable map."""
-    _only(data, {"start", "places", "paths"}, "home.toml")
+    _only(data, {"start", "places", "gate", "paths"}, "home.toml")
     start = _kind(_string(data, "start", "home.toml"), places, "home.toml start")
     listed = _listed(data.get("places"), places)
     if start not in listed:
@@ -89,7 +145,129 @@ def _home(data: dict[str, object], places: Mapping[PlaceKind, PlaceDef]) -> Sect
     ways = _paths(data.get("paths"), places, listed)
     _no_two_ways_one_direction(ways)
     _reachable(start, listed, ways)
-    return Section(start, listed, ways)
+    return Section(start=start, places=listed, paths=ways, gate=_gate(data.get("gate"), listed, ways))
+
+
+def _gate(value: object, listed: tuple[PlaceKind, ...], ways: tuple[PathDef, ...]) -> Gate:
+    """home.toml's `gate`, checked: worldgen hangs the decks off this place, in this direction."""
+    where = "home.toml gate"
+    table = _table(value, where)
+    _only(table, {"place", "direction"}, where)
+    place_value = _required(table, "place", where)
+    if not isinstance(place_value, str) or place_value not in listed:
+        raise ContentError(f"{where} place: must be one of the places in the section")
+    place = PlaceKind(place_value)
+    direction = _direction(_required(table, "direction", where), f"{where} direction")
+    if direction in (Direction.UP, Direction.DOWN):
+        raise ContentError(f"{where} direction: the decks don't join a section from above or below")
+    leaving = {way.direction for way in ways if way.origin == place} | {
+        way.direction.opposite for way in ways if way.to == place
+    }
+    if direction in leaving:
+        raise ContentError(f"{where} direction: a path already leaves {place} {direction}")
+    return Gate(place, direction)
+
+
+def _decks(data: dict[str, object], places: Mapping[PlaceKind, PlaceDef], home: Section) -> Decks:
+    """decks.toml into `Decks`, checked: the tables must describe a corridor worldgen can lay out."""
+    _only(data, {"corridor", "side_rooms", "lower_deck"}, "decks.toml")
+    seen: set[PlaceKind] = set()
+    corridor = _corridor(data.get("corridor"), places, home, seen)
+    side_rooms = _side_rooms(data.get("side_rooms"), places, home, seen, corridor)
+    return Decks(corridor, side_rooms, _lower_deck(data.get("lower_deck"), places, home, seen))
+
+
+def _corridor(value: object, places: Mapping[PlaceKind, PlaceDef], home: Section, seen: set[PlaceKind]) -> Corridor:
+    where = "decks.toml [corridor]"
+    table = _table(value, where)
+    _only(table, {"kind", "segments", "first_frame", "frame_step", "minutes"}, where)
+    kind = _deck_kind(_required(table, "kind", where), places, home, f"{where} kind", seen)
+    segments = _span(_required(table, "segments", where), f"{where} segments")
+    if segments.least < 2:
+        raise ContentError(f"{where} segments: at least 2, since the ladder never goes on the first")
+    first_frame = _whole(_required(table, "first_frame", where), f"{where} first_frame")
+    if first_frame < 1:
+        raise ContentError(f"{where} first_frame: frames count from 1")
+    frame_step = _span(_required(table, "frame_step", where), f"{where} frame_step")
+    ticks = _minutes_span(_required(table, "minutes", where), f"{where} minutes")
+    return Corridor(kind, segments, first_frame, frame_step, ticks)
+
+
+def _side_rooms(
+    value: object, places: Mapping[PlaceKind, PlaceDef], home: Section, seen: set[PlaceKind], corridor: Corridor
+) -> SideRooms:
+    where = "decks.toml [side_rooms]"
+    table = _table(value, where)
+    _only(table, {"count", "minutes", "kinds"}, where)
+    count = _span(_required(table, "count", where), f"{where} count")
+    ticks = _minutes(_required(table, "minutes", where), f"{where} minutes")
+    kinds = _deck_kinds(_required(table, "kinds", where), places, home, f"{where} kinds", seen)
+    if count.most > len(kinds):
+        raise ContentError(f"{where} count: more side rooms at most than there are kinds ({len(kinds)})")
+    if count.most > 2 * corridor.segments.least:
+        raise ContentError(
+            f"{where} count: more side rooms at most than the fewest segments have sides "
+            f"({2 * corridor.segments.least})"
+        )
+    return SideRooms(count, ticks, kinds)
+
+
+def _lower_deck(value: object, places: Mapping[PlaceKind, PlaceDef], home: Section, seen: set[PlaceKind]) -> LowerDeck:
+    where = "decks.toml [lower_deck]"
+    table = _table(value, where)
+    _only(table, {"minutes", "kinds"}, where)
+    ticks = _minutes(_required(table, "minutes", where), f"{where} minutes")
+    kinds = _deck_kinds(_required(table, "kinds", where), places, home, f"{where} kinds", seen)
+    if not kinds:
+        raise ContentError(f"{where} kinds: the lower deck needs at least one room")
+    return LowerDeck(ticks, kinds)
+
+
+def _deck_kinds(
+    value: object, places: Mapping[PlaceKind, PlaceDef], home: Section, where: str, seen: set[PlaceKind]
+) -> tuple[PlaceKind, ...]:
+    if not isinstance(value, list):
+        raise ContentError(f"{where}: must be a list of place kinds")
+    return tuple(_deck_kind(item, places, home, where, seen) for item in cast("list[object]", value))
+
+
+def _deck_kind(
+    value: object, places: Mapping[PlaceKind, PlaceDef], home: Section, where: str, seen: set[PlaceKind]
+) -> PlaceKind:
+    kind = _kind(value, places, where)
+    if kind in home.places:
+        raise ContentError(f"{where}: {kind} is one of the home section's places")
+    if kind in seen:
+        raise ContentError(f"{where}: {kind} appears twice in decks.toml")
+    seen.add(kind)
+    return kind
+
+
+def _span(value: object, where: str) -> Span:
+    pair = cast("list[object]", value) if isinstance(value, list) else None
+    if pair is None or len(pair) != 2:
+        raise ContentError(f"{where}: must be a pair like [5, 7]")
+    least, most = (_whole(item, where) for item in pair)
+    if least < 1 or least > most:
+        raise ContentError(f"{where}: must be two whole numbers, least first, from 1 up")
+    return Span(least, most)
+
+
+def _whole(value: object, where: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ContentError(f"{where}: must be a whole number")
+    return value
+
+
+def _minutes_span(value: object, where: str) -> Span:
+    """A pair like [10, 30], as minutes in and a `Span` of ticks out."""
+    pair = cast("list[object]", value) if isinstance(value, list) else None
+    if pair is None or len(pair) != 2:
+        raise ContentError(f"{where}: must be a pair like [10, 30]")
+    span = Span(_minutes(pair[0], where), _minutes(pair[1], where))
+    if span.least > span.most:
+        raise ContentError(f"{where}: must be two minute counts, least first")
+    return span
 
 
 def _listed(value: object, places: Mapping[PlaceKind, PlaceDef]) -> tuple[PlaceKind, ...]:
