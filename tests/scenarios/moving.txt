@@ -4,12 +4,12 @@
 A new world, seed 5.
 You wake in a clone vat in the vat bay.
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
 Type "help" for the commands.
 > look
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
 > west
 You head west to the storeroom.
@@ -23,7 +23,7 @@ Paths: east to the vat bay.
 > go east
 You head east to the vat bay.
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
   | t2 time_passed {"start": 1, "end": 2, "activity": "walking"}
   | t2 needs_changed {"pc": 1, "thirst": 2, "hunger": 2, "fatigue": 2}
@@ -53,7 +53,7 @@ Go where? Try "go north", or just "n".
 > s
 You head south to the vat bay.
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
   | t6 time_passed {"start": 4, "end": 6, "activity": "walking"}
   | t6 needs_changed {"pc": 1, "thirst": 6, "hunger": 6, "fatigue": 6}
@@ -76,7 +76,7 @@ You feel fine.
 > west now
 You head west to the vat bay.
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
   | t8 time_passed {"start": 7, "end": 8, "activity": "walking"}
   | t8 needs_changed {"pc": 1, "thirst": 8, "hunger": 8, "fatigue": 8}

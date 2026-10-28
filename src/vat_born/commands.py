@@ -2,10 +2,11 @@
 a small fixed vocabulary (design §10.3); other text is rejected until the intent parser exists (M9)."""
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from vat_born.clock import MINUTES_PER_TICK
-from vat_born.intents import Intent, Look, Map, Move, Status, Wait, WaitUntil, Where
+from vat_born.intents import Drink, Intent, Look, Map, Move, Rest, RestUntil, Status, Wait, WaitUntil, Where
 from vat_born.world import Direction
 
 
@@ -40,12 +41,16 @@ HELP = (
     Usage("map", "the places you know and the ways between them; takes no time"),
     Usage("go <way>", "walk to the next place: north, south, east, west, up, down (n, s, e, w, u, d)"),
     Usage("wait [time]", 'let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait until noon"'),
+    Usage("rest [time]", 'rest, or sleep, until rested or for a while: "rest", "rest 2 hours", "sleep until dawn"'),
+    Usage("drink", "drink your fill where there's water, as at the tap in the vat bay"),
     Usage("help", "this list"),
     Usage("quit", "stop playing; the world keeps your place"),
 )
 
 _WAIT_HELP = 'Wait how long? Try "wait", "wait 30 minutes", or "wait 2 hours".'
 _WAIT_UNTIL_HELP = 'Wait until when? Try "wait until noon", "wait until dusk", or "wait until dawn".'
+_REST_HELP = 'Rest how long? Try "rest", "rest 2 hours", or "sleep until dawn".'
+_REST_UNTIL_HELP = 'Rest until when? Try "sleep until dawn", "rest until noon", or "rest until dusk".'
 _GO_HELP = 'Go where? Try "go north", or just "n".'
 # A longer wait is almost surely a typo, and a big enough one would overflow SQLite's integers.
 _MAX_WAIT_DAYS = 30
@@ -86,6 +91,10 @@ def parse(line: str) -> Command:
             return Map()
         case "wait":
             return _wait(rest)
+        case "rest" | "sleep":
+            return _rest(rest)
+        case "drink":  # extra words are ignored, as in "drink water"
+            return Drink()
         case "go":
             return _go(rest)
         case "help" | "?":
@@ -102,33 +111,44 @@ def _wait(words: list[str]) -> Command:
     match words:
         case []:
             return Wait(1)
-        case [("until" | "till" | "til" | "'til"), *rest]:
-            return _wait_until(rest)
-        case ["for", *rest]:
-            return _wait_for(rest)
         case _:
-            return _wait_duration(words)
+            return _lasting(words, _WAIT_HELP, _WAIT_UNTIL_HELP, Wait, WaitUntil)
 
 
-def _wait_duration(words: list[str]) -> Command:
+def _rest(words: list[str]) -> Command:
+    match words:
+        case []:
+            return Rest(None)
+        case _:
+            return _lasting(words, _REST_HELP, _REST_UNTIL_HELP, Rest, RestUntil)
+
+
+def _lasting(
+    words: list[str],
+    how_long: str,
+    until_when: str,
+    span: Callable[[int], Wait | Rest],
+    until: Callable[[int], WaitUntil | RestUntil],
+) -> Command:
+    """The time words `wait` and `rest` share: a duration, or a time of day to last until."""
+    match words:
+        case [("until" | "till" | "til" | "'til"), *rest]:
+            minute = _time_of_day(rest)
+            return until(minute) if minute is not None else Rejected(until_when)
+        case ["for", *rest]:
+            minute = _time_of_day(rest)
+            return until(minute) if minute is not None else _lasting_duration(rest, how_long, span)
+        case _:
+            return _lasting_duration(words, how_long, span)
+
+
+def _lasting_duration(words: list[str], how_long: str, span: Callable[[int], Wait | Rest]) -> Command:
     minutes = _minutes(words)
     if minutes is None or minutes <= 0:
-        return Rejected(_WAIT_HELP)
+        return Rejected(how_long)
     if minutes > _MAX_WAIT_DAYS * _UNIT_MINUTES["day"]:
-        return Rejected(f"That's too long to wait in one go: {_MAX_WAIT_DAYS} days at most.")
-    return Wait((minutes + MINUTES_PER_TICK - 1) // MINUTES_PER_TICK)  # round up to whole ticks
-
-
-def _wait_until(words: list[str]) -> Command:
-    minute = _time_of_day(words)
-    if minute is None:
-        return Rejected(_WAIT_UNTIL_HELP)
-    return WaitUntil(minute)
-
-
-def _wait_for(words: list[str]) -> Command:
-    minute = _time_of_day(words)
-    return WaitUntil(minute) if minute is not None else _wait_duration(words)
+        return Rejected(f"That's too long for one go: {_MAX_WAIT_DAYS} days at most.")  # said of waits and rests alike
+    return span((minutes + MINUTES_PER_TICK - 1) // MINUTES_PER_TICK)  # round up to whole ticks
 
 
 def _time_of_day(words: list[str]) -> int | None:

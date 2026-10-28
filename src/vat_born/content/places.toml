@@ -3,7 +3,8 @@
 
 [vat_bay]
 name = "the vat bay"
-description = "It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath."
+description = "It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath."
+water = true
 
 [workshop]
 name = "the workshop"

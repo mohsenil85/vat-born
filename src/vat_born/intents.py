@@ -55,6 +55,31 @@ class Move:
     direction: Direction
 
 
+@dataclass(frozen=True, slots=True)
+class Drink:
+    """Drink your fill, where there's water."""
+
+
+@dataclass(frozen=True, slots=True)
+class Rest:
+    """Rest or sleep. Ticks None means until rested."""
+
+    ticks: int | None
+
+    def __post_init__(self) -> None:
+        assert self.ticks is None or self.ticks > 0, "a rest takes at least one tick"
+
+
+@dataclass(frozen=True, slots=True)
+class RestUntil:
+    """Rest until the clock next reads this minute of the day."""
+
+    minute_of_day: int
+
+    def __post_init__(self) -> None:
+        assert 0 <= self.minute_of_day < MINUTES_PER_DAY, f"{self.minute_of_day} is not a minute of the day"
+
+
 type FreeIntent = Status | Where | Look | Map
-type TimedIntent = Wait | WaitUntil | Move
+type TimedIntent = Wait | WaitUntil | Move | Drink | Rest | RestUntil
 type Intent = FreeIntent | TimedIntent

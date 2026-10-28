@@ -4,16 +4,16 @@
 A new world, seed 11.
 You wake in a clone vat in the vat bay.
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
 Type "help" for the commands.
 > look
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
 > l
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
 > status
 Day 1, morning. You are clone 1.
@@ -24,5 +24,5 @@ You wait ten minutes.
   | t1 needs_changed {"pc": 1, "thirst": 1, "hunger": 1, "fatigue": 1}
 > look
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.

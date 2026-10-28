@@ -4,7 +4,7 @@
 A new world, seed 7.
 You wake in a clone vat in the vat bay.
 The vat bay
-It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
 Type "help" for the commands.
 > wait

@@ -5,20 +5,11 @@ state, so the log holds every change. Reports answer free actions and point out 
 the world without changing it, so they are never logged."""
 
 from dataclasses import dataclass
-from enum import StrEnum
 
 from vat_born.clock import GameTime, Tick
 from vat_born.dice import Key, Odds
-from vat_born.needs import Need
+from vat_born.needs import Activity, Need
 from vat_born.world import CharacterId, Direction, Exit, Layer, NodeId, PlaceKind
-
-
-class Activity(StrEnum):
-    """What the PC was doing while time passed."""
-
-    WAITING = "waiting"
-    WALKING = "walking"
-
 
 # Facts
 
@@ -35,6 +26,7 @@ class PlaceAdded:
     kind: PlaceKind
     name: str
     description: str
+    water: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,14 +178,42 @@ class NeedWorsened:
 
 
 @dataclass(frozen=True, slots=True)
+class NeedMet:
+    """A need came back down to 0 as time passed, so it is answered for now."""
+
+    need: Need
+
+
+@dataclass(frozen=True, slots=True)
 class Interrupted:
     """The action stopped early, so the player can react."""
 
     activity: Activity
 
 
+@dataclass(frozen=True, slots=True)
+class NoWater:
+    """There is nothing to drink where the PC is."""
+
+
+@dataclass(frozen=True, slots=True)
+class NotTired:
+    """The PC is already rested, so there is nothing to sleep off."""
+
+
 type Report = (
-    Resumed | StatusReport | PlaceReport | LookReport | MapReport | NoPath | PhaseChanged | NeedWorsened | Interrupted
+    Resumed
+    | StatusReport
+    | PlaceReport
+    | LookReport
+    | MapReport
+    | NoPath
+    | PhaseChanged
+    | NeedWorsened
+    | NeedMet
+    | Interrupted
+    | NoWater
+    | NotTired
 )
 
 type Event = Fact | Report

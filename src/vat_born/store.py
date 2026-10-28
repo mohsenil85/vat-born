@@ -34,7 +34,7 @@ _DIRECTION_ORDER = {way: n for n, way in enumerate(Direction)}
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -49,7 +49,8 @@ CREATE TABLE nodes (
     layer TEXT NOT NULL,
     kind TEXT NOT NULL,
     name TEXT NOT NULL,
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
+    water INTEGER NOT NULL CHECK (water IN (0, 1))
 ) STRICT;
 
 CREATE TABLE characters (
@@ -137,16 +138,16 @@ class View:
 
     def pc_place(self) -> Place:
         row = cast(
-            "tuple[int, str, str] | None",
+            "tuple[int, str, str, int] | None",
             self._conn.execute(
-                "SELECT nodes.id, nodes.name, nodes.description FROM runs"
+                "SELECT nodes.id, nodes.name, nodes.description, nodes.water FROM runs"
                 " JOIN characters ON characters.id = runs.pc"
                 " JOIN nodes ON nodes.id = characters.node"
                 " ORDER BY runs.n DESC LIMIT 1",
             ).fetchone(),
         )
         assert row is not None, "no clone has woken"
-        return Place(NodeId(row[0]), row[1], row[2])
+        return Place(NodeId(row[0]), row[1], row[2], bool(row[3]))
 
     def pc(self) -> CharacterId:
         """The current clone's character."""
@@ -202,24 +203,24 @@ class View:
 
     def place(self, node: NodeId) -> Place:
         row = cast(
-            "tuple[int, str, str] | None",
-            self._conn.execute("SELECT id, name, description FROM nodes WHERE id = ?", (node,)).fetchone(),
+            "tuple[int, str, str, int] | None",
+            self._conn.execute("SELECT id, name, description, water FROM nodes WHERE id = ?", (node,)).fetchone(),
         )
         assert row is not None, f"no place {node}"
-        return Place(NodeId(row[0]), row[1], row[2])
+        return Place(NodeId(row[0]), row[1], row[2], bool(row[3]))
 
     def home(self) -> Place:
         """Where the current clone woke."""
         row = cast(
-            "tuple[int, str, str] | None",
+            "tuple[int, str, str, int] | None",
             self._conn.execute(
-                "SELECT nodes.id, nodes.name, nodes.description FROM runs"
+                "SELECT nodes.id, nodes.name, nodes.description, nodes.water FROM runs"
                 " JOIN nodes ON nodes.id = runs.home"
                 " ORDER BY runs.n DESC LIMIT 1",
             ).fetchone(),
         )
         assert row is not None, "no clone has woken"
-        return Place(NodeId(row[0]), row[1], row[2])
+        return Place(NodeId(row[0]), row[1], row[2], bool(row[3]))
 
 
 @final
@@ -344,10 +345,10 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             conn.execute(
                 "INSERT INTO world (id, seed, schema_version, tick) VALUES (1, ?, ?, 0)", (seed, SCHEMA_VERSION)
             )
-        case PlaceAdded(place=place, layer=layer, kind=kind, name=name, description=description):
+        case PlaceAdded(place=place, layer=layer, kind=kind, name=name, description=description, water=water):
             conn.execute(
-                "INSERT INTO nodes (id, layer, kind, name, description) VALUES (?, ?, ?, ?, ?)",
-                (place, layer, kind, name, description),
+                "INSERT INTO nodes (id, layer, kind, name, description, water) VALUES (?, ?, ?, ?, ?, ?)",
+                (place, layer, kind, name, description, int(water)),
             )
         case CloneWoke(run=run, pc=pc, place=place):
             conn.execute(

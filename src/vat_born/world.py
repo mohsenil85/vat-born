@@ -45,6 +45,7 @@ class Place:
     id: NodeId
     name: str
     description: str
+    water: bool
 
 
 @dataclass(frozen=True, slots=True)

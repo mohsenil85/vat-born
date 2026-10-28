@@ -21,6 +21,7 @@ class PlaceDef:
     kind: PlaceKind
     name: str  # as it reads mid-sentence: "the vat bay"
     description: str
+    water: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,9 +129,9 @@ def _places(data: dict[str, object]) -> Mapping[PlaceKind, PlaceDef]:
     for key, value in data.items():
         where = f"places.toml [{key}]"
         table = _table(value, where)
-        _only(table, {"name", "description"}, where)
+        _only(table, {"name", "description", "water"}, where)
         places[PlaceKind(key)] = PlaceDef(
-            PlaceKind(key), _string(table, "name", where), _string(table, "description", where)
+            PlaceKind(key), _string(table, "name", where), _string(table, "description", where), _water(table, where)
         )
     return MappingProxyType(places)
 
@@ -366,6 +367,14 @@ def _string(table: dict[str, object], key: str, where: str) -> str:
     value = table.get(key)
     if not isinstance(value, str) or not value:
         raise ContentError(f"{where}: {key} must be a non-empty string")
+    return value
+
+
+def _water(table: dict[str, object], where: str) -> bool:
+    """A place's optional `water` flag: false when absent, so only places with something to drink say so."""
+    value = table.get("water", False)
+    if not isinstance(value, bool):
+        raise ContentError(f"{where}: water must be true or false")
     return value
 
 

@@ -6,7 +6,6 @@ from typing import assert_never
 from vat_born.clock import TICKS_PER_DAY, TICKS_PER_HOUR, GameTime
 from vat_born.dice import Odds
 from vat_born.events import (
-    Activity,
     CloneWoke,
     Event,
     Interrupted,
@@ -14,9 +13,12 @@ from vat_born.events import (
     MapEntry,
     MapReport,
     NeedLevel,
+    NeedMet,
     NeedsChanged,
     NeedWorsened,
     NoPath,
+    NotTired,
+    NoWater,
     PathAdded,
     PcMoved,
     PhaseChanged,
@@ -30,7 +32,7 @@ from vat_born.events import (
     TimePassed,
     WorldCreated,
 )
-from vat_born.needs import Need
+from vat_born.needs import Activity, Need
 from vat_born.world import Direction, Exit
 
 _NUMBERS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
@@ -46,6 +48,11 @@ _NAMED = {
     Need.THIRST: ("thirsty", "very thirsty", "dying of thirst"),
     Need.HUNGER: ("hungry", "very hungry", "starving"),
     Need.FATIGUE: ("tired", "very tired", "exhausted"),
+}
+_MET = {
+    Need.THIRST: "Your thirst is gone.",
+    Need.HUNGER: "You're no longer hungry.",
+    Need.FATIGUE: "You feel rested.",
 }
 
 
@@ -89,8 +96,14 @@ def render(event: Event) -> list[str]:
             return [f"It is now day {after.day}, {after.phase}."]
         case NeedWorsened(need=need, level=level):
             return [_WORSENING[need][level - 1]]
+        case NeedMet(need=need):
+            return [_MET[need]]
         case Interrupted(activity=activity):
             return [_stopped(activity)]
+        case NoWater():
+            return ["There's no water here."]
+        case NotTired():
+            return ["You aren't tired."]
         case _:
             assert_never(event)
 
@@ -132,17 +145,25 @@ def _time_passed(event: TimePassed) -> list[str]:
             return []  # the move itself says where the walk went
         case Activity.WAITING:
             return [f"You wait {describe_duration(event.end - event.start)}."]
+        case Activity.RESTING:
+            return [f"You rest {describe_duration(event.end - event.start)}."]
+        case Activity.DRINKING:
+            return ["You drink your fill."]
         case _:
             assert_never(event.activity)
 
 
 def _stopped(activity: Activity) -> str:
-    """What the PC does when an action stops early. A walk never stops, but the words stay exhaustive."""
+    """What the PC does when an action stops early. A walk or a drink never stops, but the words stay exhaustive."""
     match activity:
         case Activity.WAITING:
             return "You stop waiting."
         case Activity.WALKING:
             return "You stop walking."
+        case Activity.RESTING:
+            return "You stop resting."
+        case Activity.DRINKING:
+            return "You stop drinking."
         case _:
             assert_never(activity)
 

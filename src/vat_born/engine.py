@@ -11,7 +11,6 @@ from vat_born.clock import Tick, game_time, ticks_until
 from vat_born.content import Content
 from vat_born.dice import Dice
 from vat_born.events import (
-    Activity,
     CloneWoke,
     Event,
     Interrupted,
@@ -19,9 +18,12 @@ from vat_born.events import (
     MapEntry,
     MapReport,
     NeedLevel,
+    NeedMet,
     NeedsChanged,
     NeedWorsened,
     NoPath,
+    NotTired,
+    NoWater,
     PathAdded,
     PcMoved,
     PhaseChanged,
@@ -36,18 +38,21 @@ from vat_born.events import (
     WorldCreated,
 )
 from vat_born.intents import (
+    Drink,
     FreeIntent,
     Intent,
     Look,
     Map,
     Move,
+    Rest,
+    RestUntil,
     Status,
     TimedIntent,
     Wait,
     WaitUntil,
     Where,
 )
-from vat_born.needs import Need, level, tick
+from vat_born.needs import Activity, Need, level, tick
 from vat_born.store import LogEntry, Store, Txn, View, WorldError
 from vat_born.world import CharacterId, Direction, Layer, NodeId
 
@@ -81,7 +86,7 @@ class Game:
                 txn.record(WorldCreated(seed))
                 for kind in home.places:
                     place = content.place(kind)
-                    txn.record(PlaceAdded(nodes[kind], Layer.DECKS, kind, place.name, place.description))
+                    txn.record(PlaceAdded(nodes[kind], Layer.DECKS, kind, place.name, place.description, place.water))
                 for way in home.paths:
                     txn.record(PathAdded(nodes[way.origin], nodes[way.to], way.direction, way.ticks))
                 stream = txn.stream("worldgen", "decks")
@@ -113,7 +118,7 @@ class Game:
         match intent:
             case Status() | Where() | Look() | Map():
                 return Turn(_resolve_free(intent, self._store.view()))
-            case Wait() | WaitUntil() | Move():
+            case Wait() | WaitUntil() | Move() | Drink() | Rest() | RestUntil():
                 return self._timed(intent)
             case _:
                 assert_never(intent)
@@ -174,6 +179,19 @@ def _resolve_timed(intent: TimedIntent, txn: Txn) -> tuple[Report, ...]:
             if not txn.is_visited(way.to):
                 txn.record(PlaceVisited(way.to))
             return (*reports, _look(txn))
+        case Drink():
+            if not txn.pc_place().water:
+                return (NoWater(),)
+            return _pass(txn, 1, Activity.DRINKING, interruptible=False)
+        case Rest(ticks=ticks):
+            if ticks is None:  # until rested
+                fatigue = txn.needs().fatigue
+                if fatigue == 0:
+                    return (NotTired(),)
+                ticks = (fatigue + 1) // 2  # just long enough to reach 0
+            return _pass(txn, ticks, Activity.RESTING, interruptible=True)
+        case RestUntil(minute_of_day=minute):
+            return _pass(txn, ticks_until(txn.tick(), minute), Activity.RESTING, interruptible=True)
         case _:
             assert_never(intent)
 
@@ -182,7 +200,8 @@ def _pass(txn: Txn, ticks: int, activity: Activity, *, interruptible: bool) -> t
     """Let TICKS ticks pass for ACTIVITY, one at a time. This is the scheduler (design §6): every time-driven system
     takes its turn each tick, in a fixed order. Needs are the only system so far; the hazard clocks (M4) and the
     allies (M7) take their turns in this loop too. A need getting worse is reported as it happens, and stops an
-    interruptible action with ticks left, so the player can react."""
+    interruptible action with ticks left, so the player can react; a need coming back down to 0 is reported too, but
+    only getting worse stops anything."""
     assert ticks > 0, "an action takes at least one tick"
     start = txn.tick()
     pc = txn.pc()
@@ -190,14 +209,15 @@ def _pass(txn: Txn, ticks: int, activity: Activity, *, interruptible: bool) -> t
     reports: list[Report] = []
     passed = 0
     for _ in range(ticks):
-        stepped = tick(needs)
+        stepped = tick(needs, activity)
         passed += 1
         worsened = False
-        for need in Need:
+        for need in Need:  # within a tick, the needs that got worse come first, then the needs met
             now = level(need, stepped.count(need))
             if now > level(need, needs.count(need)):
                 reports.append(NeedWorsened(need, now))
                 worsened = True
+        reports.extend(NeedMet(need) for need in Need if needs.count(need) > 0 and stepped.count(need) == 0)
         needs = stepped
         if worsened and interruptible and passed < ticks:
             reports.append(Interrupted(activity))

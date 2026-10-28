@@ -36,10 +36,17 @@ def decks(content: Content, stream: Stream, gate: NodeId, first: NodeId) -> tupl
 
     def beyond_place(offset: int, kind: PlaceKind) -> PlaceAdded:
         place = content.place(kind)
-        return PlaceAdded(node(offset), Layer.DECKS, kind, place.name, place.description)
+        return PlaceAdded(node(offset), Layer.DECKS, kind, place.name, place.description, place.water)
 
     places = [
-        PlaceAdded(node(i), Layer.DECKS, plan.corridor.kind, f"{corridor.name} at frame {frame}", corridor.description)
+        PlaceAdded(
+            node(i),
+            Layer.DECKS,
+            plan.corridor.kind,
+            f"{corridor.name} at frame {frame}",
+            corridor.description,
+            corridor.water,
+        )
         for i, frame in enumerate(frames)
     ]
     places += [beyond_place(segments + j, kind) for j, kind in enumerate(kinds)]

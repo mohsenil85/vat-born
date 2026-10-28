@@ -1,0 +1,99 @@
+# Water and rest answer thirst and fatigue: drink at the tap, rest until rested, and rest stops when a need gets worse.
+# seed: 3
+
+A new world, seed 3.
+You wake in a clone vat in the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+Type "help" for the commands.
+> drink
+You drink your fill.
+  | t1 time_passed {"start": 0, "end": 1, "activity": "drinking"}
+  | t1 needs_changed {"pc": 1, "thirst": 0, "hunger": 1, "fatigue": 1}
+> rest
+You rest ten minutes.
+You feel rested.
+  | t2 time_passed {"start": 1, "end": 2, "activity": "resting"}
+  | t2 needs_changed {"pc": 1, "thirst": 1, "hunger": 2, "fatigue": 0}
+> rest
+You aren't tired.
+> wait 12 hours
+You wait about 12 hours.
+It is now evening.
+You're getting thirsty.
+You stop waiting.
+  | t73 time_passed {"start": 2, "end": 73, "activity": "waiting"}
+  | t73 needs_changed {"pc": 1, "thirst": 72, "hunger": 73, "fatigue": 71}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t74 time_passed {"start": 73, "end": 74, "activity": "drinking"}
+  | t74 needs_changed {"pc": 1, "thirst": 0, "hunger": 74, "fatigue": 72}
+> status
+Day 1, evening. You are clone 1.
+You feel fine.
+> n
+You head north to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (half an hour), south to the vat bay (twenty minutes).
+  | t76 time_passed {"start": 74, "end": 76, "activity": "walking"}
+  | t76 needs_changed {"pc": 1, "thirst": 2, "hunger": 76, "fatigue": 74}
+  | t76 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+  | t76 place_visited {"place": 4}
+> drink
+There's no water here.
+> s
+You head south to the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+  | t78 time_passed {"start": 76, "end": 78, "activity": "walking"}
+  | t78 needs_changed {"pc": 1, "thirst": 4, "hunger": 78, "fatigue": 76}
+  | t78 pc_moved {"pc": 1, "origin": 4, "destination": 1, "direction": "south", "place_name": "the vat bay"}
+> wait 5 hours
+You wait about three hours.
+It is now night.
+You're getting tired.
+You stop waiting.
+  | t98 time_passed {"start": 78, "end": 98, "activity": "waiting"}
+  | t98 needs_changed {"pc": 1, "thirst": 24, "hunger": 98, "fatigue": 96}
+> status
+Day 1, night. You are clone 1.
+You're tired.
+> rest
+You rest about eight hours.
+It is now day 2, morning.
+You're getting hungry.
+You stop resting.
+  | t144 time_passed {"start": 98, "end": 144, "activity": "resting"}
+  | t144 needs_changed {"pc": 1, "thirst": 70, "hunger": 144, "fatigue": 4}
+> status
+Day 2, morning. You are clone 1.
+You're hungry.
+> sleep 2 hours
+You rest twenty minutes.
+You're getting thirsty.
+You feel rested.
+You stop resting.
+  | t146 time_passed {"start": 144, "end": 146, "activity": "resting"}
+  | t146 needs_changed {"pc": 1, "thirst": 72, "hunger": 146, "fatigue": 0}
+> rest until dawn
+You rest 12 hours.
+It is now evening.
+You're very thirsty now.
+You stop resting.
+  | t218 time_passed {"start": 146, "end": 218, "activity": "resting"}
+  | t218 needs_changed {"pc": 1, "thirst": 144, "hunger": 218, "fatigue": 0}
+> status
+Day 2, evening. You are clone 1.
+You're very thirsty and hungry.
+> rest for an hour
+You rest an hour.
+  | t224 time_passed {"start": 218, "end": 224, "activity": "resting"}
+  | t224 needs_changed {"pc": 1, "thirst": 150, "hunger": 224, "fatigue": 0}
+> rest banana
+Rest how long? Try "rest", "rest 2 hours", or "sleep until dawn".
+> rest until lunch
+Rest until when? Try "sleep until dawn", "rest until noon", or "rest until dusk".

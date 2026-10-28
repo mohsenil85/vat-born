@@ -14,6 +14,15 @@ class Need(StrEnum):
     FATIGUE = "fatigue"
 
 
+class Activity(StrEnum):
+    """What the PC was doing while time passed."""
+
+    WAITING = "waiting"
+    WALKING = "walking"
+    RESTING = "resting"
+    DRINKING = "drinking"
+
+
 @dataclass(frozen=True, slots=True)
 class Needs:
     """Ticks since each need was last answered. A fresh clone has all three at 0."""
@@ -49,6 +58,9 @@ def level(need: Need, ticks: int) -> int:
     return sum(1 for at in _AT_LEVEL[need] if ticks >= at)
 
 
-def tick(needs: Needs) -> Needs:
-    """One tick later: every need counts one more tick since it was last answered."""
-    return Needs(needs.thirst + 1, needs.hunger + 1, needs.fatigue + 1)
+def tick(needs: Needs, activity: Activity) -> Needs:
+    """One tick later, spent doing ACTIVITY. Thirst holds at 0 while drinking, and resting brings fatigue down
+    twice as fast as being awake builds it; hunger only ever builds."""
+    thirst = 0 if activity is Activity.DRINKING else needs.thirst + 1
+    fatigue = max(needs.fatigue - 2, 0) if activity is Activity.RESTING else needs.fatigue + 1
+    return Needs(thirst, needs.hunger + 1, fatigue)
