@@ -165,8 +165,8 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
 - Then the success test (§14) again, on the whole slice with the narrator: is a death-and-respawn loop on one seed
   fun as text alone?
 
-Status: M0 and M1 done (2026-10-27): the generated decks, walking, `look`, `map`, and `where` with the way home.
-M2 in progress: next, the needs and the tick loop; then drinking and resting.
+Status: M0, M1, and M2 done (2026-10-27): the generated decks, walking, `look`, `map`, `where` with the way home,
+needs on a tick loop, drinking at the tap, and resting. Next: M3.
 
 ## Running the work
 
