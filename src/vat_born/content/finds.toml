@@ -1,0 +1,43 @@
+# What searching turns up, by place kind. Worldgen hides `count` things in each place of that kind: the number is
+# drawn per place from the range, least first, and each thing from `items`, with repeats, so an item listed twice
+# is twice as likely. A place kind with no table here hides nothing.
+
+[store]
+count = [1, 1]
+items = ["ration_bar"]
+
+[galley]
+count = [1, 3]
+items = ["ration_bar", "tin_of_stew", "tin_of_stew"]
+
+[hydroponics]
+count = [2, 3]
+items = ["pale_shoots"]
+
+[crew_quarters]
+count = [1, 2]
+items = ["ration_bar", "canteen"]
+
+[cargo_hold]
+count = [0, 2]
+items = ["tin_of_stew"]
+
+[machine_shop]
+count = [1, 1]
+items = ["hand_lamp"]
+
+[armory]
+count = [0, 1]
+items = ["hand_lamp"]
+
+[gymnasium]
+count = [0, 1]
+items = ["canteen"]
+
+[pump_room]
+count = [1, 1]
+items = ["canteen"]
+
+[cable_vault]
+count = [0, 1]
+items = ["hand_lamp"]

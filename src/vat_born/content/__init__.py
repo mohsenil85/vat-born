@@ -9,7 +9,7 @@ from types import MappingProxyType
 from typing import cast
 
 from vat_born.clock import MINUTES_PER_TICK
-from vat_born.world import Direction, PlaceKind
+from vat_born.world import Direction, ItemKind, PlaceKind
 
 
 class ContentError(Exception):
@@ -22,6 +22,21 @@ class PlaceDef:
     name: str  # as it reads mid-sentence: "the vat bay"
     description: str
     water: bool
+
+
+@dataclass(frozen=True, slots=True)
+class ItemDef:
+    kind: ItemKind
+    name: str  # as it reads after "a" or a number: "a ration bar"
+    plural: str
+
+
+@dataclass(frozen=True, slots=True)
+class Finds:
+    """What a place kind hides: how many things, drawn per place from COUNT, each drawn from ITEMS."""
+
+    count: Span
+    items: tuple[ItemKind, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,17 +117,31 @@ class Content:
     places: Mapping[PlaceKind, PlaceDef]
     home: Section
     decks: Decks
+    items: Mapping[ItemKind, ItemDef]
+    finds: Mapping[PlaceKind, Finds]
 
     def place(self, kind: PlaceKind) -> PlaceDef:
         if kind not in self.places:
             raise ContentError(f"places.toml has no [{kind}]")
         return self.places[kind]
 
+    def item(self, kind: ItemKind) -> ItemDef:
+        if kind not in self.items:
+            raise ContentError(f"items.toml has no [{kind}]")
+        return self.items[kind]
+
 
 def load_content() -> Content:
     places = _places(_read("places.toml"))
     home = _home(_read("home.toml"), places)
-    return Content(places=places, home=home, decks=_decks(_read("decks.toml"), places, home))
+    items = _items(_read("items.toml"))
+    return Content(
+        places=places,
+        home=home,
+        decks=_decks(_read("decks.toml"), places, home),
+        items=items,
+        finds=_finds(_read("finds.toml"), places, items),
+    )
 
 
 def _read(name: str) -> dict[str, object]:
@@ -134,6 +163,45 @@ def _places(data: dict[str, object]) -> Mapping[PlaceKind, PlaceDef]:
             PlaceKind(key), _string(table, "name", where), _string(table, "description", where), _water(table, where)
         )
     return MappingProxyType(places)
+
+
+def _items(data: dict[str, object]) -> Mapping[ItemKind, ItemDef]:
+    items: dict[ItemKind, ItemDef] = {}
+    for key, value in data.items():
+        where = f"items.toml [{key}]"
+        table = _table(value, where)
+        _only(table, {"name", "plural"}, where)
+        items[ItemKind(key)] = ItemDef(ItemKind(key), _string(table, "name", where), _string(table, "plural", where))
+    return MappingProxyType(items)
+
+
+def _finds(
+    data: dict[str, object], places: Mapping[PlaceKind, PlaceDef], items: Mapping[ItemKind, ItemDef]
+) -> Mapping[PlaceKind, Finds]:
+    """finds.toml into `Finds`, keyed by place kind."""
+    finds: dict[PlaceKind, Finds] = {}
+    for key, value in data.items():
+        if PlaceKind(key) not in places:
+            raise ContentError(f"finds.toml [{key}]: places.toml has no [{key}]")
+        where = f"finds.toml [{key}]"
+        table = _table(value, where)
+        _only(table, {"count", "items"}, where)
+        count = _count_span(_required(table, "count", where), f"{where} count")
+        listed = _required(table, "items", where)
+        if not isinstance(listed, list) or not listed:
+            raise ContentError(f"{where} items: must be a non-empty list of item kinds")
+        kinds = tuple(_item_kind(item, items, f"{where} items") for item in cast("list[object]", listed))
+        finds[PlaceKind(key)] = Finds(count, kinds)
+    return MappingProxyType(finds)
+
+
+def _item_kind(value: object, items: Mapping[ItemKind, ItemDef], where: str) -> ItemKind:
+    if not isinstance(value, str) or not value:
+        raise ContentError(f"{where}: must be an item kind")
+    kind = ItemKind(value)
+    if kind not in items:
+        raise ContentError(f"{where}: items.toml has no [{kind}]")
+    return kind
 
 
 def _home(data: dict[str, object], places: Mapping[PlaceKind, PlaceDef]) -> Section:
@@ -251,6 +319,17 @@ def _span(value: object, where: str) -> Span:
     least, most = (_whole(item, where) for item in pair)
     if least < 1 or least > most:
         raise ContentError(f"{where}: must be two whole numbers, least first, from 1 up")
+    return Span(least, most)
+
+
+def _count_span(value: object, where: str) -> Span:
+    """A span of counts, which alone among the content ranges may start at 0: a place can hide nothing."""
+    pair = cast("list[object]", value) if isinstance(value, list) else None
+    if pair is None or len(pair) != 2:
+        raise ContentError(f"{where}: must be a pair like [0, 2]")
+    least, most = (_whole(item, where) for item in pair)
+    if least < 0 or least > most:
+        raise ContentError(f"{where}: must be two whole numbers, least first, from 0 up")
     return Span(least, most)
 
 

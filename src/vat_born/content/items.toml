@@ -1,0 +1,21 @@
+# Items, by kind. A name reads after "a" or a number: "a ration bar", "two ration bars".
+
+[ration_bar]
+name = "ration bar"
+plural = "ration bars"
+
+[tin_of_stew]
+name = "tin of stew"
+plural = "tins of stew"
+
+[pale_shoots]
+name = "handful of pale shoots"
+plural = "handfuls of pale shoots"
+
+[canteen]
+name = "canteen"
+plural = "canteens"
+
+[hand_lamp]
+name = "hand lamp"
+plural = "hand lamps"

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from vat_born.clock import GameTime, Tick
 from vat_born.dice import Key, Odds
 from vat_born.needs import Activity, Need
-from vat_born.world import CharacterId, Direction, Exit, Layer, NodeId, PlaceKind
+from vat_born.world import CharacterId, Direction, Exit, ItemId, ItemKind, Layer, NodeId, PlaceKind
 
 # Facts
 
@@ -90,8 +90,46 @@ class Rolled:
     success: bool
 
 
+@dataclass(frozen=True, slots=True)
+class ItemHidden:
+    """A thing hidden in a place at worldgen, waiting for a search to turn it up."""
+
+    item: ItemId
+    kind: ItemKind
+    place: NodeId
+
+
+@dataclass(frozen=True, slots=True)
+class ItemFound:
+    """A search turned a hidden item up: it lies in the open where it was found. NAME is its singular name."""
+
+    item: ItemId
+    place: NodeId
+    name: str
+
+
+@dataclass(frozen=True, slots=True)
+class PlaceSearchedBare:
+    """The current clone has searched PLACE until nothing was left. The knowledge is the clone's, not the world's
+    (design §4)."""
+
+    run: int
+    place: NodeId
+
+
 type Fact = (
-    WorldCreated | PlaceAdded | CloneWoke | PathAdded | PcMoved | PlaceVisited | TimePassed | NeedsChanged | Rolled
+    WorldCreated
+    | PlaceAdded
+    | CloneWoke
+    | PathAdded
+    | PcMoved
+    | PlaceVisited
+    | ItemHidden
+    | ItemFound
+    | PlaceSearchedBare
+    | TimePassed
+    | NeedsChanged
+    | Rolled
 )
 
 
@@ -136,9 +174,19 @@ class PlaceReport:
 
 
 @dataclass(frozen=True, slots=True)
+class ItemStack:
+    """COUNT items of one kind, as a look lists them."""
+
+    name: str
+    plural: str
+    count: int
+
+
+@dataclass(frozen=True, slots=True)
 class LookReport:
     place_name: str
     description: str
+    items: tuple[ItemStack, ...]  # the items lying in the open, one stack per kind, in items.toml order
     exits: tuple[Exit, ...]
 
 
@@ -201,6 +249,11 @@ class NotTired:
     """The PC is already rested, so there is nothing to sleep off."""
 
 
+@dataclass(frozen=True, slots=True)
+class NowhereLeft:
+    """This place has been searched bare already, and the clone knows it."""
+
+
 type Report = (
     Resumed
     | StatusReport
@@ -214,6 +267,7 @@ type Report = (
     | Interrupted
     | NoWater
     | NotTired
+    | NowhereLeft
 )
 
 type Event = Fact | Report

@@ -17,24 +17,27 @@ from vat_born.dice import Dice, Key, Odds, Stream
 from vat_born.events import (
     CloneWoke,
     Fact,
+    ItemFound,
+    ItemHidden,
     NeedsChanged,
     PathAdded,
     PcMoved,
     PlaceAdded,
+    PlaceSearchedBare,
     PlaceVisited,
     Rolled,
     TimePassed,
     WorldCreated,
 )
 from vat_born.needs import Needs
-from vat_born.world import CharacterId, Direction, Exit, NodeId, Place
+from vat_born.world import CharacterId, Direction, Exit, Item, ItemId, ItemKind, NodeId, Place
 
 # SQL would sort the direction words alphabetically, so the order of a place's paths is set in Python instead.
 _DIRECTION_ORDER = {way: n for n, way in enumerate(Direction)}
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -82,6 +85,24 @@ CREATE TABLE runs (
 CREATE TABLE visited (
     node INTEGER PRIMARY KEY REFERENCES nodes (id),
     tick INTEGER NOT NULL
+) STRICT;
+
+-- Every item in the world. Each lies in a place: hidden in the place's search pool until a search turns it up,
+-- then in the open.
+CREATE TABLE items (
+    id INTEGER PRIMARY KEY,
+    kind TEXT NOT NULL,
+    node INTEGER NOT NULL REFERENCES nodes (id),
+    hidden INTEGER NOT NULL CHECK (hidden IN (0, 1))
+) STRICT;
+
+-- The places each clone has searched until nothing was left. The knowledge is the clone's, not the world's: a new
+-- clone has to search again (design §4: a new clone knows places, not details).
+CREATE TABLE searched_bare (
+    run INTEGER NOT NULL REFERENCES runs (n),
+    node INTEGER NOT NULL REFERENCES nodes (id),
+    tick INTEGER NOT NULL,
+    PRIMARY KEY (run, node)
 ) STRICT;
 
 -- Every fact, in order.
@@ -221,6 +242,36 @@ class View:
         )
         assert row is not None, "no clone has woken"
         return Place(NodeId(row[0]), row[1], row[2], bool(row[3]))
+
+    def items_at(self, place: NodeId) -> tuple[Item, ...]:
+        """The items lying in the open at PLACE, in ID order."""
+        rows = cast(
+            "list[tuple[int, str]]",
+            self._conn.execute(
+                "SELECT id, kind FROM items WHERE node = ? AND hidden = 0 ORDER BY id", (place,)
+            ).fetchall(),
+        )
+        return tuple(Item(ItemId(row[0]), ItemKind(row[1])) for row in rows)
+
+    def next_hidden(self, place: NodeId) -> Item | None:
+        """The hidden item at PLACE with the lowest ID, or None when nothing is hidden there any more."""
+        row = cast(
+            "tuple[int, str] | None",
+            self._conn.execute(
+                "SELECT id, kind FROM items WHERE node = ? AND hidden = 1 ORDER BY id LIMIT 1", (place,)
+            ).fetchone(),
+        )
+        return None if row is None else Item(ItemId(row[0]), ItemKind(row[1]))
+
+    def searched_bare(self, place: NodeId) -> bool:
+        """Whether the current clone has searched PLACE until nothing was left."""
+        row = cast(
+            "tuple[int] | None",
+            self._conn.execute(
+                "SELECT node FROM searched_bare WHERE run = (SELECT max(n) FROM runs) AND node = ?", (place,)
+            ).fetchone(),
+        )
+        return row is not None
 
 
 @final
@@ -373,6 +424,13 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
         case PlaceVisited(place=place):
             # The primary key refuses a second row for one place, so recording a visit twice fails loudly.
             conn.execute("INSERT INTO visited (node, tick) SELECT ?, tick FROM world", (place,))
+        case ItemHidden(item=item, kind=kind, place=place):
+            conn.execute("INSERT INTO items (id, kind, node, hidden) VALUES (?, ?, ?, 1)", (item, kind, place))
+        case ItemFound(item=item, place=place):
+            found = conn.execute("UPDATE items SET hidden = 0 WHERE id = ? AND node = ? AND hidden = 1", (item, place))
+            assert found.rowcount == 1, f"item {item} was not hidden at {place}"
+        case PlaceSearchedBare(run=run, place=place):
+            conn.execute("INSERT INTO searched_bare (run, node, tick) SELECT ?, ?, tick FROM world", (run, place))
         case TimePassed(start=start, end=end):
             assert end > start, "time only moves forward"
             moved = conn.execute("UPDATE world SET tick = ? WHERE tick = ?", (end, start))

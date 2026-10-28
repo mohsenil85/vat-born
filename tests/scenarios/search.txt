@@ -1,0 +1,91 @@
+# Searching: a place hides a few things, found an hour at a time against the odds, until there's nowhere left to look.
+# seed: 1
+
+A new world, seed 1.
+You wake in a clone vat in the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+Type "help" for the commands.
+> search
+You search for an hour.
+You find nothing, and there's nowhere left to look.
+  | t6 time_passed {"start": 0, "end": 6, "activity": "searching"}
+  | t6 needs_changed {"pc": 1, "thirst": 6, "hunger": 6, "fatigue": 6}
+  | t6 place_searched_bare {"run": 1, "place": 1}
+> search
+You've searched here already, and there's nowhere left to look.
+> look
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+> w
+You head west to the storeroom.
+The storeroom
+Empty shelves run floor to ceiling. Scrape marks on the deck show where crates were dragged out, and a cold draft stirs the dust.
+Paths: east to the vat bay.
+  | t7 time_passed {"start": 6, "end": 7, "activity": "walking"}
+  | t7 needs_changed {"pc": 1, "thirst": 7, "hunger": 7, "fatigue": 7}
+  | t7 pc_moved {"pc": 1, "origin": 1, "destination": 3, "direction": "west", "place_name": "the storeroom"}
+  | t7 place_visited {"place": 3}
+> search
+You search for an hour.
+Search 50%: failure.
+  | t13 time_passed {"start": 7, "end": 13, "activity": "searching"}
+  | t13 needs_changed {"pc": 1, "thirst": 13, "hunger": 13, "fatigue": 13}
+  | t13 rolled {"purpose": "search", "key": [3], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.5848211468628474, "success": false}
+> search
+You search for an hour.
+Search 50%: failure.
+  | t19 time_passed {"start": 13, "end": 19, "activity": "searching"}
+  | t19 needs_changed {"pc": 1, "thirst": 19, "hunger": 19, "fatigue": 19}
+  | t19 rolled {"purpose": "search", "key": [3], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.804881751832008, "success": false}
+> wait 8 hours
+You wait eight hours.
+It is now afternoon.
+  | t67 time_passed {"start": 19, "end": 67, "activity": "waiting"}
+  | t67 needs_changed {"pc": 1, "thirst": 67, "hunger": 67, "fatigue": 67}
+> search
+You search for fifty minutes.
+It is now evening.
+You're getting thirsty.
+You stop searching.
+  | t72 time_passed {"start": 67, "end": 72, "activity": "searching"}
+  | t72 needs_changed {"pc": 1, "thirst": 72, "hunger": 72, "fatigue": 72}
+> wait a day
+You wait four hours.
+It is now night.
+You're getting tired.
+You stop waiting.
+  | t96 time_passed {"start": 72, "end": 96, "activity": "waiting"}
+  | t96 needs_changed {"pc": 1, "thirst": 96, "hunger": 96, "fatigue": 96}
+> wait a day
+You wait eight hours.
+It is now day 2, morning.
+You're very thirsty now.
+You're getting hungry.
+You're very tired now.
+You stop waiting.
+  | t144 time_passed {"start": 96, "end": 144, "activity": "waiting"}
+  | t144 needs_changed {"pc": 1, "thirst": 144, "hunger": 144, "fatigue": 144}
+> search
+You search for an hour.
+Search 40% (base 50%, very tired -10%): success.
+You find a ration bar.
+  | t150 time_passed {"start": 144, "end": 150, "activity": "searching"}
+  | t150 needs_changed {"pc": 1, "thirst": 150, "hunger": 150, "fatigue": 150}
+  | t150 rolled {"purpose": "search", "key": [3], "odds": {"base": 0.5, "modifiers": [{"reason": "very tired", "delta": -0.1}]}, "chance": 0.4, "value": 0.2723002280360278, "success": true}
+  | t150 item_found {"item": 1, "place": 3, "name": "ration bar"}
+> look
+The storeroom
+Empty shelves run floor to ceiling. Scrape marks on the deck show where crates were dragged out, and a cold draft stirs the dust.
+You see a ration bar here.
+Paths: east to the vat bay.
+> search
+You search for an hour.
+You find nothing, and there's nowhere left to look.
+  | t156 time_passed {"start": 150, "end": 156, "activity": "searching"}
+  | t156 needs_changed {"pc": 1, "thirst": 156, "hunger": 156, "fatigue": 156}
+  | t156 place_searched_bare {"run": 1, "place": 3}
+> search
+You've searched here already, and there's nowhere left to look.

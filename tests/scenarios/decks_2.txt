@@ -51,6 +51,19 @@ Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the
   | t0 path_added {"place": 11, "to": 20, "direction": "down", "ticks": 1}
   | t0 path_added {"place": 20, "to": 21, "direction": "east", "ticks": 1}
   | t0 path_added {"place": 21, "to": 22, "direction": "east", "ticks": 1}
+  | t0 item_hidden {"item": 1, "kind": "ration_bar", "place": 3}
+  | t0 item_hidden {"item": 2, "kind": "ration_bar", "place": 13}
+  | t0 item_hidden {"item": 3, "kind": "ration_bar", "place": 13}
+  | t0 item_hidden {"item": 4, "kind": "tin_of_stew", "place": 13}
+  | t0 item_hidden {"item": 5, "kind": "pale_shoots", "place": 14}
+  | t0 item_hidden {"item": 6, "kind": "pale_shoots", "place": 14}
+  | t0 item_hidden {"item": 7, "kind": "pale_shoots", "place": 14}
+  | t0 item_hidden {"item": 8, "kind": "hand_lamp", "place": 16}
+  | t0 item_hidden {"item": 9, "kind": "hand_lamp", "place": 17}
+  | t0 item_hidden {"item": 10, "kind": "ration_bar", "place": 18}
+  | t0 item_hidden {"item": 11, "kind": "canteen", "place": 18}
+  | t0 item_hidden {"item": 12, "kind": "canteen", "place": 20}
+  | t0 item_hidden {"item": 13, "kind": "hand_lamp", "place": 22}
   | t0 clone_woke {"run": 1, "pc": 1, "place": 1, "place_name": "the vat bay"}
   | t0 place_visited {"place": 1}
 Type "help" for the commands.

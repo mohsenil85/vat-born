@@ -9,6 +9,9 @@ from vat_born.events import (
     CloneWoke,
     Event,
     Interrupted,
+    ItemFound,
+    ItemHidden,
+    ItemStack,
     LookReport,
     MapEntry,
     MapReport,
@@ -19,11 +22,13 @@ from vat_born.events import (
     NoPath,
     NotTired,
     NoWater,
+    NowhereLeft,
     PathAdded,
     PcMoved,
     PhaseChanged,
     PlaceAdded,
     PlaceReport,
+    PlaceSearchedBare,
     PlaceVisited,
     Resumed,
     Rolled,
@@ -61,7 +66,7 @@ def render(event: Event) -> list[str]:
     match event:
         case WorldCreated(seed=seed):
             return [f"A new world, seed {seed}."]
-        case PlaceAdded() | PathAdded() | PlaceVisited() | NeedsChanged():
+        case PlaceAdded() | PathAdded() | PlaceVisited() | ItemHidden() | NeedsChanged():
             return []
         case CloneWoke(place_name=place):
             return [f"You wake in a clone vat in {place}."]
@@ -69,8 +74,9 @@ def render(event: Event) -> list[str]:
             return [f"You head {direction} to {place}."]
         case TimePassed():
             return _time_passed(event)
-        case Rolled(odds=odds, success=success):
-            return [f"{describe_odds(odds)}: {'success' if success else 'failure'}."]
+        case Rolled(purpose=purpose, odds=odds, success=success):
+            what_for = purpose[:1].upper() + purpose[1:]
+            return [f"{what_for} {describe_odds(odds)}: {'success' if success else 'failure'}."]
         case Resumed(seed=seed, run=run, time=time, place_name=place):
             return [f"Seed {seed}, clone {run}. {describe_time(time)}.", f"You are in {place}."]
         case StatusReport(time=time, run=run, levels=levels):
@@ -86,8 +92,12 @@ def render(event: Event) -> list[str]:
                     return [line, f"The way home: {_route(steps)} ({describe_duration(ticks)})."]
         case NoPath(direction=direction):
             return [f"You can't go {direction} from here."]
-        case LookReport(place_name=place, description=description, exits=exits):
-            return [place[:1].upper() + place[1:], description, _paths(exits)]
+        case LookReport(place_name=place, description=description, items=items, exits=exits):
+            lines = [place[:1].upper() + place[1:], description]
+            if items:
+                lines.append(_items_here(items))
+            lines.append(_paths(exits))
+            return lines
         case MapReport(places=places):
             return [_on_the_map(entry) for entry in places]
         case PhaseChanged(before=before, after=after):
@@ -104,6 +114,12 @@ def render(event: Event) -> list[str]:
             return ["There's no water here."]
         case NotTired():
             return ["You aren't tired."]
+        case ItemFound(name=name):
+            return [f"You find {_a(name)}."]
+        case PlaceSearchedBare():
+            return ["You find nothing, and there's nowhere left to look."]
+        case NowhereLeft():
+            return ["You've searched here already, and there's nowhere left to look."]
         case _:
             assert_never(event)
 
@@ -149,6 +165,8 @@ def _time_passed(event: TimePassed) -> list[str]:
             return [f"You rest {describe_duration(event.end - event.start)}."]
         case Activity.DRINKING:
             return ["You drink your fill."]
+        case Activity.SEARCHING:
+            return [f"You search for {describe_duration(event.end - event.start)}."]
         case _:
             assert_never(event.activity)
 
@@ -164,6 +182,8 @@ def _stopped(activity: Activity) -> str:
             return "You stop resting."
         case Activity.DRINKING:
             return "You stop drinking."
+        case Activity.SEARCHING:
+            return "You stop searching."
         case _:
             assert_never(activity)
 
@@ -171,18 +191,35 @@ def _stopped(activity: Activity) -> str:
 def _how_you_are(levels: tuple[NeedLevel, ...]) -> str:
     """The second line of `status`: each need above level 0, named by its level, in `Need` order."""
     words = [_NAMED[entry.need][entry.level - 1] for entry in levels if entry.level > 0]
-    if not words:
-        return "You feel fine."
-    if len(words) == 1:
-        return f"You're {words[0]}."
-    if len(words) == 2:
-        return f"You're {words[0]} and {words[1]}."
-    return f"You're {', '.join(words[:-1])}, and {words[-1]}."
+    return f"You're {_listed(words)}." if words else "You feel fine."
 
 
 def _paths(exits: tuple[Exit, ...]) -> str:
     """The exits as one line, in `Direction` order; only a walk longer than ten minutes says how long it is."""
     return f"Paths: {_exits(exits)}."
+
+
+def _items_here(items: tuple[ItemStack, ...]) -> str:
+    """What lies in the open: "You see two ration bars and a canteen here." """
+    return f"You see {_listed([_stack(stack) for stack in items])} here."
+
+
+def _stack(stack: ItemStack) -> str:
+    """Items of one kind, counted: "a ration bar", "two ration bars"."""
+    return _a(stack.name) if stack.count == 1 else f"{_number(stack.count)} {stack.plural}"
+
+
+def _a(name: str) -> str:
+    """A name with its article: "a ration bar", "an item"."""
+    return f"{'an' if name[:1].lower() in 'aeiou' else 'a'} {name}"
+
+
+def _listed(words: list[str]) -> str:
+    """Words joined as a list in a sentence: "a", "a and b", "a, b, and c"."""
+    assert words, "an empty list reads as nothing"
+    if len(words) <= 2:
+        return " and ".join(words)
+    return f"{', '.join(words[:-1])}, and {words[-1]}"
 
 
 def _exits(exits: tuple[Exit, ...], *, unknown: bool = False) -> str:

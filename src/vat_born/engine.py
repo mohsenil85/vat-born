@@ -2,18 +2,22 @@
 facts on a `Txn`, in one transaction, and always takes time."""
 
 import heapq
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Self, assert_never, final
 
 from vat_born import worldgen
-from vat_born.clock import Tick, game_time, ticks_until
+from vat_born.clock import TICKS_PER_HOUR, Tick, game_time, ticks_until
 from vat_born.content import Content
-from vat_born.dice import Dice
+from vat_born.dice import Dice, Modifier, Odds
 from vat_born.events import (
     CloneWoke,
     Event,
     Interrupted,
+    ItemFound,
+    ItemHidden,
+    ItemStack,
     LookReport,
     MapEntry,
     MapReport,
@@ -24,11 +28,13 @@ from vat_born.events import (
     NoPath,
     NotTired,
     NoWater,
+    NowhereLeft,
     PathAdded,
     PcMoved,
     PhaseChanged,
     PlaceAdded,
     PlaceReport,
+    PlaceSearchedBare,
     PlaceVisited,
     Report,
     Resumed,
@@ -46,15 +52,16 @@ from vat_born.intents import (
     Move,
     Rest,
     RestUntil,
+    Search,
     Status,
     TimedIntent,
     Wait,
     WaitUntil,
     Where,
 )
-from vat_born.needs import Activity, Need, level, tick
+from vat_born.needs import Activity, Need, Needs, level, tick
 from vat_born.store import LogEntry, Store, Txn, View, WorldError
-from vat_born.world import CharacterId, Direction, Layer, NodeId
+from vat_born.world import CharacterId, Direction, ItemId, ItemKind, Layer, NodeId
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,9 +76,10 @@ class Turn:
 class Game:
     """An open world. Create or resume one, call `act` once per command, then `close` it."""
 
-    def __init__(self, store: Store, dice: Dice) -> None:
+    def __init__(self, store: Store, dice: Dice, content: Content) -> None:
         self._store = store
         self._dice = dice
+        self._content = content
 
     @classmethod
     def create(cls, path: Path, seed: int, content: Content) -> tuple[Self, Turn]:
@@ -93,17 +101,24 @@ class Game:
                 beyond = worldgen.decks(content, stream, nodes[home.gate.place], NodeId(len(home.places) + 1))
                 for fact in beyond:
                     txn.record(fact)
+                placed = [(nodes[kind], kind) for kind in home.places]
+                placed += [(fact.place, fact.kind) for fact in beyond if isinstance(fact, PlaceAdded)]
+                item = 1
+                for node, kind in placed:  # node ID order: the home places, then the decks' places from first up
+                    for found in worldgen.finds(content, kind, txn.stream("worldgen", "finds", node)):
+                        txn.record(ItemHidden(ItemId(item), found, node))
+                        item += 1
                 txn.record(CloneWoke(run=1, pc=CharacterId(1), place=nodes[home.start], place_name=start.name))
                 txn.record(PlaceVisited(nodes[home.start]))
-            turn = Turn((*txn.facts, _look(store.view())), txn.logged)
+            turn = Turn((*txn.facts, _look(store.view(), content)), txn.logged)
         except BaseException:
             store.close()
             path.unlink()  # a half-made world would only fail later, as "not a world"
             raise
-        return cls(store, dice), turn
+        return cls(store, dice, content), turn
 
     @classmethod
-    def resume(cls, path: Path, seed: int | None) -> tuple[Self, Turn]:
+    def resume(cls, path: Path, seed: int | None, content: Content) -> tuple[Self, Turn]:
         """Open the existing world at PATH. If SEED is given, it must be the world's."""
         store = Store.open(path)
         view = store.view()
@@ -112,13 +127,13 @@ class Game:
             store.close()
             raise WorldError(f"{path} is the world for seed {stored}, not {seed}")
         report = Resumed(stored, view.run(), game_time(view.tick()), view.pc_place().name)
-        return cls(store, Dice(stored)), Turn((report,))
+        return cls(store, Dice(stored), content), Turn((report,))
 
     def act(self, intent: Intent) -> Turn:
         match intent:
             case Status() | Where() | Look() | Map():
-                return Turn(_resolve_free(intent, self._store.view()))
-            case Wait() | WaitUntil() | Move() | Drink() | Rest() | RestUntil():
+                return Turn(_resolve_free(intent, self._store.view(), self._content))
+            case Wait() | WaitUntil() | Move() | Drink() | Search() | Rest() | RestUntil():
                 return self._timed(intent)
             case _:
                 assert_never(intent)
@@ -129,7 +144,7 @@ class Game:
     def _timed(self, intent: TimedIntent) -> Turn:
         with self._store.transaction(self._dice) as txn:
             start = txn.tick()
-            reports = _resolve_timed(intent, txn)
+            reports = _resolve_timed(intent, txn, self._content)
             end = txn.tick()
         if not txn.facts:  # refused: nothing changed and no time passed
             assert reports, f"{intent} did nothing and said nothing"
@@ -140,7 +155,7 @@ class Game:
         return Turn((*txn.facts, *notices, *reports), txn.logged)
 
 
-def _resolve_free(intent: FreeIntent, view: View) -> tuple[Event, ...]:
+def _resolve_free(intent: FreeIntent, view: View, content: Content) -> tuple[Event, ...]:
     match intent:
         case Status():
             needs = view.needs()
@@ -149,7 +164,7 @@ def _resolve_free(intent: FreeIntent, view: View) -> tuple[Event, ...]:
         case Where():
             return (PlaceReport(view.pc_place().name, _route_home(view)),)
         case Look():
-            return (_look(view),)
+            return (_look(view, content),)
         case Map():
             here = view.pc_place().id
             entries = tuple(
@@ -161,7 +176,7 @@ def _resolve_free(intent: FreeIntent, view: View) -> tuple[Event, ...]:
             assert_never(intent)
 
 
-def _resolve_timed(intent: TimedIntent, txn: Txn) -> tuple[Report, ...]:
+def _resolve_timed(intent: TimedIntent, txn: Txn, content: Content) -> tuple[Report, ...]:
     """Do what the intent says, recording its facts, and return the reports to show after them. A refused action
     records nothing and returns the report that says why."""
     match intent:
@@ -178,11 +193,13 @@ def _resolve_timed(intent: TimedIntent, txn: Txn) -> tuple[Report, ...]:
             txn.record(PcMoved(txn.pc(), place.id, way.to, direction, way.place_name))
             if not txn.is_visited(way.to):
                 txn.record(PlaceVisited(way.to))
-            return (*reports, _look(txn))
+            return (*reports, _look(txn, content))
         case Drink():
             if not txn.pc_place().water:
                 return (NoWater(),)
             return _pass(txn, 1, Activity.DRINKING, interruptible=False)
+        case Search():
+            return _search(txn, content)
         case Rest(ticks=ticks):
             if ticks is None:  # until rested
                 fatigue = txn.needs().fatigue
@@ -194,6 +211,42 @@ def _resolve_timed(intent: TimedIntent, txn: Txn) -> tuple[Report, ...]:
             return _pass(txn, ticks_until(txn.tick(), minute), Activity.RESTING, interruptible=True)
         case _:
             assert_never(intent)
+
+
+# A search takes an hour, and rolls to turn up the next hidden thing: 50%, less when fatigue clouds the search. A
+# carried hand lamp would add its bonus here too, when carrying arrives later in M3.
+_SEARCH_TICKS = TICKS_PER_HOUR
+_SEARCH_BASE = 0.50
+_SEARCH_VERY_TIRED = Modifier("very tired", -0.10)
+_SEARCH_EXHAUSTED = Modifier("exhausted", -0.20)
+
+
+def _search(txn: Txn, content: Content) -> tuple[Report, ...]:
+    """Spend an hour searching where the PC is. A place hides only so much: once a search finds nothing left, the
+    clone knows not to search there again."""
+    place = txn.pc_place()
+    if txn.searched_bare(place.id):
+        return (NowhereLeft(),)
+    start = txn.tick()
+    reports = _pass(txn, _SEARCH_TICKS, Activity.SEARCHING, interruptible=True)
+    if txn.tick() - start < _SEARCH_TICKS:  # a need stopped the search early, and an interrupted search finds nothing
+        return reports
+    hidden = txn.next_hidden(place.id)
+    if hidden is None:
+        txn.record(PlaceSearchedBare(txn.run(), place.id))
+    elif txn.roll(_search_odds(txn.needs()), "search", place.id):
+        txn.record(ItemFound(hidden.id, place.id, content.item(hidden.kind).name))
+    return reports
+
+
+def _search_odds(needs: Needs) -> Odds:
+    """A search's odds, read from the needs as they stand when the search ends."""
+    tired = level(Need.FATIGUE, needs.fatigue)
+    if tired >= 3:
+        return Odds(_SEARCH_BASE, (_SEARCH_EXHAUSTED,))
+    if tired == 2:
+        return Odds(_SEARCH_BASE, (_SEARCH_VERY_TIRED,))
+    return Odds(_SEARCH_BASE)
 
 
 def _pass(txn: Txn, ticks: int, activity: Activity, *, interruptible: bool) -> tuple[Report, ...]:
@@ -227,10 +280,17 @@ def _pass(txn: Txn, ticks: int, activity: Activity, *, interruptible: bool) -> t
     return tuple(reports)
 
 
-def _look(view: View) -> LookReport:
-    """What a clone sees when it looks, arrives somewhere, or wakes."""
+def _look(view: View, content: Content) -> LookReport:
+    """What a clone sees when it looks, arrives somewhere, or wakes: the place, what lies in the open there, and
+    the paths out."""
     place = view.pc_place()
-    return LookReport(place.name, place.description, view.exits(place.id))
+    counts: Counter[ItemKind] = Counter(item.kind for item in view.items_at(place.id))
+    order = {kind: n for n, kind in enumerate(content.items)}  # items.toml order, for stacking
+    stacks = tuple(
+        ItemStack(content.item(kind).name, content.item(kind).plural, count)
+        for kind, count in sorted(counts.items(), key=lambda pair: order[pair[0]])
+    )
+    return LookReport(place.name, place.description, stacks, view.exits(place.id))
 
 
 # Definition order is the order routes break ties in.

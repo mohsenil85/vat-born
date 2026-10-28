@@ -109,7 +109,7 @@ def _open(world: Path | None, seed: int | None, content: Content) -> tuple[Game,
 
 def _open_or_create(path: Path, seed: int | None, content: Content) -> tuple[Game, Turn]:
     if path.exists():
-        return Game.resume(path, seed)
+        return Game.resume(path, seed, content)
     return Game.create(path, seed if seed is not None else secrets.randbelow(_NEW_SEEDS), content)
 
 

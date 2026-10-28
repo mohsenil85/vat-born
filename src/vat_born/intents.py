@@ -61,6 +61,11 @@ class Drink:
 
 
 @dataclass(frozen=True, slots=True)
+class Search:
+    """Search where you are for what the place hides."""
+
+
+@dataclass(frozen=True, slots=True)
 class Rest:
     """Rest or sleep. Ticks None means until rested."""
 
@@ -81,5 +86,5 @@ class RestUntil:
 
 
 type FreeIntent = Status | Where | Look | Map
-type TimedIntent = Wait | WaitUntil | Move | Drink | Rest | RestUntil
+type TimedIntent = Wait | WaitUntil | Move | Drink | Search | Rest | RestUntil
 type Intent = FreeIntent | TimedIntent

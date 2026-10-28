@@ -6,7 +6,9 @@ from typing import NewType
 
 NodeId = NewType("NodeId", int)
 CharacterId = NewType("CharacterId", int)
+ItemId = NewType("ItemId", int)
 PlaceKind = NewType("PlaceKind", str)  # a table in content/places.toml
+ItemKind = NewType("ItemKind", str)  # a table in content/items.toml
 
 
 class Layer(StrEnum):
@@ -46,6 +48,15 @@ class Place:
     name: str
     description: str
     water: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Item:
+    """A thing lying in a place. It starts hidden in the place's search pool and comes into the open when a search
+    turns it up."""
+
+    id: ItemId
+    kind: ItemKind
 
 
 @dataclass(frozen=True, slots=True)

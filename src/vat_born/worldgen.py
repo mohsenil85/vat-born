@@ -5,7 +5,7 @@ them."""
 from vat_born.content import Content
 from vat_born.dice import Stream
 from vat_born.events import PathAdded, PlaceAdded
-from vat_born.world import Direction, Layer, NodeId, PlaceKind
+from vat_born.world import Direction, ItemKind, Layer, NodeId, PlaceKind
 
 
 def decks(content: Content, stream: Stream, gate: NodeId, first: NodeId) -> tuple[PlaceAdded | PathAdded, ...]:
@@ -61,6 +61,16 @@ def decks(content: Content, stream: Stream, gate: NodeId, first: NodeId) -> tupl
         for k in range(1, len(plan.lower_deck.kinds))
     ]
     return (*places, *paths)
+
+
+def finds(content: Content, kind: PlaceKind, stream: Stream) -> tuple[ItemKind, ...]:
+    """What one place of KIND hides, in the order searches will turn them up. A kind with no table in finds.toml
+    hides nothing and draws nothing."""
+    table = content.finds.get(kind)
+    if table is None:
+        return ()
+    count = stream.randint(table.count.least, table.count.most)
+    return tuple(stream.choice(table.items) for _ in range(count))
 
 
 def _sides(heading: Direction) -> tuple[Direction, Direction]:

@@ -6,7 +6,20 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from vat_born.clock import MINUTES_PER_TICK
-from vat_born.intents import Drink, Intent, Look, Map, Move, Rest, RestUntil, Status, Wait, WaitUntil, Where
+from vat_born.intents import (
+    Drink,
+    Intent,
+    Look,
+    Map,
+    Move,
+    Rest,
+    RestUntil,
+    Search,
+    Status,
+    Wait,
+    WaitUntil,
+    Where,
+)
 from vat_born.world import Direction
 
 
@@ -43,6 +56,7 @@ HELP = (
     Usage("wait [time]", 'let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait until noon"'),
     Usage("rest [time]", 'rest, or sleep, until rested or for a while: "rest", "rest 2 hours", "sleep until dawn"'),
     Usage("drink", "drink your fill where there's water, as at the tap in the vat bay"),
+    Usage("search", "spend an hour searching where you are; each place hides only so much"),
     Usage("help", "this list"),
     Usage("quit", "stop playing; the world keeps your place"),
 )
@@ -95,6 +109,8 @@ def parse(line: str) -> Command:
             return _rest(rest)
         case "drink":  # extra words are ignored, as in "drink water"
             return Drink()
+        case "search":  # extra words are ignored, as in "search the room"
+            return Search()
         case "go":
             return _go(rest)
         case "help" | "?":

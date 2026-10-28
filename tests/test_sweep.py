@@ -8,6 +8,12 @@ import pytest
 from tests.harness import play
 
 COMMANDS = (
+    "west",
+    "search",
+    "search",
+    "search",
+    "look",
+    "east",
     "drink",
     "rest",
     "status",
@@ -51,6 +57,10 @@ COMMANDS = (
     "sleep until dawn",
     "rest",
     "status",
+    "search",
+    "search",
+    "look",
+    "search",
 )
 
 
