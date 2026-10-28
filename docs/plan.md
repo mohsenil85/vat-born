@@ -94,7 +94,9 @@ sentence:
   the seed, a resumed world needs no saved generator state, and transcripts change only where behavior did. The
   `random` module and the wall clock are lint errors everywhere but `dice.py`.
 - **Every chance is rolled against odds:** a base rate plus named modifiers. Each roll is logged with its
-  breakdown, so the log and the player see the same numbers.
+  breakdown, so the log and the player see the same numbers. The one exception (*proposed* with M4): a hazard
+  clock rolls every tick, and logging each miss would bury the log, so only a roll that fires is logged, in the
+  fact it causes. Its draws still come from a stream keyed by the clock and the tick.
 - **State changes only by recording a fact,** which applies it and appends it to the log in one step, so the log
   can't miss a change. The schema keeps the log append-only: triggers reject updates and deletes.
 - **Free actions get a read-only view** of the world, and SQLite refuses writes outside a timed action's
@@ -169,6 +171,30 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
     drinks from a canteen;
   - items answer to any of their words: "take bar", "eat stew".
 - **M4 Danger:** both hazard clocks with their telegraphs, odds in `status`, confirmations, `fight`, and injuries.
+  *Proposed* 2026-10-27, the orchestrator's defaults, built while the designer was away:
+  - each clock has four stages: three signs, then its threat. Every tick it may roll to reach the next stage, at a
+    daily chance that starts low and rises each day, but never more than one stage a day, and each stage comes by a
+    set day whatever the rolls. The predator starts at 30% a day, rising 10 points a day to 80%, and hunts by day 9
+    at the latest; the air recycler starts at 10%, rising 5 points a day to 50%, and fails by day 10;
+  - **the predator** leaves tracks in a corridor, then a kill in a side room, then cries out at midnight, then
+    hunts. Hunting, it can attack anywhere: 40% a day out on the decks, 10% at home, 20 points more at night;
+  - **the air recycler**, the hum behind the vat bay, stutters, then the air goes stale, then a warning light comes
+    on, all in the vat bay. Then it fails, and the home section's air goes bad: a new need, breath, builds there
+    (short of breath after an hour, gasping after three, suffocating after five, dead after six) and eases out on
+    the decks. `repair` at the vat bay fixes it, two hours' work for each stage it has reached, kept when
+    interrupted, and the clock starts over;
+  - a clone learns of a clock from its signs. `status` lists each clock it knows of, by the worst sign it has seen,
+    with today's odds that it grows worse, or for a hunting predator the odds of an attack where you are;
+  - an attack stops whatever you're doing, and then it's `fight` or `flee`; nothing else will do. Both ask first,
+    with their odds. A fight rolls to drive the predator off (35%), which sends its clock back to quiet; failing
+    that, it rolls to survive wounded (70%), and the predator retreats to its cries. Fleeing rolls to get back to
+    where you came from, unhurt (50%), and failing that, the same roll to survive. Being very tired or exhausted
+    costs 10 or 20 points on all three, and so does each level of wounds;
+  - a fight is two rolls, not one as first planned: drive it off, then survive. Each is an ordinary roll with its
+    odds shown, so the log and the player see the same numbers;
+  - wounds: wounded, then badly wounded, and a third wound kills. A wound heals in a day and a half awake, or half a
+    day resting, and also costs 10 points a level on searches;
+  - death ends the run, with its cause. Until M5 builds what follows, a dead clone can only quit.
 - **M5 Death:** permadeath, bones, the respawn gap and its report, and clone knowledge.
 - **Playtest:** the designer plays the death-and-respawn loop on one seed, with template text. This is the §14
   success test, run early on purpose: if the loop isn't fun, we change course before building M6–M9.
