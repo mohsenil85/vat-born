@@ -10,6 +10,8 @@ Tick = NewType("Tick", int)
 MINUTES_PER_TICK = 10
 TICKS_PER_HOUR = 6
 TICKS_PER_DAY = 144
+MINUTES_PER_DAY = 24 * 60
+_DAY_START = 6 * 60  # the minute of the day at which the game day begins (tick 0 is 06:00 on day 1)
 
 
 class Phase(StrEnum):
@@ -36,3 +38,13 @@ def game_time(tick: Tick) -> GameTime:
     day, into_day = divmod(tick, TICKS_PER_DAY)
     phase = next(phase for start, phase in _PHASE_STARTS if into_day >= start)
     return GameTime(day + 1, phase)
+
+
+def ticks_until(now: Tick, minute_of_day: int) -> int:
+    """Ticks from NOW until the clock next reads MINUTE_OF_DAY, minutes after midnight (0 to 1439). The wait is
+    strictly later, so a clock that reads that time now is a full day away."""
+    assert 0 <= minute_of_day < MINUTES_PER_DAY, f"{minute_of_day} is not a minute of the day"
+    into_day = now * MINUTES_PER_TICK % MINUTES_PER_DAY  # minutes since the day began at 06:00
+    wait = (minute_of_day - _DAY_START - into_day) % MINUTES_PER_DAY
+    assert wait % MINUTES_PER_TICK == 0, f"the clock never reads {minute_of_day} minutes into a tick"
+    return wait // MINUTES_PER_TICK if wait else TICKS_PER_DAY

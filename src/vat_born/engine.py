@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Self, assert_never, final
 
-from vat_born.clock import Tick, game_time
+from vat_born.clock import Tick, game_time, ticks_until
 from vat_born.content import Content
 from vat_born.dice import Dice
 from vat_born.events import (
@@ -25,7 +25,17 @@ from vat_born.events import (
     TimePassed,
     WorldCreated,
 )
-from vat_born.intents import FreeIntent, Intent, Look, Move, Status, TimedIntent, Wait, Where
+from vat_born.intents import (
+    FreeIntent,
+    Intent,
+    Look,
+    Move,
+    Status,
+    TimedIntent,
+    Wait,
+    WaitUntil,
+    Where,
+)
 from vat_born.store import LogEntry, Store, Txn, View, WorldError
 from vat_born.world import CharacterId, Layer, NodeId
 
@@ -86,7 +96,7 @@ class Game:
         match intent:
             case Status() | Where() | Look():
                 return Turn(_resolve_free(intent, self._store.view()))
-            case Wait() | Move():
+            case Wait() | WaitUntil() | Move():
                 return self._timed(intent)
             case _:
                 assert_never(intent)
@@ -127,6 +137,10 @@ def _resolve_timed(intent: TimedIntent, txn: Txn) -> tuple[Report, ...]:
         case Wait(ticks=ticks):
             start = txn.tick()
             txn.record(TimePassed(start, Tick(start + ticks), Activity.WAITING))
+            return ()
+        case WaitUntil(minute_of_day=minute):
+            start = txn.tick()
+            txn.record(TimePassed(start, Tick(start + ticks_until(start, minute)), Activity.WAITING))
             return ()
         case Move(direction=direction):
             place = txn.pc_place()

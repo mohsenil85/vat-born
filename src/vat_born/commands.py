@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 
 from vat_born.clock import MINUTES_PER_TICK
-from vat_born.intents import Intent, Look, Move, Status, Wait, Where
+from vat_born.intents import Intent, Look, Move, Status, Wait, WaitUntil, Where
 from vat_born.world import Direction
 
 
@@ -38,12 +38,13 @@ HELP = (
     Usage("where", "where you are; takes no time"),
     Usage("look", "describe where you are; takes no time"),
     Usage("go <way>", "walk to the next place: north, south, east, west, up, down (n, s, e, w, u, d)"),
-    Usage("wait [time]", 'let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait a day"'),
+    Usage("wait [time]", 'let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait until noon"'),
     Usage("help", "this list"),
     Usage("quit", "stop playing; the world keeps your place"),
 )
 
 _WAIT_HELP = 'Wait how long? Try "wait", "wait 30 minutes", or "wait 2 hours".'
+_WAIT_UNTIL_HELP = 'Wait until when? Try "wait until noon", "wait until dusk", or "wait until dawn".'
 _GO_HELP = 'Go where? Try "go north", or just "n".'
 # A longer wait is almost surely a typo, and a big enough one would overflow SQLite's integers.
 _MAX_WAIT_DAYS = 30
@@ -56,6 +57,16 @@ _UNIT_MINUTES = {
 
 # Every direction word and its first letter: "north" and "n" both mean north.
 _WAYS = {word: way for way in Direction for word in (way.value, way.value[:1])}
+
+# Named times of day, as minutes after midnight. The player never sees clock numbers, so a wait names its time;
+# most of these are where a phase begins.
+_TIMES_OF_DAY = {
+    **dict.fromkeys(("dawn", "morning", "tomorrow"), 6 * 60),
+    **dict.fromkeys(("noon", "midday", "afternoon"), 12 * 60),
+    **dict.fromkeys(("dusk", "evening"), 18 * 60),
+    **dict.fromkeys(("night", "nightfall", "dark"), 22 * 60),
+    "midnight": 0,
+}
 
 
 def parse(line: str) -> Command:
@@ -85,14 +96,45 @@ def parse(line: str) -> Command:
 
 
 def _wait(words: list[str]) -> Command:
-    if not words:
-        return Wait(1)
+    match words:
+        case []:
+            return Wait(1)
+        case [("until" | "till" | "til" | "'til"), *rest]:
+            return _wait_until(rest)
+        case ["for", *rest]:
+            return _wait_for(rest)
+        case _:
+            return _wait_duration(words)
+
+
+def _wait_duration(words: list[str]) -> Command:
     minutes = _minutes(words)
     if minutes is None or minutes <= 0:
         return Rejected(_WAIT_HELP)
     if minutes > _MAX_WAIT_DAYS * _UNIT_MINUTES["day"]:
         return Rejected(f"That's too long to wait in one go: {_MAX_WAIT_DAYS} days at most.")
     return Wait((minutes + MINUTES_PER_TICK - 1) // MINUTES_PER_TICK)  # round up to whole ticks
+
+
+def _wait_until(words: list[str]) -> Command:
+    minute = _time_of_day(words)
+    if minute is None:
+        return Rejected(_WAIT_UNTIL_HELP)
+    return WaitUntil(minute)
+
+
+def _wait_for(words: list[str]) -> Command:
+    minute = _time_of_day(words)
+    return WaitUntil(minute) if minute is not None else _wait_duration(words)
+
+
+def _time_of_day(words: list[str]) -> int | None:
+    """The minute of the day WORDS name ("evening", "the evening"), or None if they name no time."""
+    match words:
+        case ["the", word] | [word]:
+            return _TIMES_OF_DAY.get(word)
+        case _:
+            return None
 
 
 def _go(words: list[str]) -> Command:

@@ -4,6 +4,7 @@ Free intents only read the world and take no time; timed intents change it and t
 
 from dataclasses import dataclass
 
+from vat_born.clock import MINUTES_PER_DAY
 from vat_born.world import Direction
 
 
@@ -33,6 +34,16 @@ class Wait:
 
 
 @dataclass(frozen=True, slots=True)
+class WaitUntil:
+    """Wait until the clock next reads this minute of the day."""
+
+    minute_of_day: int
+
+    def __post_init__(self) -> None:
+        assert 0 <= self.minute_of_day < MINUTES_PER_DAY, f"{self.minute_of_day} is not a minute of the day"
+
+
+@dataclass(frozen=True, slots=True)
 class Move:
     """Walk the path in that direction, if there is one."""
 
@@ -40,5 +51,5 @@ class Move:
 
 
 type FreeIntent = Status | Where | Look
-type TimedIntent = Wait | Move
+type TimedIntent = Wait | WaitUntil | Move
 type Intent = FreeIntent | TimedIntent

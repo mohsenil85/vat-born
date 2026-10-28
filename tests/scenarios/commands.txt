@@ -13,7 +13,7 @@ Commands:
   where        where you are; takes no time
   look         describe where you are; takes no time
   go <way>     walk to the next place: north, south, east, west, up, down (n, s, e, w, u, d)
-  wait [time]  let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait a day"
+  wait [time]  let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait until noon"
   help         this list
   quit         stop playing; the world keeps your place
 > xyzzy

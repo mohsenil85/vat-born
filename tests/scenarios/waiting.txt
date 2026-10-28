@@ -66,3 +66,41 @@ It is now day 5, morning.
   | t579 time_passed {"start": 291, "end": 579, "activity": "waiting"}
 > status
 Day 5, morning. You are clone 1.
+> wait until noon
+You wait five and a half hours.
+It is now afternoon.
+  | t612 time_passed {"start": 579, "end": 612, "activity": "waiting"}
+> wait till dusk
+You wait six hours.
+It is now evening.
+  | t648 time_passed {"start": 612, "end": 648, "activity": "waiting"}
+> wait 'til night
+You wait four hours.
+It is now night.
+  | t672 time_passed {"start": 648, "end": 672, "activity": "waiting"}
+> wait until midnight
+You wait two hours.
+  | t684 time_passed {"start": 672, "end": 684, "activity": "waiting"}
+> status
+Day 5, night. You are clone 1.
+> wait for dawn
+You wait six hours.
+It is now day 6, morning.
+  | t720 time_passed {"start": 684, "end": 720, "activity": "waiting"}
+> status
+Day 6, morning. You are clone 1.
+> wait until the evening
+You wait 12 hours.
+It is now evening.
+  | t792 time_passed {"start": 720, "end": 792, "activity": "waiting"}
+> wait for 2 hours
+You wait two hours.
+  | t804 time_passed {"start": 792, "end": 804, "activity": "waiting"}
+> wait until noon
+You wait 16 hours.
+It is now day 7, afternoon.
+  | t900 time_passed {"start": 804, "end": 900, "activity": "waiting"}
+> wait until lunch
+Wait until when? Try "wait until noon", "wait until dusk", or "wait until dawn".
+> wait for nothing
+Wait how long? Try "wait", "wait 30 minutes", or "wait 2 hours".
