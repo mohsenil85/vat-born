@@ -6,7 +6,9 @@ import contextlib
 import importlib
 import os
 import secrets
+import shutil
 import sys
+import textwrap
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
@@ -19,6 +21,7 @@ from vat_born.render import render
 from vat_born.store import WorldError
 
 _NEW_SEEDS = 1_000_000  # random seeds for new worlds stay below this, so they're easy to read and type
+_MAX_WIDTH = 100  # wrapped text never runs past this, however wide the terminal gets: longer lines are hard to read
 
 
 class ShowLog(StrEnum):
@@ -33,15 +36,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     world = cast("Path | None", args.world)
     seed = cast("int | None", args.seed)
     show_log = cast("ShowLog | None", args.show_log)
+    # Wrapping follows where the text goes, unlike `interactive` (stdin), which is about prompts and echo.
+    wrap = sys.stdout.isatty()
     try:
         game, turn = _open(world, seed, load_content())
     except WorldError as error:
         print(f"vat-born: {error}", file=sys.stderr)
         return 2
     try:
-        _show(turn, log=show_log is ShowLog.ALL)
-        print('Type "help" for the commands.')
-        _play(game, log=show_log is not None)
+        _show(turn, log=show_log is ShowLog.ALL, wrap=wrap)
+        _say('Type "help" for the commands.', wrap=wrap)
+        _play(game, log=show_log is not None, wrap=wrap)
     except KeyboardInterrupt:
         print()
         return 130
@@ -129,7 +134,7 @@ def _unused_seed(worlds: Path) -> int:
             return seed
 
 
-def _play(game: Game, *, log: bool) -> None:
+def _play(game: Game, *, log: bool, wrap: bool) -> None:
     interactive = sys.stdin.isatty()
     if interactive:
         with contextlib.suppress(ImportError):  # line editing and history, where the platform has readline
@@ -144,11 +149,11 @@ def _play(game: Game, *, log: bool) -> None:
             case Quit():
                 return
             case Help():
-                _print_help()
+                _print_help(wrap=wrap)
             case Rejected(message=message):
-                print(message)
+                _say(message, wrap=wrap)
             case intent:
-                _show(game.act(intent), log=log)
+                _show(game.act(intent), log=log, wrap=wrap)
 
 
 def _read(*, interactive: bool) -> str | None:
@@ -162,17 +167,27 @@ def _read(*, interactive: bool) -> str | None:
         return None
 
 
-def _show(turn: Turn, *, log: bool) -> None:
+def _show(turn: Turn, *, log: bool, wrap: bool) -> None:
     for event in turn.events:
         for text in render(event):
-            print(text)
+            _say(text, wrap=wrap)
     if log:
         for entry in turn.logged:
-            print(f"  | t{entry.tick} {entry.kind} {entry.payload}")
+            print(f"  | t{entry.tick} {entry.kind} {entry.payload}")  # the log is machine-shaped; never wrapped
 
 
-def _print_help() -> None:
-    width = max(len(usage.form) for usage in HELP)
-    print("Commands:")
+def _say(text: str, *, wrap: bool, hanging: str = "") -> None:
+    """Print one line of game text, wrapped to the terminal when the output goes to one. A pipe or a file gets the
+    line untouched, so transcripts are stable; the width is read per line, so a resize takes effect."""
+    if not wrap:
+        print(text)
+        return
+    width = min(shutil.get_terminal_size().columns, _MAX_WIDTH)
+    print(textwrap.fill(text, width=width, subsequent_indent=hanging))
+
+
+def _print_help(*, wrap: bool) -> None:
+    column = max(len(usage.form) for usage in HELP)
+    _say("Commands:", wrap=wrap)
     for usage in HELP:
-        print(f"  {usage.form:<{width}}  {usage.summary}")
+        _say(f"  {usage.form:<{column}}  {usage.summary}", wrap=wrap, hanging=" " * (column + 4))
