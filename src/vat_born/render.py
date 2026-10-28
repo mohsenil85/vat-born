@@ -6,11 +6,14 @@ from typing import assert_never
 from vat_born.clock import TICKS_PER_DAY, TICKS_PER_HOUR, GameTime
 from vat_born.dice import Odds
 from vat_born.events import (
+    Ate,
     CloneWoke,
+    DrankFrom,
     Event,
     Interrupted,
     InventoryReport,
     ItemDropped,
+    ItemFilled,
     ItemFound,
     ItemHidden,
     ItemStack,
@@ -18,15 +21,19 @@ from vat_born.events import (
     LookReport,
     MapEntry,
     MapReport,
+    NeedEased,
     NeedLevel,
     NeedMet,
     NeedsChanged,
     NeedWorsened,
     NoPath,
     NotCarried,
+    NotFood,
     NotHere,
     NothingCarried,
     NothingHere,
+    NothingToDrink,
+    NothingToFill,
     NotTired,
     NoWater,
     NowhereLeft,
@@ -116,6 +123,8 @@ def render(event: Event) -> list[str]:
             return [_WORSENING[need][level - 1]]
         case NeedMet(need=need):
             return [_MET[need]]
+        case NeedEased(need=need, before=before, after=after):
+            return _eased(need, before, after)
         case Interrupted(activity=activity):
             return [_stopped(activity)]
         case NoWater():
@@ -128,6 +137,8 @@ def render(event: Event) -> list[str]:
             return [f"You take {_a(name)}."]
         case ItemDropped(name=name):
             return [f"You drop {_a(name)}."]
+        case Ate() | ItemFilled() | DrankFrom() | NotFood() | NothingToFill() | NothingToDrink():
+            return _consumed(event)
         case InventoryReport(items=items):
             if not items:
                 return ["You aren't carrying anything."]
@@ -181,6 +192,29 @@ def describe_odds(odds: Odds) -> str:
     return f"{_percent(odds.chance)} ({', '.join(parts)})"
 
 
+def _consumed(event: Ate | ItemFilled | DrankFrom | NotFood | NothingToFill | NothingToDrink) -> list[str]:
+    """The words for eating and drinking what you carry, and the refusals when there's nothing to eat or fill or
+    drink from."""
+    match event:
+        case Ate(name=name):
+            return [f"You eat {_a(name)}."]
+        case ItemFilled(name=name):
+            return [f"You fill {_a(name)}."]
+        case DrankFrom(name=name, drinks=drinks):
+            if drinks == 0:
+                return [f"Your {name} is empty now."]
+            left = f"{_number(drinks)} drink{'s' if drinks > 1 else ''} left"
+            return [f"Your {name} has {left}."]
+        case NotFood(name=name):
+            return [f"You can't eat {_a(name)}."]
+        case NothingToFill():
+            return ["You have nothing that needs filling."]
+        case NothingToDrink(name=name):
+            return [f"There's no water here, and your {name} is empty."]
+        case _:
+            assert_never(event)
+
+
 def _time_passed(event: TimePassed) -> list[str]:
     match event.activity:
         case Activity.WALKING:
@@ -195,6 +229,8 @@ def _time_passed(event: TimePassed) -> list[str]:
             return [f"You search for {describe_duration(event.end - event.start)}."]
         case Activity.HANDLING:
             return []  # the item facts say what happened
+        case Activity.EATING:
+            return []  # the meal says what happened
         case _:
             assert_never(event.activity)
 
@@ -214,6 +250,8 @@ def _stopped(activity: Activity) -> str:
             return "You stop searching."
         case Activity.HANDLING:
             return "You stop what you're doing."  # can't happen: handling is never interruptible
+        case Activity.EATING:
+            return "You stop eating."  # can't happen: eating is never interruptible
         case _:
             assert_never(activity)
 
@@ -222,6 +260,15 @@ def _how_you_are(levels: tuple[NeedLevel, ...]) -> str:
     """The second line of `status`: each need above level 0, named by its level, in `Need` order."""
     words = [_NAMED[entry.need][entry.level - 1] for entry in levels if entry.level > 0]
     return f"You're {_listed(words)}." if words else "You feel fine."
+
+
+def _eased(need: Need, before: int, after: int) -> list[str]:
+    """What an answered need says, by level: met, eased but not met, or still where it was."""
+    if after == before:
+        return [] if after == 0 else [f"You're still {_NAMED[need][after - 1]}."]
+    if after == 0:
+        return [_MET[need]]
+    return [f"You're only {_NAMED[need][after - 1]} now."]
 
 
 def _paths(exits: tuple[Exit, ...]) -> str:
@@ -235,8 +282,20 @@ def _items_here(items: tuple[ItemStack, ...]) -> str:
 
 
 def _stack(stack: ItemStack) -> str:
-    """Items of one kind, counted: "a ration bar", "two ration bars"."""
-    return _a(stack.name) if stack.count == 1 else f"{_number(stack.count)} {stack.plural}"
+    """Items of one kind, counted: "a ration bar", "two ration bars". A stack that holds water says how full it
+    is: "a canteen (full)", "two canteens (empty)", "a canteen (one drink left)"."""
+    counted = _a(stack.name) if stack.count == 1 else f"{_number(stack.count)} {stack.plural}"
+    return counted if not stack.capacity else f"{counted} ({_how_full(stack)})"
+
+
+def _how_full(stack: ItemStack) -> str:
+    """The state of a stack that holds water, for the brackets after its name."""
+    drinks = stack.drinks or 0
+    if drinks == stack.capacity:
+        return "full"
+    if drinks == 0:
+        return "empty"
+    return f"{_number(drinks)} drink{'s' if drinks > 1 else ''} left"
 
 
 def _a(name: str) -> str:

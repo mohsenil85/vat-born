@@ -29,6 +29,9 @@ class ItemDef:
     kind: ItemKind
     name: str  # as it reads after "a" or a number: "a ration bar"
     plural: str
+    meal: int  # the hunger eating it answers, in ticks; 0 when it isn't food
+    drinks: int  # how many drinks it holds when full; 0 when it holds no water
+    search: int  # the points it adds to a search's odds while carried; 0 when it doesn't help
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,9 +173,36 @@ def _items(data: dict[str, object]) -> Mapping[ItemKind, ItemDef]:
     for key, value in data.items():
         where = f"items.toml [{key}]"
         table = _table(value, where)
-        _only(table, {"name", "plural"}, where)
-        items[ItemKind(key)] = ItemDef(ItemKind(key), _string(table, "name", where), _string(table, "plural", where))
+        _only(table, {"name", "plural", "meal", "drinks", "search"}, where)
+        items[ItemKind(key)] = ItemDef(
+            ItemKind(key),
+            _string(table, "name", where),
+            _string(table, "plural", where),
+            _meal(table, where),
+            _optional_whole(table, "drinks", where),
+            _optional_whole(table, "search", where),
+        )
     return MappingProxyType(items)
+
+
+def _meal(table: dict[str, object], where: str) -> int:
+    """An item's optional `meal`: minutes in, ticks out, 0 when the item isn't food."""
+    if "meal" not in table:
+        return 0
+    minutes = table["meal"]
+    if not isinstance(minutes, int) or isinstance(minutes, bool) or minutes <= 0 or minutes % MINUTES_PER_TICK:
+        raise ContentError(f"{where}: meal must be a positive number of minutes, a multiple of ten")
+    return minutes // MINUTES_PER_TICK
+
+
+def _optional_whole(table: dict[str, object], key: str, where: str) -> int:
+    """An item's optional positive whole number, 0 when the key is absent."""
+    if key not in table:
+        return 0
+    value = table[key]
+    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+        raise ContentError(f"{where}: {key} must be a positive whole number")
+    return value
 
 
 def _finds(

@@ -69,6 +69,12 @@ COMMANDS = (
     "take all",
     "drop bar",
     "i",
+    "fill",
+    "drink",
+    "eat bar",
+    "eat shoots",
+    "eat stew",
+    "i",
 )
 
 

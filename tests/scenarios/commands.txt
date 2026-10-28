@@ -17,10 +17,12 @@ Commands:
   go <way>      walk to the next place: north, south, east, west, up, down (n, s, e, w, u, d)
   wait [time]   let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait until noon"
   rest [time]   rest, or sleep, until rested or for a while: "rest", "rest 2 hours", "sleep until dawn"
-  drink         drink your fill where there's water, as at the tap in the vat bay
+  drink         drink your fill where there's water, or from your canteen
+  fill          fill your canteen where there's water
   search        spend an hour searching where you are; each place hides only so much
   take <thing>  pick up what you see: "take ration bar", "take bar", "take all"
   drop <thing>  put down what you carry: "drop canteen", "drop all"
+  eat <food>    eat something you carry: "eat ration bar", "eat stew"
   help          this list
   quit          stop playing; the world keeps your place
 > xyzzy

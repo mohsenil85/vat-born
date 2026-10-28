@@ -10,6 +10,8 @@ from vat_born.intents import (
     Drink,
     Drop,
     DropAll,
+    Eat,
+    Fill,
     Intent,
     Inventory,
     Look,
@@ -61,10 +63,12 @@ HELP = (
     Usage("go <way>", "walk to the next place: north, south, east, west, up, down (n, s, e, w, u, d)"),
     Usage("wait [time]", 'let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait until noon"'),
     Usage("rest [time]", 'rest, or sleep, until rested or for a while: "rest", "rest 2 hours", "sleep until dawn"'),
-    Usage("drink", "drink your fill where there's water, as at the tap in the vat bay"),
+    Usage("drink", "drink your fill where there's water, or from your canteen"),
+    Usage("fill", "fill your canteen where there's water"),
     Usage("search", "spend an hour searching where you are; each place hides only so much"),
     Usage("take <thing>", 'pick up what you see: "take ration bar", "take bar", "take all"'),
     Usage("drop <thing>", 'put down what you carry: "drop canteen", "drop all"'),
+    Usage("eat <food>", 'eat something you carry: "eat ration bar", "eat stew"'),
     Usage("help", "this list"),
     Usage("quit", "stop playing; the world keeps your place"),
 )
@@ -76,6 +80,7 @@ _REST_UNTIL_HELP = 'Rest until when? Try "sleep until dawn", "rest until noon", 
 _GO_HELP = 'Go where? Try "go north", or just "n".'
 _TAKE_HELP = 'Take what? Try "take ration bar", or "take all".'
 _DROP_HELP = 'Drop what? Try "drop ration bar", or "drop all".'
+_EAT_HELP = 'Eat what? Try "eat ration bar".'
 _PICK_UP_HELP = 'Pick up what? Try "pick up ration bar".'
 _ARTICLES = frozenset(("the", "a", "an", "some"))
 # A longer wait is almost surely a typo, and a big enough one would overflow SQLite's integers.
@@ -123,6 +128,8 @@ def parse(line: str) -> Command:
             return _rest(rest)
         case "drink":  # extra words are ignored, as in "drink water"
             return Drink()
+        case "fill":  # extra words are ignored, as in "fill canteen"
+            return Fill()
         case "search":  # extra words are ignored, as in "search the room"
             return Search()
         case "take" | "get":
@@ -135,6 +142,8 @@ def parse(line: str) -> Command:
                     return Rejected(_PICK_UP_HELP)
         case "drop":
             return _dropping(rest)
+        case "eat":
+            return _eating(rest)
         case "go":
             return _go(rest)
         case "help" | "?":
@@ -226,6 +235,15 @@ def _dropping(words: list[str]) -> Command:
             return DropAll()
         case what:
             return Drop(tuple(what))
+
+
+def _eating(words: list[str]) -> Command:
+    """The words after "eat": what to eat."""
+    match _thing(words):
+        case []:
+            return Rejected(_EAT_HELP)
+        case what:
+            return Eat(tuple(what))
 
 
 def _thing(words: list[str]) -> list[str]:

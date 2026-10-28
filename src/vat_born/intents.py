@@ -62,7 +62,12 @@ class Move:
 
 @dataclass(frozen=True, slots=True)
 class Drink:
-    """Drink your fill, where there's water."""
+    """Drink your fill, where there's water or in something you carry."""
+
+
+@dataclass(frozen=True, slots=True)
+class Fill:
+    """Fill what holds water, where there's water."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,6 +106,16 @@ class DropAll:
 
 
 @dataclass(frozen=True, slots=True)
+class Eat:
+    """Eat what the words mean, from what the PC carries."""
+
+    words: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        assert self.words, "eating needs words"
+
+
+@dataclass(frozen=True, slots=True)
 class Rest:
     """Rest or sleep. Ticks None means until rested."""
 
@@ -121,5 +136,7 @@ class RestUntil:
 
 
 type FreeIntent = Status | Where | Look | Map | Inventory
-type TimedIntent = Wait | WaitUntil | Move | Drink | Search | Take | TakeAll | Drop | DropAll | Rest | RestUntil
+type TimedIntent = (
+    Wait | WaitUntil | Move | Drink | Fill | Search | Take | TakeAll | Drop | DropAll | Eat | Rest | RestUntil
+)
 type Intent = FreeIntent | TimedIntent

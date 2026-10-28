@@ -1,21 +1,28 @@
-# Items, by kind. A name reads after "a" or a number: "a ration bar", "two ration bars".
+# Items, by kind. A name reads after "a" or a number: "a ration bar", "two ration bars". The rest is what an item is
+# for, each key only on the items it applies to: `meal` is the hunger eating it answers, in minutes; `drinks` is
+# how many drinks it holds when full; `search` is the points it adds to a search's odds while carried.
 
 [ration_bar]
 name = "ration bar"
 plural = "ration bars"
+meal = 1440
 
 [tin_of_stew]
 name = "tin of stew"
 plural = "tins of stew"
+meal = 1440
 
 [pale_shoots]
 name = "handful of pale shoots"
 plural = "handfuls of pale shoots"
+meal = 720
 
 [canteen]
 name = "canteen"
 plural = "canteens"
+drinks = 2
 
 [hand_lamp]
 name = "hand lamp"
 plural = "hand lamps"
+search = 15

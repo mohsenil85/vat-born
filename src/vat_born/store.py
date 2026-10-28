@@ -15,9 +15,12 @@ from typing import Self, assert_never, cast, final
 from vat_born.clock import Tick
 from vat_born.dice import Dice, Key, Odds, Stream
 from vat_born.events import (
+    Ate,
     CloneWoke,
+    DrankFrom,
     Fact,
     ItemDropped,
+    ItemFilled,
     ItemFound,
     ItemHidden,
     ItemTaken,
@@ -39,7 +42,7 @@ _DIRECTION_ORDER = {way: n for n, way in enumerate(Direction)}
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 9
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -90,13 +93,14 @@ CREATE TABLE visited (
 ) STRICT;
 
 -- Every item in the world. Each lies in a place, hidden in the place's search pool until a search turns it up and
--- then in the open, or is carried by a character.
+-- then in the open, or is carried by a character. DRINKS is the water in it now, for the things that hold any.
 CREATE TABLE items (
     id INTEGER PRIMARY KEY,
     kind TEXT NOT NULL,
     node INTEGER REFERENCES nodes (id),
     holder INTEGER REFERENCES characters (id),
     hidden INTEGER NOT NULL CHECK (hidden IN (0, 1)),
+    drinks INTEGER NOT NULL CHECK (drinks >= 0),
     CHECK ((node IS NULL) <> (holder IS NULL)),
     CHECK (hidden = 0 OR node IS NOT NULL)
 ) STRICT;
@@ -251,32 +255,33 @@ class View:
     def items_at(self, place: NodeId) -> tuple[Item, ...]:
         """The items lying in the open at PLACE, in ID order."""
         rows = cast(
-            "list[tuple[int, str]]",
+            "list[tuple[int, str, int]]",
             self._conn.execute(
-                "SELECT id, kind FROM items WHERE node = ? AND hidden = 0 ORDER BY id", (place,)
+                "SELECT id, kind, drinks FROM items WHERE node = ? AND hidden = 0 ORDER BY id", (place,)
             ).fetchall(),
         )
-        return tuple(Item(ItemId(row[0]), ItemKind(row[1])) for row in rows)
+        return tuple(Item(ItemId(row[0]), ItemKind(row[1]), row[2]) for row in rows)
 
     def carried(self) -> tuple[Item, ...]:
         """What the current clone carries, in ID order."""
         rows = cast(
-            "list[tuple[int, str]]",
+            "list[tuple[int, str, int]]",
             self._conn.execute(
-                "SELECT id, kind FROM items WHERE holder = (SELECT pc FROM runs ORDER BY n DESC LIMIT 1) ORDER BY id"
+                "SELECT id, kind, drinks FROM items WHERE holder ="
+                " (SELECT pc FROM runs ORDER BY n DESC LIMIT 1) ORDER BY id"
             ).fetchall(),
         )
-        return tuple(Item(ItemId(row[0]), ItemKind(row[1])) for row in rows)
+        return tuple(Item(ItemId(row[0]), ItemKind(row[1]), row[2]) for row in rows)
 
     def next_hidden(self, place: NodeId) -> Item | None:
         """The hidden item at PLACE with the lowest ID, or None when nothing is hidden there any more."""
         row = cast(
-            "tuple[int, str] | None",
+            "tuple[int, str, int] | None",
             self._conn.execute(
-                "SELECT id, kind FROM items WHERE node = ? AND hidden = 1 ORDER BY id LIMIT 1", (place,)
+                "SELECT id, kind, drinks FROM items WHERE node = ? AND hidden = 1 ORDER BY id LIMIT 1", (place,)
             ).fetchone(),
         )
-        return None if row is None else Item(ItemId(row[0]), ItemKind(row[1]))
+        return None if row is None else Item(ItemId(row[0]), ItemKind(row[1]), row[2])
 
     def searched_bare(self, place: NodeId) -> bool:
         """Whether the current clone has searched PLACE until nothing was left."""
@@ -440,7 +445,9 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             # The primary key refuses a second row for one place, so recording a visit twice fails loudly.
             conn.execute("INSERT INTO visited (node, tick) SELECT ?, tick FROM world", (place,))
         case ItemHidden(item=item, kind=kind, place=place):
-            conn.execute("INSERT INTO items (id, kind, node, hidden) VALUES (?, ?, ?, 1)", (item, kind, place))
+            conn.execute(
+                "INSERT INTO items (id, kind, node, hidden, drinks) VALUES (?, ?, ?, 1, 0)", (item, kind, place)
+            )
         case ItemFound(item=item, place=place):
             found = conn.execute("UPDATE items SET hidden = 0 WHERE id = ? AND node = ? AND hidden = 1", (item, place))
             assert found.rowcount == 1, f"item {item} was not hidden at {place}"
@@ -454,6 +461,8 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
                 "UPDATE items SET node = ?, holder = NULL WHERE id = ? AND holder = ?", (place, item, pc)
             )
             assert dropped.rowcount == 1, f"character {pc} was not carrying item {item}"
+        case Ate() | ItemFilled() | DrankFrom():
+            _apply_carried(conn, fact)
         case PlaceSearchedBare(run=run, place=place):
             conn.execute("INSERT INTO searched_bare (run, node, tick) SELECT ?, ?, tick FROM world", (run, place))
         case TimePassed(start=start, end=end):
@@ -468,6 +477,26 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             assert moved.rowcount == 1, f"no character {pc} to grow needs in"
         case Rolled():
             pass  # a roll changes nothing by itself; what follows from it is a fact of its own
+        case _:
+            assert_never(fact)
+
+
+def _apply_carried(conn: sqlite3.Connection, fact: Ate | ItemFilled | DrankFrom) -> None:
+    """Apply the facts that eat or drink what the PC carries: eating destroys the item and answers hunger, and
+    filling and drinking set the drinks in it. Each changes exactly the rows it must, or the assert fails the
+    action."""
+    match fact:
+        case Ate(pc=pc, item=item, hunger=hunger):
+            eaten = conn.execute("DELETE FROM items WHERE id = ? AND holder = ?", (item, pc))
+            assert eaten.rowcount == 1, f"character {pc} was not carrying item {item}"
+            fed = conn.execute("UPDATE characters SET hunger = ? WHERE id = ?", (hunger, pc))
+            assert fed.rowcount == 1, f"no character {pc} to feed"
+        case ItemFilled(item=item, drinks=drinks) | DrankFrom(item=item, drinks=drinks):
+            set_drinks = conn.execute(
+                "UPDATE items SET drinks = ? WHERE id = ? AND holder = (SELECT pc FROM runs ORDER BY n DESC LIMIT 1)",
+                (drinks, item),
+            )
+            assert set_drinks.rowcount == 1, f"item {item} was not carried by the clone"
         case _:
             assert_never(fact)
 

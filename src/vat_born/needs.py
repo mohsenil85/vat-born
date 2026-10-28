@@ -23,6 +23,7 @@ class Activity(StrEnum):
     DRINKING = "drinking"
     SEARCHING = "searching"
     HANDLING = "handling"
+    EATING = "eating"
 
 
 @dataclass(frozen=True, slots=True)

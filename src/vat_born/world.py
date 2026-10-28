@@ -53,10 +53,11 @@ class Place:
 @dataclass(frozen=True, slots=True)
 class Item:
     """A thing in the world. It starts hidden in a place's search pool, comes into the open when a search turns it
-    up, and can then be carried by a character."""
+    up, and can then be carried by a character. DRINKS is the water in it now, for the things that hold any."""
 
     id: ItemId
     kind: ItemKind
+    drinks: int
 
 
 @dataclass(frozen=True, slots=True)

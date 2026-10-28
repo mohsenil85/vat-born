@@ -169,23 +169,23 @@ Paths: east to the corridor at frame 19.
   | t47 place_visited {"place": 16}
 > search
 You search for an hour.
-Search 50%: failure.
+Search 65% (base 50%, hand lamp +15%): failure.
   | t53 time_passed {"start": 47, "end": 53, "activity": "searching"}
   | t53 needs_changed {"pc": 1, "thirst": 53, "hunger": 53, "fatigue": 53}
-  | t53 rolled {"purpose": "search", "key": [16], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.8962238737078358, "success": false}
+  | t53 rolled {"purpose": "search", "key": [16], "odds": {"base": 0.5, "modifiers": [{"reason": "hand lamp", "delta": 0.15}]}, "chance": 0.65, "value": 0.8962238737078358, "success": false}
 > search
 You search for an hour.
-Search 50%: failure.
+Search 65% (base 50%, hand lamp +15%): failure.
   | t59 time_passed {"start": 53, "end": 59, "activity": "searching"}
   | t59 needs_changed {"pc": 1, "thirst": 59, "hunger": 59, "fatigue": 59}
-  | t59 rolled {"purpose": "search", "key": [16], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.848161505790044, "success": false}
+  | t59 rolled {"purpose": "search", "key": [16], "odds": {"base": 0.5, "modifiers": [{"reason": "hand lamp", "delta": 0.15}]}, "chance": 0.65, "value": 0.848161505790044, "success": false}
 > search
 You search for an hour.
-Search 50%: success.
+Search 65% (base 50%, hand lamp +15%): success.
 You find a tin of stew.
   | t65 time_passed {"start": 59, "end": 65, "activity": "searching"}
   | t65 needs_changed {"pc": 1, "thirst": 65, "hunger": 65, "fatigue": 65}
-  | t65 rolled {"purpose": "search", "key": [16], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.35421962057399203, "success": true}
+  | t65 rolled {"purpose": "search", "key": [16], "odds": {"base": 0.5, "modifiers": [{"reason": "hand lamp", "delta": 0.15}]}, "chance": 0.65, "value": 0.35421962057399203, "success": true}
   | t65 item_found {"item": 5, "place": 16, "name": "tin of stew"}
 > take the stew
 You take a tin of stew.

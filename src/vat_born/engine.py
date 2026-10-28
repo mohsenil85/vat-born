@@ -12,11 +12,14 @@ from vat_born.clock import TICKS_PER_HOUR, Tick, game_time, ticks_until
 from vat_born.content import Content
 from vat_born.dice import Dice, Modifier, Odds
 from vat_born.events import (
+    Ate,
     CloneWoke,
+    DrankFrom,
     Event,
     Interrupted,
     InventoryReport,
     ItemDropped,
+    ItemFilled,
     ItemFound,
     ItemHidden,
     ItemStack,
@@ -24,15 +27,19 @@ from vat_born.events import (
     LookReport,
     MapEntry,
     MapReport,
+    NeedEased,
     NeedLevel,
     NeedMet,
     NeedsChanged,
     NeedWorsened,
     NoPath,
     NotCarried,
+    NotFood,
     NotHere,
     NothingCarried,
     NothingHere,
+    NothingToDrink,
+    NothingToFill,
     NotTired,
     NoWater,
     NowhereLeft,
@@ -55,6 +62,8 @@ from vat_born.intents import (
     Drink,
     Drop,
     DropAll,
+    Eat,
+    Fill,
     FreeIntent,
     Intent,
     Inventory,
@@ -72,7 +81,7 @@ from vat_born.intents import (
     WaitUntil,
     Where,
 )
-from vat_born.needs import Activity, Need, Needs, level, tick
+from vat_born.needs import Activity, Need, level, tick
 from vat_born.store import LogEntry, Store, Txn, View, WorldError
 from vat_born.world import CharacterId, Direction, Item, ItemId, ItemKind, Layer, NodeId
 
@@ -151,6 +160,7 @@ class Game:
                 | WaitUntil()
                 | Move()
                 | Drink()
+                | Fill()
                 | Search()
                 | Rest()
                 | RestUntil()
@@ -158,6 +168,7 @@ class Game:
                 | TakeAll()
                 | Drop()
                 | DropAll()
+                | Eat()
             ):
                 return self._timed(intent)
             case _:
@@ -222,9 +233,9 @@ def _resolve_timed(intent: TimedIntent, txn: Txn, content: Content) -> tuple[Rep
                 txn.record(PlaceVisited(way.to))
             return (*reports, _look(txn, content))
         case Drink():
-            if not txn.pc_place().water:
-                return (NoWater(),)
-            return _pass(txn, 1, Activity.DRINKING, interruptible=False)
+            return _drink(txn, content)
+        case Fill():
+            return _fill(txn, content)
         case Search():
             return _search(txn, content)
         case Take(words=words):
@@ -250,6 +261,14 @@ def _resolve_timed(intent: TimedIntent, txn: Txn, content: Content) -> tuple[Rep
         case DropAll():
             items = txn.carried()
             return (NothingCarried(),) if not items else _handle(txn, content, items, taking=False)
+        case Eat(words=words):
+            match _meant(words, txn.carried(), content):
+                case None:
+                    return (NotCarried(words),)
+                case WhichOne() as which:
+                    return (which,)
+                case items:
+                    return _eat(txn, content, items[0])  # eating is always one item: the lowest ID
         case Rest(ticks=ticks):
             if ticks is None:  # until rested
                 fatigue = txn.needs().fatigue
@@ -263,8 +282,8 @@ def _resolve_timed(intent: TimedIntent, txn: Txn, content: Content) -> tuple[Rep
             assert_never(intent)
 
 
-# A search takes an hour, and rolls to turn up the next hidden thing: 50%, less when fatigue clouds the search. A
-# carried hand lamp would add its bonus here too, when carrying arrives later in M3.
+# A search takes an hour, and rolls to turn up the next hidden thing: 50%, plus the points of everything carried
+# that helps a search, less when fatigue clouds the search.
 _SEARCH_TICKS = TICKS_PER_HOUR
 _SEARCH_BASE = 0.50
 _SEARCH_VERY_TIRED = Modifier("very tired", -0.10)
@@ -284,19 +303,31 @@ def _search(txn: Txn, content: Content) -> tuple[Report, ...]:
     hidden = txn.next_hidden(place.id)
     if hidden is None:
         txn.record(PlaceSearchedBare(txn.run(), place.id))
-    elif txn.roll(_search_odds(txn.needs()), "search", place.id):
+    elif txn.roll(_search_odds(txn, content), "search", place.id):
         txn.record(ItemFound(hidden.id, place.id, content.item(hidden.kind).name))
     return reports
 
 
-def _search_odds(needs: Needs) -> Odds:
-    """A search's odds, read from the needs as they stand when the search ends."""
-    tired = level(Need.FATIGUE, needs.fatigue)
+def _search_odds(txn: Txn, content: Content) -> Odds:
+    """A search's odds, read from what the PC carries and the needs as they stand when the search ends. Each kind
+    of thing carried that helps a search adds its points, however many of it are carried."""
+    modifiers = [
+        Modifier(defn.name, defn.search / 100)
+        for kind in _kinds_carried(txn, content)
+        if (defn := content.item(kind)).search
+    ]
+    tired = level(Need.FATIGUE, txn.needs().fatigue)
     if tired >= 3:
-        return Odds(_SEARCH_BASE, (_SEARCH_EXHAUSTED,))
-    if tired == 2:
-        return Odds(_SEARCH_BASE, (_SEARCH_VERY_TIRED,))
-    return Odds(_SEARCH_BASE)
+        modifiers.append(_SEARCH_EXHAUSTED)
+    elif tired == 2:
+        modifiers.append(_SEARCH_VERY_TIRED)
+    return Odds(_SEARCH_BASE, tuple(modifiers))
+
+
+def _kinds_carried(txn: Txn, content: Content) -> tuple[ItemKind, ...]:
+    """The kinds of thing the PC carries, in items.toml order."""
+    order = {kind: n for n, kind in enumerate(content.items)}
+    return tuple(sorted({item.kind for item in txn.carried()}, key=order.__getitem__))
 
 
 def _pass(txn: Txn, ticks: int, activity: Activity, *, interruptible: bool) -> tuple[Report, ...]:
@@ -339,14 +370,34 @@ def _look(view: View, content: Content) -> LookReport:
 
 
 def _stacked(items: tuple[Item, ...], content: Content) -> tuple[ItemStack, ...]:
-    """Items counted into one stack per kind, in items.toml order: how `look` lists a place and `inventory` a
-    clone's hands."""
-    counts: Counter[ItemKind] = Counter(item.kind for item in items)
+    """Items counted into stacks, in items.toml order: how `look` lists a place and `inventory` a clone's hands.
+    Things that hold water stack by kind and how full they are, fullest first, so a full canteen and an empty one
+    are two stacks."""
+    counts: Counter[tuple[ItemKind, int | None]] = Counter()
+    for item in items:
+        holds_water = _capacity(content, item.kind) > 0
+        counts[(item.kind, item.drinks if holds_water else None)] += 1
     order = {kind: n for n, kind in enumerate(content.items)}  # items.toml order, for stacking
+
+    def fullest_first(pair: tuple[tuple[ItemKind, int | None], int]) -> tuple[int, int]:
+        (kind, drinks), _count = pair
+        return (order[kind], -(drinks or 0))  # within a kind, the fullest stack comes first
+
     return tuple(
-        ItemStack(content.item(kind).name, content.item(kind).plural, count)
-        for kind, count in sorted(counts.items(), key=lambda pair: order[pair[0]])
+        ItemStack(
+            content.item(kind).name,
+            content.item(kind).plural,
+            count,
+            drinks,
+            _capacity(content, kind),
+        )
+        for (kind, drinks), count in sorted(counts.items(), key=fullest_first)
     )
+
+
+def _capacity(content: Content, kind: ItemKind) -> int:
+    """How many drinks a thing of this kind holds when full: 0 when it holds no water."""
+    return content.item(kind).drinks
 
 
 def _meant(words: tuple[str, ...], pool: tuple[Item, ...], content: Content) -> tuple[Item, ...] | WhichOne | None:
@@ -381,6 +432,53 @@ def _handle(txn: Txn, content: Content, items: tuple[Item, ...], *, taking: bool
         fact = ItemTaken(pc, item.id, place, name) if taking else ItemDropped(pc, item.id, place, name)
         txn.record(fact)
     return reports
+
+
+def _drink(txn: Txn, content: Content) -> tuple[Report, ...]:
+    """Drink your fill: from the place, where there's water, and elsewhere from the thing carried with the fewest
+    drinks left, so a nearly empty one drains before a full one is opened."""
+    if txn.pc_place().water:
+        return _pass(txn, 1, Activity.DRINKING, interruptible=False)
+    carried = txn.carried()
+    held = [item for item in carried if _capacity(content, item.kind) and item.drinks > 0]
+    if held:
+        chosen = min(held, key=lambda item: (item.drinks, item.id))
+        reports = _pass(txn, 1, Activity.DRINKING, interruptible=False)
+        txn.record(DrankFrom(chosen.id, content.item(chosen.kind).name, chosen.drinks - 1))
+        return reports
+    empty = [item for item in carried if _capacity(content, item.kind)]
+    if empty:
+        return (NothingToDrink(content.item(empty[0].kind).name),)
+    return (NoWater(),)
+
+
+def _fill(txn: Txn, content: Content) -> tuple[Report, ...]:
+    """Fill everything carried that holds water and isn't full, as one tick of handling, each item in ID order."""
+    if not txn.pc_place().water:
+        return (NoWater(),)
+    carried = txn.carried()
+    fillable = [
+        item for item in carried if _capacity(content, item.kind) and item.drinks < _capacity(content, item.kind)
+    ]
+    if not fillable:
+        return (NothingToFill(),)
+    reports = _pass(txn, 1, Activity.HANDLING, interruptible=False)
+    for item in fillable:
+        txn.record(ItemFilled(item.id, content.item(item.kind).name, _capacity(content, item.kind)))
+    return reports
+
+
+def _eat(txn: Txn, content: Content, item: Item) -> tuple[Report, ...]:
+    """Eat one item: a tick of eating, then the meal off the PC's hunger. Hunger builds through the tick like any
+    other; the meal is taken off after it, and what remains of the hunger is said by its level."""
+    defn = content.item(item.kind)
+    if not defn.meal:
+        return (NotFood(defn.name),)
+    reports = _pass(txn, 1, Activity.EATING, interruptible=False)
+    before = txn.needs().hunger
+    after = max(before - defn.meal, 0)
+    txn.record(Ate(txn.pc(), item.id, defn.name, after))
+    return (*reports, NeedEased(Need.HUNGER, level(Need.HUNGER, before), level(Need.HUNGER, after)))
 
 
 # Definition order is the order routes break ties in.

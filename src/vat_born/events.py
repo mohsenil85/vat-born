@@ -129,6 +129,35 @@ class ItemDropped:
 
 
 @dataclass(frozen=True, slots=True)
+class Ate:
+    """The PC ate the item, which is gone. HUNGER is the PC's hunger after the meal; NAME is the item's singular
+    name."""
+
+    pc: CharacterId
+    item: ItemId
+    name: str
+    hunger: int
+
+
+@dataclass(frozen=True, slots=True)
+class ItemFilled:
+    """An item the PC carries was filled with water to its capacity. NAME is its singular name."""
+
+    item: ItemId
+    name: str
+    drinks: int
+
+
+@dataclass(frozen=True, slots=True)
+class DrankFrom:
+    """The PC drank one drink from an item it carries; DRINKS is what's left in it. NAME is its singular name."""
+
+    item: ItemId
+    name: str
+    drinks: int
+
+
+@dataclass(frozen=True, slots=True)
 class PlaceSearchedBare:
     """The current clone has searched PLACE until nothing was left. The knowledge is the clone's, not the world's
     (design §4)."""
@@ -148,6 +177,9 @@ type Fact = (
     | ItemFound
     | ItemTaken
     | ItemDropped
+    | Ate
+    | ItemFilled
+    | DrankFrom
     | PlaceSearchedBare
     | TimePassed
     | NeedsChanged
@@ -197,11 +229,15 @@ class PlaceReport:
 
 @dataclass(frozen=True, slots=True)
 class ItemStack:
-    """COUNT items of one kind, as a look lists them."""
+    """COUNT items of one kind, as a look lists them. For the things that hold water (CAPACITY above 0), DRINKS is
+    the drinks in each item of the stack and the stack holds only items equally full; None, with capacity 0, for
+    everything else."""
 
     name: str
     plural: str
     count: int
+    drinks: int | None
+    capacity: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -315,6 +351,35 @@ class NothingCarried:
     """The PC carries nothing, so there is nothing to drop."""
 
 
+@dataclass(frozen=True, slots=True)
+class NotFood:
+    """The thing named can't be eaten. NAME is its singular name."""
+
+    name: str
+
+
+@dataclass(frozen=True, slots=True)
+class NothingToFill:
+    """The PC carries nothing that holds water and isn't full."""
+
+
+@dataclass(frozen=True, slots=True)
+class NothingToDrink:
+    """There is no water where the PC is, and the only thing it carries that holds water is empty. NAME is that
+    thing's singular name."""
+
+    name: str
+
+
+@dataclass(frozen=True, slots=True)
+class NeedEased:
+    """An action answered a need: how hungry or tired the PC was before (BEFORE) and is after (AFTER), as levels."""
+
+    need: Need
+    before: int
+    after: int
+
+
 type Report = (
     Resumed
     | StatusReport
@@ -325,6 +390,7 @@ type Report = (
     | PhaseChanged
     | NeedWorsened
     | NeedMet
+    | NeedEased
     | Interrupted
     | NoWater
     | NotTired
@@ -335,6 +401,9 @@ type Report = (
     | NotCarried
     | NothingHere
     | NothingCarried
+    | NotFood
+    | NothingToFill
+    | NothingToDrink
 )
 
 type Event = Fact | Report
