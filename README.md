@@ -9,7 +9,10 @@ from place to place, putting it down where you choose, eat the food you find, wh
 in a canteen, filled where there's water and drunk from anywhere, and let time pass, which wears on the clone:
 thirst, hunger, and fatigue build and show in `status`. Dangers gather in the background, unseen: something walks
 the decks, and the air recycler hums on. Each can show itself in signs — tracks, a kill, a faltering hum, a warning
-light — which `status` names as dangers once you've come across them.
+light — which `status` names as dangers once you've come across them. When the thing that walks the decks has the
+hunt about it and catches you waiting, resting, or searching, it attacks, and nothing will do but fighting it off
+or fleeing back the way you came — each a gamble with the odds shown before you commit, and each wound it leaves
+heals only with time. A badly wounded clone doesn't survive a third; the run ends there, until the next clone wakes.
 
 The Python engine owns world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
 player intent and narrate resolved events, but may not change the rules or state directly.

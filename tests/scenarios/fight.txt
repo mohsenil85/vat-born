@@ -1,0 +1,179 @@
+# Fighting and fleeing: the predator driven off goes quiet and its signs with it, until it comes back days later;
+# then a clone that gets away runs back the way it came.
+# seed: 36
+
+A new world, seed 36.
+You wake in a clone vat in the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+Type "help" for the commands.
+> n
+You head north to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (half an hour), south to the vat bay (twenty minutes).
+  | t2 time_passed {"start": 0, "end": 2, "activity": "walking"}
+  | t2 needs_changed {"pc": 1, "thirst": 2, "hunger": 2, "fatigue": 2}
+  | t2 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+  | t2 place_visited {"place": 4}
+> n
+You head north to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 12 (twenty minutes), south to the bulkhead (half an hour), east to the records office.
+  | t5 time_passed {"start": 2, "end": 5, "activity": "walking"}
+  | t5 needs_changed {"pc": 1, "thirst": 5, "hunger": 5, "fatigue": 5}
+  | t5 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+  | t5 place_visited {"place": 5}
+> wait 30 days
+You wait about 11 hours.
+It is now evening.
+You're getting thirsty.
+You stop waiting.
+  | t72 time_passed {"start": 5, "end": 72, "activity": "waiting"}
+  | t72 needs_changed {"pc": 1, "thirst": 72, "hunger": 72, "fatigue": 72}
+> wait 30 days
+You wait four hours.
+It is now night.
+You're getting tired.
+You stop waiting.
+  | t96 time_passed {"start": 72, "end": 96, "activity": "waiting"}
+  | t96 needs_changed {"pc": 1, "thirst": 96, "hunger": 96, "fatigue": 96}
+> wait 30 days
+You wait eight hours.
+It is now day 2, morning.
+You're very thirsty now.
+You're getting hungry.
+You're very tired now.
+You stop waiting.
+  | t144 time_passed {"start": 96, "end": 144, "activity": "waiting"}
+  | t144 needs_changed {"pc": 1, "thirst": 144, "hunger": 144, "fatigue": 144}
+> wait 30 days
+You wait 12 hours.
+It is now evening.
+You're exhausted.
+You stop waiting.
+  | t216 time_passed {"start": 144, "end": 216, "activity": "waiting"}
+  | t216 needs_changed {"pc": 1, "thirst": 216, "hunger": 216, "fatigue": 216}
+> wait 30 days
+You wait 12 hours.
+It is now day 3, morning.
+You're dying of thirst.
+You stop waiting.
+  | t288 time_passed {"start": 216, "end": 288, "activity": "waiting"}
+  | t288 needs_changed {"pc": 1, "thirst": 288, "hunger": 288, "fatigue": 288}
+  | t288 clock_advanced {"clock": "predator", "stage": 1, "at": 288, "daily": 0.5, "forced": true}
+  | t288 sign_left {"clock": "predator", "stage": 1, "place": 8, "at": 288}
+> wait 30 days
+You wait a day.
+It is now day 4, morning.
+You're very hungry now.
+You stop waiting.
+  | t432 time_passed {"start": 288, "end": 432, "activity": "waiting"}
+  | t432 needs_changed {"pc": 1, "thirst": 432, "hunger": 432, "fatigue": 432}
+  | t432 clock_advanced {"clock": "air", "stage": 1, "at": 432, "daily": 0.25, "forced": true}
+  | t432 sign_left {"clock": "air", "stage": 1, "place": 1, "at": 432}
+> wait 30 days
+You wait about three days.
+It is now day 6, night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t828 time_passed {"start": 432, "end": 828, "activity": "waiting"}
+  | t828 needs_changed {"pc": 1, "thirst": 828, "hunger": 828, "fatigue": 828}
+  | t828 clock_advanced {"clock": "predator", "stage": 2, "at": 445, "daily": 0.6, "forced": false}
+  | t828 sign_left {"clock": "predator", "stage": 2, "place": 16, "at": 445}
+  | t828 clock_advanced {"clock": "predator", "stage": 3, "at": 694, "daily": 0.7, "forced": false}
+  | t828 sign_left {"clock": "predator", "stage": 3, "place": null, "at": 694}
+  | t828 clock_advanced {"clock": "air", "stage": 2, "at": 702, "daily": 0.3, "forced": false}
+  | t828 sign_left {"clock": "air", "stage": 2, "place": 1, "at": 702}
+  | t828 sign_seen {"run": 1, "clock": "predator", "stage": 3}
+> wait 30 days
+You wait a day.
+It is now day 7, night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t972 time_passed {"start": 828, "end": 972, "activity": "waiting"}
+  | t972 needs_changed {"pc": 1, "thirst": 972, "hunger": 972, "fatigue": 972}
+  | t972 clock_advanced {"clock": "predator", "stage": 4, "at": 842, "daily": 0.8, "forced": false}
+> wait 30 days
+You wait six hours.
+It is now day 8, morning.
+You're starving.
+You stop waiting.
+  | t1008 time_passed {"start": 972, "end": 1008, "activity": "waiting"}
+  | t1008 needs_changed {"pc": 1, "thirst": 1008, "hunger": 1008, "fatigue": 1008}
+  | t1008 clock_advanced {"clock": "air", "stage": 3, "at": 1008, "daily": 0.45, "forced": true}
+  | t1008 sign_left {"clock": "air", "stage": 3, "place": 1, "at": 1008}
+> wait 30 days
+You wait 16 and a half hours.
+It is now night.
+Something huge comes at you out of the dark, all teeth and hooked claws: the predator!
+  | t1107 time_passed {"start": 1008, "end": 1107, "activity": "waiting"}
+  | t1107 needs_changed {"pc": 1, "thirst": 1107, "hunger": 1107, "fatigue": 1107}
+  | t1107 predator_attacked {"place": 5, "at": 1107, "odds": {"base": 0.4, "modifiers": [{"reason": "at night", "delta": 0.2}]}}
+  | t1107 sign_seen {"run": 1, "clock": "predator", "stage": 4}
+> fight
+Fight it? 15% (base 35%, exhausted -20%) to drive it off; if not, 50% (base 70%, exhausted -20%) to live through it, wounded. (yes or no)
+> yes
+Fight 15% (base 35%, exhausted -20%): success.
+It shrieks and flees into the dark, bleeding. It won't be back for a while.
+  | t1108 time_passed {"start": 1107, "end": 1108, "activity": "fighting"}
+  | t1108 needs_changed {"pc": 1, "thirst": 1108, "hunger": 1108, "fatigue": 1108}
+  | t1108 rolled {"purpose": "fight", "key": [5], "odds": {"base": 0.35, "modifiers": [{"reason": "exhausted", "delta": -0.2}]}, "chance": 0.15, "value": 0.04709373040397857, "success": true}
+  | t1108 predator_driven_off {}
+> status
+Day 8, night. You are clone 1.
+You're dying of thirst, starving, and exhausted.
+> wait 30 days
+You wait about three days.
+It is now day 11, night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t1548 time_passed {"start": 1108, "end": 1548, "activity": "waiting"}
+  | t1548 needs_changed {"pc": 1, "thirst": 1548, "hunger": 1548, "fatigue": 1548}
+  | t1548 clock_advanced {"clock": "predator", "stage": 1, "at": 1252, "daily": 0.8, "forced": true}
+  | t1548 sign_left {"clock": "predator", "stage": 1, "place": 11, "at": 1252}
+  | t1548 clock_advanced {"clock": "air", "stage": 4, "at": 1296, "daily": 0.5, "forced": true}
+  | t1548 clock_advanced {"clock": "predator", "stage": 2, "at": 1396, "daily": 0.8, "forced": true}
+  | t1548 sign_left {"clock": "predator", "stage": 2, "place": 12, "at": 1396}
+  | t1548 clock_advanced {"clock": "predator", "stage": 3, "at": 1540, "daily": 0.8, "forced": true}
+  | t1548 sign_left {"clock": "predator", "stage": 3, "place": null, "at": 1540}
+  | t1548 sign_seen {"run": 1, "clock": "predator", "stage": 3}
+> wait 30 days
+You wait a day.
+It is now day 12, night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t1692 time_passed {"start": 1548, "end": 1692, "activity": "waiting"}
+  | t1692 needs_changed {"pc": 1, "thirst": 1692, "hunger": 1692, "fatigue": 1692}
+  | t1692 clock_advanced {"clock": "predator", "stage": 4, "at": 1684, "daily": 0.8, "forced": true}
+> wait 30 days
+You wait about five hours.
+Something huge comes at you out of the dark, all teeth and hooked claws: the predator!
+  | t1720 time_passed {"start": 1692, "end": 1720, "activity": "waiting"}
+  | t1720 needs_changed {"pc": 1, "thirst": 1720, "hunger": 1720, "fatigue": 1720}
+  | t1720 predator_attacked {"place": 5, "at": 1720, "odds": {"base": 0.4, "modifiers": [{"reason": "at night", "delta": 0.2}]}}
+  | t1720 sign_seen {"run": 1, "clock": "predator", "stage": 4}
+> flee
+Run for it? 30% (base 50%, exhausted -20%) to get away; if not, 50% (base 70%, exhausted -20%) to live through it, wounded. (yes or no)
+> yes
+Flee 30% (base 50%, exhausted -20%): success.
+You tear free and run.
+You head south to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (half an hour), south to the vat bay (twenty minutes).
+  | t1720 rolled {"purpose": "flee", "key": [5], "odds": {"base": 0.5, "modifiers": [{"reason": "exhausted", "delta": -0.2}]}, "chance": 0.3, "value": 0.057461525689802895, "success": true}
+  | t1720 pc_escaped {}
+  | t1723 time_passed {"start": 1720, "end": 1723, "activity": "walking"}
+  | t1723 needs_changed {"pc": 1, "thirst": 1723, "hunger": 1723, "fatigue": 1723}
+  | t1723 pc_moved {"pc": 1, "origin": 5, "destination": 4, "direction": "south", "place_name": "the bulkhead"}
+> status
+Day 12, night. You are clone 1.
+You're dying of thirst, starving, and exhausted.
+Something is hunting on the decks. An attack where you are: 30% (base 10%, at night +20%) a day.
+> look
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (half an hour), south to the vat bay (twenty minutes).

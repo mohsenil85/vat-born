@@ -17,6 +17,7 @@ from typing import cast
 from vat_born.commands import HELP, Help, Quit, Rejected, parse
 from vat_born.content import Content, load_content
 from vat_born.engine import Game, Turn
+from vat_born.events import Report
 from vat_born.render import render
 from vat_born.store import WorldError
 
@@ -153,6 +154,11 @@ def _play(game: Game, *, log: bool, wrap: bool) -> None:
             case Rejected(message=message):
                 _say(message, wrap=wrap)
             case intent:
+                if (stakes := game.stakes(intent)) is not None and not _confirm(
+                    stakes, interactive=interactive, wrap=wrap
+                ):
+                    _say("You hold back.", wrap=wrap)
+                    continue
                 _show(game.act(intent), log=log, wrap=wrap)
 
 
@@ -165,6 +171,19 @@ def _read(*, interactive: bool) -> str | None:
     except EOFError:
         print()
         return None
+
+
+def _confirm(stakes: Report, *, interactive: bool, wrap: bool) -> bool:
+    """Show what acting risks and ask whether to go ahead (design §10.3). Anything but yes holds back, and the end
+    of piped input counts as no."""
+    _show(Turn((stakes,)), log=False, wrap=wrap)
+    answer = _read(interactive=interactive)
+    if answer is None:
+        return False
+    if not interactive:  # no terminal echoes piped input, so show the answer as the player would have typed it
+        said = answer.strip()
+        print(f"> {said}" if said else ">")
+    return answer.strip().lower() in ("yes", "y")
 
 
 def _show(turn: Turn, *, log: bool, wrap: bool) -> None:

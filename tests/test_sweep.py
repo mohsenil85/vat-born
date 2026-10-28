@@ -80,6 +80,12 @@ COMMANDS = (
     "wait 30 days",
     "status",
     "look",
+    "fight",
+    "flee",
+    "wait 30 days",
+    "fight",
+    "yes",
+    "status",
 )
 
 

@@ -64,10 +64,36 @@ def test_scenario(path: Path, tmp_path: Path, request: pytest.FixtureRequest) ->
         )
     hashed = play(tmp_path / "hashed.db", scenario.seed, commands, hash_seed=1, log=scenario.log)
     _same(straight, hashed, "Under another PYTHONHASHSEED the game played differently: set order or hash() leaks.")
-    half = len(commands) // 2
+    half = _split_point(straight, len(commands))
     first = play(tmp_path / "split.db", scenario.seed, commands[:half], log=scenario.log)
     second = play(tmp_path / "split.db", scenario.seed, commands[half:], log=scenario.log)
     _same(straight, first + _after_startup(second), "Stopped halfway and resumed, the game played differently.")
+
+
+def _split_point(transcript: str, count: int) -> int:
+    """Where to stop and resume: halfway through the input lines, or just after, so that an answer never comes
+    apart from the question it answers. A question is a line of the game's ending "(yes or no)"."""
+    answers = _answers(transcript)
+    half = count // 2
+    while half in answers:
+        half += 1
+    return half
+
+
+def _answers(transcript: str) -> set[int]:
+    """The positions, among the transcript's input lines, of the ones that answered a question."""
+    answers: set[int] = set()
+    n = -1
+    asked = False
+    for line in transcript.splitlines():
+        if line.startswith("> "):
+            n += 1
+            if asked:
+                answers.add(n)
+            asked = False
+        elif not line.startswith("  | "):
+            asked = line.endswith("(yes or no)")
+    return answers
 
 
 def _header(lines: list[str], key: str) -> list[str]:

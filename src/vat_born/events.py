@@ -206,6 +206,58 @@ class SignSeen:
     stage: int
 
 
+@dataclass(frozen=True, slots=True)
+class PredatorAttacked:
+    """The predator, hunting, attacked the PC in PLACE at AT, at those daily odds. The attack has the PC cornered
+    there until it fights or flees, and it is the clone's sight of the hunt (the clock's stage 4)."""
+
+    place: NodeId
+    at: Tick
+    odds: Odds
+
+
+@dataclass(frozen=True, slots=True)
+class PredatorDrivenOff:
+    """The PC fought the predator off. The attack ends, the predator's clock goes back to quiet, and its signs and
+    every clone's sightings of them are gone: it won't be back for a while."""
+
+
+@dataclass(frozen=True, slots=True)
+class PredatorRetreated:
+    """The predator hurt the PC and let it go. The attack ends, and its clock drops back to its cries: it is
+    sated, not gone."""
+
+
+@dataclass(frozen=True, slots=True)
+class PcEscaped:
+    """The PC tore free and ran. The attack ends; the predator still hunts."""
+
+
+@dataclass(frozen=True, slots=True)
+class PcWounded:
+    """The PC took a wound; WOUNDS is the ticks of healing it now has left."""
+
+    pc: CharacterId
+    wounds: int
+
+
+@dataclass(frozen=True, slots=True)
+class WoundsChanged:
+    """The PC's wounds after time passed: the ticks of healing left, healed down through the pass."""
+
+    pc: CharacterId
+    wounds: int
+
+
+@dataclass(frozen=True, slots=True)
+class PcDied:
+    """The PC died at the current tick, of CAUSE, in PLACE. The run is over; M5 builds what comes after."""
+
+    pc: CharacterId
+    cause: str
+    place: NodeId
+
+
 type Fact = (
     WorldCreated
     | PlaceAdded
@@ -225,6 +277,13 @@ type Fact = (
     | ClockAdvanced
     | SignLeft
     | SignSeen
+    | PredatorAttacked
+    | PredatorDrivenOff
+    | PredatorRetreated
+    | PcEscaped
+    | PcWounded
+    | WoundsChanged
+    | PcDied
     | TimePassed
     | NeedsChanged
     | Rolled
@@ -255,6 +314,7 @@ class StatusReport:
     time: GameTime
     run: int
     levels: tuple[NeedLevel, ...]
+    wounds: int  # the wound level, 0 to 2
     dangers: tuple[Danger, ...]  # the clocks the clone has seen a sign of, in `Clock` order
 
 
@@ -295,12 +355,13 @@ class Sign:
 
 @dataclass(frozen=True, slots=True)
 class Danger:
-    """A clock the clone knows of, for `status`: the worst sign it has come across (STAGE), and today's chance
-    DAILY that the clock grows worse."""
+    """A clock the clone knows of, for `status`: the worst sign it has come across (STAGE), today's chance DAILY
+    that the clock grows worse, and for a hunting predator the odds ATTACK of it striking where the PC is."""
 
     clock: Clock
     stage: int
     daily: float
+    attack: Odds | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -457,6 +518,63 @@ class NeedEased:
     after: int
 
 
+@dataclass(frozen=True, slots=True)
+class Attacked:
+    """The predator has come for the PC, and whatever it was doing stops."""
+
+
+@dataclass(frozen=True, slots=True)
+class Cornered:
+    """The predator is on the PC, and nothing will do but fighting or fleeing."""
+
+
+@dataclass(frozen=True, slots=True)
+class NothingToFight:
+    """Nothing has the PC cornered, so there is nothing to fight."""
+
+
+@dataclass(frozen=True, slots=True)
+class NothingToFlee:
+    """Nothing has the PC cornered, so there is nothing to flee from."""
+
+
+@dataclass(frozen=True, slots=True)
+class FightStakes:
+    """What fighting risks: the odds of driving the predator off, and of living through it wounded — or None,
+    when a badly wounded clone would simply die."""
+
+    drive_off: Odds
+    survive: Odds | None
+
+
+@dataclass(frozen=True, slots=True)
+class FleeStakes:
+    """What fleeing risks: the odds of getting away, and of living through being caught — or None, when a badly
+    wounded clone would simply die."""
+
+    get_away: Odds
+    survive: Odds | None
+
+
+@dataclass(frozen=True, slots=True)
+class Wounded:
+    """The predator hurt the PC; LEVEL is how badly it is wounded now, 1 or 2."""
+
+    level: int
+
+
+@dataclass(frozen=True, slots=True)
+class WoundsHealed:
+    """The PC's wounds healed down a level as time passed; LEVEL is where they stand now."""
+
+    level: int
+
+
+@dataclass(frozen=True, slots=True)
+class Dead:
+    """The clone is dead, and until M5 builds what comes after, only quitting is left."""
+
+
 type Report = (
     Resumed
     | StatusReport
@@ -483,6 +601,15 @@ type Report = (
     | NothingToDrink
     | SignNoticed
     | HeardCries
+    | Attacked
+    | Cornered
+    | NothingToFight
+    | NothingToFlee
+    | FightStakes
+    | FleeStakes
+    | Wounded
+    | WoundsHealed
+    | Dead
 )
 
 type Event = Fact | Report

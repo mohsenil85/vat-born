@@ -28,16 +28,23 @@ from vat_born.events import (
     ItemTaken,
     NeedsChanged,
     PathAdded,
+    PcDied,
+    PcEscaped,
     PcMoved,
+    PcWounded,
     PlaceAdded,
     PlaceSearchedBare,
     PlaceVisited,
+    PredatorAttacked,
+    PredatorDrivenOff,
+    PredatorRetreated,
     Rolled,
     Sign,
     SignLeft,
     SignSeen,
     TimePassed,
     WorldCreated,
+    WoundsChanged,
 )
 from vat_born.hazards import Clock
 from vat_born.needs import Needs
@@ -58,7 +65,7 @@ def _signs(rows: list[tuple[str, int]]) -> tuple[Sign, ...]:
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 10
+SCHEMA_VERSION = 11
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -83,7 +90,9 @@ CREATE TABLE characters (
     node INTEGER NOT NULL REFERENCES nodes (id),
     thirst INTEGER NOT NULL,
     hunger INTEGER NOT NULL,
-    fatigue INTEGER NOT NULL
+    fatigue INTEGER NOT NULL,
+    wounds INTEGER NOT NULL CHECK (wounds >= 0),
+    came_from INTEGER REFERENCES nodes (id)
 ) STRICT;
 
 CREATE TABLE edges (
@@ -94,12 +103,16 @@ CREATE TABLE edges (
     PRIMARY KEY (from_node, direction)
 ) STRICT;
 
--- One row per clone: the run counter (design §4) and where this one woke, which is its way home.
+-- One row per clone: the run counter (design §4) and where this one woke, which is its way home. DIED, CAUSE,
+-- and DEATH_NODE are set when the clone dies; they are NULL while it lives.
 CREATE TABLE runs (
     n INTEGER PRIMARY KEY,
     pc INTEGER NOT NULL REFERENCES characters (id),
     home INTEGER NOT NULL REFERENCES nodes (id),
-    started_tick INTEGER NOT NULL
+    started_tick INTEGER NOT NULL,
+    died INTEGER,
+    cause TEXT,
+    death_node INTEGER REFERENCES nodes (id)
 ) STRICT;
 
 -- The places a clone has been, kept for the next one (design §4: a new clone knows places, not details).
@@ -153,6 +166,13 @@ CREATE TABLE signs_seen (
     stage INTEGER NOT NULL,
     tick INTEGER NOT NULL,
     PRIMARY KEY (run, clock, stage)
+) STRICT;
+
+-- The attack under way, if any: the predator has the PC cornered in this place until it fights or flees.
+CREATE TABLE attack (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    node INTEGER NOT NULL REFERENCES nodes (id),
+    tick INTEGER NOT NULL
 ) STRICT;
 
 -- Every fact, in order.
@@ -258,6 +278,46 @@ class View:
         )
         assert row is not None, "no clone has woken"
         return Needs(*row)
+
+    def wounds(self) -> int:
+        """The current clone's wounds: the ticks of healing they have left."""
+        row = cast(
+            "tuple[int] | None",
+            self._conn.execute(
+                "SELECT characters.wounds FROM runs"
+                " JOIN characters ON characters.id = runs.pc"
+                " ORDER BY runs.n DESC LIMIT 1",
+            ).fetchone(),
+        )
+        assert row is not None, "no clone has woken"
+        return row[0]
+
+    def came_from(self) -> NodeId | None:
+        """Where the current clone last walked from, or None if it hasn't walked since it woke."""
+        row = cast(
+            "tuple[int | None] | None",
+            self._conn.execute(
+                "SELECT characters.came_from FROM runs"
+                " JOIN characters ON characters.id = runs.pc"
+                " ORDER BY runs.n DESC LIMIT 1",
+            ).fetchone(),
+        )
+        assert row is not None, "no clone has woken"
+        return None if row[0] is None else NodeId(row[0])
+
+    def dead(self) -> bool:
+        """Whether the current clone has died. M5 builds what comes after."""
+        row = cast(
+            "tuple[int | None] | None",
+            self._conn.execute("SELECT died FROM runs ORDER BY n DESC LIMIT 1").fetchone(),
+        )
+        assert row is not None, "no clone has woken"
+        return row[0] is not None
+
+    def attack(self) -> NodeId | None:
+        """Where the predator has the PC cornered, or None when no attack is under way."""
+        row = cast("tuple[int] | None", self._conn.execute("SELECT node FROM attack WHERE id = 1").fetchone())
+        return None if row is None else NodeId(row[0])
 
     def exits(self, place: NodeId) -> tuple[Exit, ...]:
         """The paths out of PLACE, in `Direction` order, each marked for whether its far end has been visited."""
@@ -510,7 +570,8 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             )
         case CloneWoke(run=run, pc=pc, place=place):
             conn.execute(
-                "INSERT INTO characters (id, kind, node, thirst, hunger, fatigue) VALUES (?, 'pc', ?, 0, 0, 0)",
+                "INSERT INTO characters (id, kind, node, thirst, hunger, fatigue, wounds)"
+                " VALUES (?, 'pc', ?, 0, 0, 0, 0)",
                 (pc, place),
             )
             conn.execute(
@@ -526,34 +587,35 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
                 (to, place, direction.opposite, ticks),
             )
         case PcMoved(pc=pc, origin=origin, destination=destination):
-            moved = conn.execute("UPDATE characters SET node = ? WHERE id = ? AND node = ?", (destination, pc, origin))
+            moved = conn.execute(
+                "UPDATE characters SET node = ?, came_from = ? WHERE id = ? AND node = ?",
+                (destination, origin, pc, origin),
+            )
             assert moved.rowcount == 1, f"character {pc} was not at {origin}"
         case PlaceVisited(place=place):
             # The primary key refuses a second row for one place, so recording a visit twice fails loudly.
             conn.execute("INSERT INTO visited (node, tick) SELECT ?, tick FROM world", (place,))
-        case ItemHidden(item=item, kind=kind, place=place):
-            conn.execute(
-                "INSERT INTO items (id, kind, node, hidden, drinks) VALUES (?, ?, ?, 1, 0)", (item, kind, place)
-            )
-        case ItemFound(item=item, place=place):
-            found = conn.execute("UPDATE items SET hidden = 0 WHERE id = ? AND node = ? AND hidden = 1", (item, place))
-            assert found.rowcount == 1, f"item {item} was not hidden at {place}"
-        case ItemTaken(pc=pc, item=item, place=place):
-            took = conn.execute(
-                "UPDATE items SET node = NULL, holder = ? WHERE id = ? AND node = ? AND hidden = 0", (pc, item, place)
-            )
-            assert took.rowcount == 1, f"item {item} was not lying in the open at {place}"
-        case ItemDropped(pc=pc, item=item, place=place):
-            dropped = conn.execute(
-                "UPDATE items SET node = ?, holder = NULL WHERE id = ? AND holder = ?", (place, item, pc)
-            )
-            assert dropped.rowcount == 1, f"character {pc} was not carrying item {item}"
+        case ItemHidden() | ItemFound() | ItemTaken() | ItemDropped():
+            _apply_items(conn, fact)
         case Ate() | ItemFilled() | DrankFrom():
             _apply_carried(conn, fact)
         case PlaceSearchedBare(run=run, place=place):
             conn.execute("INSERT INTO searched_bare (run, node, tick) SELECT ?, ?, tick FROM world", (run, place))
         case ClockStarted() | ClockAdvanced() | SignLeft() | SignSeen():
             _apply_clocks(conn, fact)
+        case PredatorAttacked() | PredatorDrivenOff() | PredatorRetreated() | PcEscaped():
+            _apply_predator(conn, fact)
+        case PcWounded(pc=pc, wounds=wounds) | WoundsChanged(pc=pc, wounds=wounds):
+            set_wounds = conn.execute("UPDATE characters SET wounds = ? WHERE id = ?", (wounds, pc))
+            assert set_wounds.rowcount == 1, f"no character {pc} to set the wounds of"
+        case PcDied(pc=pc, cause=cause, place=place):
+            died = conn.execute(
+                "UPDATE runs SET died = (SELECT tick FROM world), cause = ?, death_node = ?"
+                " WHERE n = (SELECT max(n) FROM runs) AND pc = ? AND died IS NULL",
+                (cause, place, pc),
+            )
+            assert died.rowcount == 1, f"character {pc} was not the current living clone"
+            conn.execute("DELETE FROM attack")  # any attack under way dies with the clone
         case TimePassed(start=start, end=end):
             assert end > start, "time only moves forward"
             moved = conn.execute("UPDATE world SET tick = ? WHERE tick = ?", (end, start))
@@ -591,6 +653,68 @@ def _apply_clocks(conn: sqlite3.Connection, fact: ClockStarted | ClockAdvanced |
             )
         case _:
             assert_never(fact)
+
+
+def _apply_items(conn: sqlite3.Connection, fact: ItemHidden | ItemFound | ItemTaken | ItemDropped) -> None:
+    """Apply the item facts: a thing hidden at worldgen, found by a search, taken up, or dropped."""
+    match fact:
+        case ItemHidden(item=item, kind=kind, place=place):
+            conn.execute(
+                "INSERT INTO items (id, kind, node, hidden, drinks) VALUES (?, ?, ?, 1, 0)", (item, kind, place)
+            )
+        case ItemFound(item=item, place=place):
+            found = conn.execute("UPDATE items SET hidden = 0 WHERE id = ? AND node = ? AND hidden = 1", (item, place))
+            assert found.rowcount == 1, f"item {item} was not hidden at {place}"
+        case ItemTaken(pc=pc, item=item, place=place):
+            took = conn.execute(
+                "UPDATE items SET node = NULL, holder = ? WHERE id = ? AND node = ? AND hidden = 0", (pc, item, place)
+            )
+            assert took.rowcount == 1, f"item {item} was not lying in the open at {place}"
+        case ItemDropped(pc=pc, item=item, place=place):
+            dropped = conn.execute(
+                "UPDATE items SET node = ?, holder = NULL WHERE id = ? AND holder = ?", (place, item, pc)
+            )
+            assert dropped.rowcount == 1, f"character {pc} was not carrying item {item}"
+        case _:
+            assert_never(fact)
+
+
+def _apply_predator(
+    conn: sqlite3.Connection, fact: PredatorAttacked | PredatorDrivenOff | PredatorRetreated | PcEscaped
+) -> None:
+    """Apply the attack's facts: the predator corners the PC, and then is driven off, retreats wounded, or loses
+    its hold as the PC escapes. Driving it off quiets its clock and clears its signs entirely; a retreat only
+    sets the clock back to its cries."""
+    match fact:
+        case PredatorAttacked(place=place, at=at):
+            conn.execute("INSERT INTO attack (id, node, tick) VALUES (1, ?, ?)", (place, at))
+        case PredatorDrivenOff():
+            _end_attack(conn)
+            quieted = conn.execute(
+                "UPDATE clocks SET stage = 0, since = (SELECT tick FROM world) WHERE clock = ?",
+                (Clock.PREDATOR,),
+            )
+            assert quieted.rowcount == 1, "no predator clock to quiet"
+            conn.execute("DELETE FROM signs WHERE clock = ?", (Clock.PREDATOR,))
+            conn.execute("DELETE FROM signs_seen WHERE clock = ?", (Clock.PREDATOR,))
+        case PredatorRetreated():
+            _end_attack(conn)
+            backed = conn.execute(
+                "UPDATE clocks SET stage = 3, since = (SELECT tick FROM world) WHERE clock = ?",
+                (Clock.PREDATOR,),
+            )
+            assert backed.rowcount == 1, "no predator clock to set back"
+            conn.execute("DELETE FROM signs_seen WHERE clock = ? AND stage = 4", (Clock.PREDATOR,))
+        case PcEscaped():
+            _end_attack(conn)
+        case _:
+            assert_never(fact)
+
+
+def _end_attack(conn: sqlite3.Connection) -> None:
+    """The attack is over: exactly one was under way."""
+    ended = conn.execute("DELETE FROM attack")
+    assert ended.rowcount == 1, "no attack was under way"
 
 
 def _apply_carried(conn: sqlite3.Connection, fact: Ate | ItemFilled | DrankFrom) -> None:

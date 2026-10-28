@@ -7,12 +7,17 @@ from vat_born.clock import TICKS_PER_DAY, TICKS_PER_HOUR, GameTime
 from vat_born.dice import Odds
 from vat_born.events import (
     Ate,
+    Attacked,
     ClockAdvanced,
     ClockStarted,
     CloneWoke,
+    Cornered,
     Danger,
+    Dead,
     DrankFrom,
     Event,
+    FightStakes,
+    FleeStakes,
     HeardCries,
     Interrupted,
     InventoryReport,
@@ -37,17 +42,25 @@ from vat_born.events import (
     NothingCarried,
     NothingHere,
     NothingToDrink,
+    NothingToFight,
     NothingToFill,
+    NothingToFlee,
     NotTired,
     NoWater,
     NowhereLeft,
     PathAdded,
+    PcDied,
+    PcEscaped,
     PcMoved,
+    PcWounded,
     PhaseChanged,
     PlaceAdded,
     PlaceReport,
     PlaceSearchedBare,
     PlaceVisited,
+    PredatorAttacked,
+    PredatorDrivenOff,
+    PredatorRetreated,
     Resumed,
     Rolled,
     Route,
@@ -58,6 +71,9 @@ from vat_born.events import (
     TimePassed,
     WhichOne,
     WorldCreated,
+    Wounded,
+    WoundsChanged,
+    WoundsHealed,
 )
 from vat_born.hazards import Clock
 from vat_born.needs import Activity, Need
@@ -77,6 +93,7 @@ _NAMED = {
     Need.HUNGER: ("hungry", "very hungry", "starving"),
     Need.FATIGUE: ("tired", "very tired", "exhausted"),
 }
+_WOUNDS = ("wounded", "badly wounded")  # how `status` names each wound level
 _MET = {
     Need.THIRST: "Your thirst is gone.",
     Need.HUNGER: "You're no longer hungry.",
@@ -97,6 +114,7 @@ _DANGERS = {
     (Clock.PREDATOR, 1): "Something big walks the decks.",
     (Clock.PREDATOR, 2): "Something is killing out on the decks.",
     (Clock.PREDATOR, 3): "Something cries on the decks at night.",
+    (Clock.PREDATOR, 4): "Something is hunting on the decks.",
     (Clock.AIR, 1): "The air recycler is faltering.",
     (Clock.AIR, 2): "The air at home is going stale.",
     (Clock.AIR, 3): "The air recycler's warning light is on.",
@@ -114,12 +132,13 @@ def render(event: Event) -> list[str]:
             | PlaceVisited()
             | ItemHidden()
             | NeedsChanged()
+            | WoundsChanged()
             | ClockStarted()
             | ClockAdvanced()
             | SignLeft()
             | SignSeen()
         ):
-            return []  # the clocks only show through their signs
+            return []  # the clocks only show through their signs, and the wounds through their words below
         case CloneWoke(place_name=place):
             return [f"You wake in a clone vat in {place}."]
         case PcMoved(direction=direction, place_name=place):
@@ -131,10 +150,10 @@ def render(event: Event) -> list[str]:
             return [f"{what_for} {describe_odds(odds)}: {'success' if success else 'failure'}."]
         case Resumed(seed=seed, run=run, time=time, place_name=place):
             return [f"Seed {seed}, clone {run}. {describe_time(time)}.", f"You are in {place}."]
-        case StatusReport(time=time, run=run, levels=levels, dangers=dangers):
+        case StatusReport(time=time, run=run, levels=levels, wounds=wounds, dangers=dangers):
             return [
                 f"{describe_time(time)}. You are clone {run}.",
-                _how_you_are(levels),
+                _how_you_are(levels, wounds),
                 *(_danger(danger) for danger in dangers),
             ]
         case PlaceReport(place_name=place, route=route):
@@ -201,8 +220,25 @@ def render(event: Event) -> list[str]:
             return ["You've searched here already, and there's nowhere left to look."]
         case SignNoticed(clock=clock, stage=stage):
             return [_SIGNS[clock, stage]]
-        case HeardCries():
-            return ["Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly."]
+        case (
+            HeardCries()
+            | PredatorAttacked()
+            | PcWounded()
+            | Attacked()
+            | Cornered()
+            | NothingToFight()
+            | NothingToFlee()
+            | FightStakes()
+            | FleeStakes()
+            | Wounded()
+            | WoundsHealed()
+            | PredatorDrivenOff()
+            | PredatorRetreated()
+            | PcEscaped()
+            | PcDied()
+            | Dead()
+        ):
+            return _hunt(event)
         case _:
             assert_never(event)
 
@@ -236,6 +272,66 @@ def describe_odds(odds: Odds) -> str:
         return _percent(odds.chance)
     parts = [f"base {_percent(odds.base)}", *(f"{m.reason} {m.delta:+.0%}" for m in odds.modifiers)]
     return f"{_percent(odds.chance)} ({', '.join(parts)})"
+
+
+def _hunt(
+    event: HeardCries
+    | PredatorAttacked
+    | PcWounded
+    | Attacked
+    | Cornered
+    | NothingToFight
+    | NothingToFlee
+    | FightStakes
+    | FleeStakes
+    | Wounded
+    | WoundsHealed
+    | PredatorDrivenOff
+    | PredatorRetreated
+    | PcEscaped
+    | PcDied
+    | Dead,
+) -> list[str]:
+    """The words for the hunt (M4): the cries, the attack, the gambles and their stakes, the wounds it leaves,
+    and the clone's death at its jaws."""
+    match event:
+        case HeardCries():
+            return ["Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly."]
+        case PredatorAttacked():
+            return []  # the `Attacked` report says it, after the tick's other news
+        case Attacked():
+            return ["Something huge comes at you out of the dark, all teeth and hooked claws: the predator!"]
+        case Cornered():
+            return ["The predator is on you. Fight, or flee!"]
+        case NothingToFight():
+            return ["There's nothing here to fight."]
+        case NothingToFlee():
+            return ["There's nothing to flee from."]
+        case FightStakes(drive_off=drive_off, survive=survive):
+            return _stakes("Fight it", "drive it off", drive_off, survive)
+        case FleeStakes(get_away=get_away, survive=survive):
+            return _stakes("Run for it", "get away", get_away, survive)
+        case PcWounded():
+            return ["It tears into you."]
+        case Wounded(level=level):
+            return [f"You're {_WOUNDS[level - 1]}."]
+        case WoundsHealed(level=level):
+            if level == 0:
+                return ["Your wounds have healed."]
+            assert level == 1, "wounds only heal down to wounded, or to none"
+            return ["Your wounds are healing: you're only wounded now."]
+        case PredatorDrivenOff():
+            return ["It shrieks and flees into the dark, bleeding. It won't be back for a while."]
+        case PredatorRetreated():
+            return ["It slinks off into the dark, sated for now."]
+        case PcEscaped():
+            return ["You tear free and run."]
+        case PcDied():
+            return ["It drags you down. You are dead."]
+        case Dead():
+            return ["You are dead. Type quit to stop."]
+        case _:
+            assert_never(event)
 
 
 def _consumed(event: Ate | ItemFilled | DrankFrom | NotFood | NothingToFill | NothingToDrink) -> list[str]:
@@ -277,6 +373,8 @@ def _time_passed(event: TimePassed) -> list[str]:
             return []  # the item facts say what happened
         case Activity.EATING:
             return []  # the meal says what happened
+        case Activity.FIGHTING:
+            return []  # the fight's facts say what happened
         case _:
             assert_never(event.activity)
 
@@ -298,19 +396,34 @@ def _stopped(activity: Activity) -> str:
             return "You stop what you're doing."  # can't happen: handling is never interruptible
         case Activity.EATING:
             return "You stop eating."  # can't happen: eating is never interruptible
+        case Activity.FIGHTING:
+            return "You stop fighting."  # can't happen: a fight is never interruptible
         case _:
             assert_never(activity)
 
 
-def _how_you_are(levels: tuple[NeedLevel, ...]) -> str:
-    """The second line of `status`: each need above level 0, named by its level, in `Need` order."""
+def _how_you_are(levels: tuple[NeedLevel, ...], wounds: int) -> str:
+    """The second line of `status`: each need above level 0, then each wound, named by its level, in `Need` order."""
     words = [_NAMED[entry.need][entry.level - 1] for entry in levels if entry.level > 0]
+    if wounds:
+        words.append(_WOUNDS[wounds - 1])
     return f"You're {_listed(words)}." if words else "You feel fine."
 
 
 def _danger(danger: Danger) -> str:
-    """A danger line of `status`: the words for its worst sign, with today's chance it grows worse."""
+    """A danger line of `status`: the words for its worst sign, with today's chance it grows worse — a hunting
+    predator is named by the odds of it striking where the PC is instead."""
+    if danger.attack is not None:
+        return f"{_DANGERS[danger.clock, danger.stage]} An attack where you are: {describe_odds(danger.attack)} a day."
     return f"{_DANGERS[danger.clock, danger.stage]} It grows worse at {_percent(danger.daily)} a day."
+
+
+def _stakes(verb: str, win: str, odds: Odds, survive: Odds | None) -> list[str]:
+    """What a fight or a flight risks, for the frontend to ask about (design §10.3): the odds of WIN, and of living
+    through failing it. SURVIVE None means failing kills outright: a badly wounded clone has no third wound to
+    spare, and no roll saves it."""
+    otherwise = "you die" if survive is None else f"{describe_odds(survive)} to live through it, wounded"
+    return [f"{verb}? {describe_odds(odds)} to {win}; if not, {otherwise}. (yes or no)"]
 
 
 def _eased(need: Need, before: int, after: int) -> list[str]:

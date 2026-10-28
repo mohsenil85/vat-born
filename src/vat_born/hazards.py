@@ -7,8 +7,9 @@ misses, so these draws don't go through `Txn.roll`: they come from a stream keye
 only a clock that moves records a fact, carrying the chance it moved at. This is the one exception to "every roll
 is logged".
 
-The threats the clocks climb toward — the hunt, the failing air — are later milestones. Here the clocks only run
-and leave their signs.
+The threats the clocks climb toward are the hunt and the failing air. The hunt is built: once the predator's
+ clock reaches its last stage it attacks a clone that lingers, at the odds in `attack_odds`. The air's failure is a
+later milestone; here its clock only runs and leaves its signs.
 """
 
 from dataclasses import dataclass
@@ -16,6 +17,7 @@ from enum import StrEnum
 from math import pow as float_pow
 
 from vat_born.clock import TICKS_PER_DAY, TICKS_PER_HOUR, Tick, game_time
+from vat_born.dice import Modifier, Odds
 
 
 class Clock(StrEnum):
@@ -72,3 +74,17 @@ def due(clock: Clock, stage: int, at: Tick) -> bool:
 def is_midnight(at: Tick) -> bool:
     """Whether AT is the tick at 00:00, the moment the night's cries carry, if there are any."""
     return at % TICKS_PER_DAY == _MIDNIGHT
+
+
+# The hunting predator's daily odds of attacking a clone that lingers: base by where the clone is, and worse at
+# night, when the thing can see and the clone can't.
+_ATTACK_AT_HOME = 0.10
+_ATTACK_BEYOND_HOME = 0.40
+_ATTACK_AT_NIGHT = Modifier("at night", 0.20)
+
+
+def attack_odds(*, at_home: bool, at_night: bool) -> Odds:
+    """The daily odds a hunting predator attacks a clone that lingers where it is (M4): the base rate by whether
+    the clone is in the home section, and the night's points on top when it is night."""
+    base = _ATTACK_AT_HOME if at_home else _ATTACK_BEYOND_HOME
+    return Odds(base, (_ATTACK_AT_NIGHT,) if at_night else ())

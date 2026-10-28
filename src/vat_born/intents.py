@@ -135,8 +135,32 @@ class RestUntil:
         assert 0 <= self.minute_of_day < MINUTES_PER_DAY, f"{self.minute_of_day} is not a minute of the day"
 
 
+@dataclass(frozen=True, slots=True)
+class Fight:
+    """Fight off what has the PC cornered."""
+
+
+@dataclass(frozen=True, slots=True)
+class Flee:
+    """Run from what has the PC cornered, back the way the PC came."""
+
+
 type FreeIntent = Status | Where | Look | Map | Inventory
 type TimedIntent = (
-    Wait | WaitUntil | Move | Drink | Fill | Search | Take | TakeAll | Drop | DropAll | Eat | Rest | RestUntil
+    Wait
+    | WaitUntil
+    | Move
+    | Drink
+    | Fill
+    | Search
+    | Take
+    | TakeAll
+    | Drop
+    | DropAll
+    | Eat
+    | Rest
+    | RestUntil
+    | Fight
+    | Flee
 )
 type Intent = FreeIntent | TimedIntent

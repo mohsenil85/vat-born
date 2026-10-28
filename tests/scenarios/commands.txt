@@ -23,6 +23,8 @@ Commands:
   take <thing>  pick up what you see: "take ration bar", "take bar", "take all"
   drop <thing>  put down what you carry: "drop canteen", "drop all"
   eat <food>    eat something you carry: "eat ration bar", "eat stew"
+  fight         fight off what's attacking you; it asks first, with the odds
+  flee          run back the way you came from what's attacking you; it asks first, with the odds
   help          this list
   quit          stop playing; the world keeps your place
 > xyzzy

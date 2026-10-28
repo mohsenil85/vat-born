@@ -8,18 +8,23 @@ from pathlib import Path
 from typing import Self, assert_never, final
 
 from vat_born import worldgen
-from vat_born.clock import TICKS_PER_HOUR, Tick, game_time, ticks_until
+from vat_born.clock import TICKS_PER_HOUR, GameTime, Phase, Tick, game_time, ticks_until
 from vat_born.content import Content
 from vat_born.dice import Dice, Modifier, Odds
 from vat_born.events import (
     Ate,
+    Attacked,
     ClockAdvanced,
     ClockStarted,
     CloneWoke,
+    Cornered,
     Danger,
+    Dead,
     DrankFrom,
     Event,
     Fact,
+    FightStakes,
+    FleeStakes,
     HeardCries,
     Interrupted,
     InventoryReport,
@@ -44,17 +49,25 @@ from vat_born.events import (
     NothingCarried,
     NothingHere,
     NothingToDrink,
+    NothingToFight,
     NothingToFill,
+    NothingToFlee,
     NotTired,
     NoWater,
     NowhereLeft,
     PathAdded,
+    PcDied,
+    PcEscaped,
     PcMoved,
+    PcWounded,
     PhaseChanged,
     PlaceAdded,
     PlaceReport,
     PlaceSearchedBare,
     PlaceVisited,
+    PredatorAttacked,
+    PredatorDrivenOff,
+    PredatorRetreated,
     Report,
     Resumed,
     Route,
@@ -66,14 +79,19 @@ from vat_born.events import (
     TimePassed,
     WhichOne,
     WorldCreated,
+    Wounded,
+    WoundsChanged,
+    WoundsHealed,
 )
-from vat_born.hazards import Clock, daily_chance, due, is_midnight, may_move, tick_chance
+from vat_born.hazards import Clock, attack_odds, daily_chance, due, is_midnight, may_move, tick_chance
 from vat_born.intents import (
     Drink,
     Drop,
     DropAll,
     Eat,
+    Fight,
     Fill,
+    Flee,
     FreeIntent,
     Intent,
     Inventory,
@@ -91,9 +109,9 @@ from vat_born.intents import (
     WaitUntil,
     Where,
 )
-from vat_born.needs import Activity, Need, Needs, level, tick
-from vat_born.store import ClockState, LogEntry, Store, Txn, View, WorldError
-from vat_born.world import CharacterId, Direction, Item, ItemId, ItemKind, Layer, NodeId
+from vat_born.needs import Activity, Need, Needs, heal, level, take_wound, tick, wound_level
+from vat_born.store import ClockState, LogEntry, PlaceWithKind, Store, Txn, View, WorldError
+from vat_born.world import CharacterId, Direction, Exit, Item, ItemId, ItemKind, Layer, NodeId
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,9 +182,14 @@ class Game:
         return cls(store, Dice(stored), content), Turn((report,))
 
     def act(self, intent: Intent) -> Turn:
+        view = self._store.view()
+        if view.dead():  # M5 builds what comes after a death; until then, only quitting is left
+            return Turn((Dead(),))
         match intent:
             case Status() | Where() | Look() | Map() | Inventory():
-                return Turn(_resolve_free(intent, self._store.view(), self._content))
+                return Turn(_resolve_free(intent, view, self._content))
+            case Fight() | Flee():
+                return self._timed(intent)
             case (
                 Wait()
                 | WaitUntil()
@@ -182,9 +205,32 @@ class Game:
                 | DropAll()
                 | Eat()
             ):
+                if view.attack() is not None:  # the predator is on the PC: nothing else will do
+                    return Turn((Cornered(),))
                 return self._timed(intent)
             case _:
                 assert_never(intent)
+
+    def stakes(self, intent: Intent) -> Report | None:
+        """What acting on INTENT risks, for the frontend to ask about before acting (design §10.3): the fight and
+        the flight from an attack, either of which can kill. Anything else risks nothing that needs asking."""
+        match intent:
+            case Fight() | Flee():
+                view = self._store.view()
+                if view.attack() is None:
+                    return None
+                needs, wounds = view.needs(), view.wounds()
+                condition = _condition(needs, wounds)
+                survive = None if wound_level(wounds) == 2 else Odds(_SURVIVE_BASE, condition)
+                match intent:
+                    case Fight():
+                        return FightStakes(Odds(_FIGHT_BASE, condition), survive)
+                    case Flee():
+                        return FleeStakes(Odds(_FLEE_BASE, condition), survive)
+                    case _:
+                        assert_never(intent)
+            case _:
+                return None
 
     def close(self) -> None:
         self._store.close()
@@ -208,13 +254,16 @@ def _resolve_free(intent: FreeIntent, view: View, content: Content) -> tuple[Eve
         case Status():
             needs = view.needs()
             levels = tuple(NeedLevel(need, level(need, needs.count(need))) for need in Need)
-            day = game_time(view.tick()).day
-            dangers = tuple(
-                Danger(clock, worst, daily_chance(clock, day))
-                for clock in Clock
-                if (worst := max((sign.stage for sign in view.signs_seen() if sign.clock is clock), default=None))
-            )
-            return (StatusReport(game_time(view.tick()), view.run(), levels, dangers),)
+            now = game_time(view.tick())
+            dangers: list[Danger] = []
+            for clock in Clock:
+                worst = max((sign.stage for sign in view.signs_seen() if sign.clock is clock), default=None)
+                if worst is None:
+                    continue
+                # A predator the clone has seen hunting is a danger of striking where the PC is, not of growing worse
+                striking = _attack_odds(view, content, now) if clock is Clock.PREDATOR and worst == 4 else None
+                dangers.append(Danger(clock, worst, daily_chance(clock, now.day), striking))
+            return (StatusReport(now, view.run(), levels, wound_level(view.wounds()), tuple(dangers)),)
         case Where():
             return (PlaceReport(view.pc_place().name, _route_home(view)),)
         case Look():
@@ -241,19 +290,10 @@ def _resolve_timed(intent: TimedIntent, txn: Txn, content: Content) -> tuple[Rep
         case WaitUntil(minute_of_day=minute):
             return _pass(txn, ticks_until(txn.tick(), minute), content, Activity.WAITING, interruptible=True)
         case Move(direction=direction):
-            place = txn.pc_place()
-            way = next((out for out in txn.exits(place.id) if out.direction == direction), None)
+            way = next((out for out in txn.exits(txn.pc_place().id) if out.direction == direction), None)
             if way is None:
                 return (NoPath(direction),)
-            reports = _pass(txn, way.ticks, content, Activity.WALKING, interruptible=False)
-            txn.record(PcMoved(txn.pc(), place.id, way.to, direction, way.place_name))
-            if not txn.is_visited(way.to):
-                txn.record(PlaceVisited(way.to))
-            seen = set(txn.signs_seen())
-            for sign in txn.signs_at(way.to):  # the arrival comes across every sign there the clone hasn't seen
-                if sign not in seen:
-                    txn.record(SignSeen(txn.run(), sign.clock, sign.stage))
-            return (*reports, _look(txn, content))
+            return _walk(txn, content, way)
         case Drink():
             return _drink(txn, content)
         case Fill():
@@ -300,16 +340,35 @@ def _resolve_timed(intent: TimedIntent, txn: Txn, content: Content) -> tuple[Rep
             return _pass(txn, ticks, content, Activity.RESTING, interruptible=True)
         case RestUntil(minute_of_day=minute):
             return _pass(txn, ticks_until(txn.tick(), minute), content, Activity.RESTING, interruptible=True)
+        case Fight():
+            return _fight(txn, content)
+        case Flee():
+            return _flee(txn, content)
         case _:
             assert_never(intent)
 
 
 # A search takes an hour, and rolls to turn up the next hidden thing: 50%, plus the points of everything carried
-# that helps a search, less when fatigue clouds the search.
+# that helps a search, less when fatigue clouds it or wounds slow the hands.
 _SEARCH_TICKS = TICKS_PER_HOUR
 _SEARCH_BASE = 0.50
-_SEARCH_VERY_TIRED = Modifier("very tired", -0.10)
-_SEARCH_EXHAUSTED = Modifier("exhausted", -0.20)
+
+# The gambles with the predator (M4): a roll to drive it off, one to get away, and — failing either — one to live
+# through it wounded. Fatigue and wounds cost each of them, and searches, the same points.
+_FIGHT_BASE = 0.35
+_FLEE_BASE = 0.50
+_SURVIVE_BASE = 0.70
+_VERY_TIRED = Modifier("very tired", -0.10)
+_EXHAUSTED = Modifier("exhausted", -0.20)
+_WOUNDED = Modifier("wounded", -0.10)
+_BADLY_WOUNDED = Modifier("badly wounded", -0.20)
+
+# What the PC can be doing for the hunting predator to catch it lingering: anything but walking, drinking,
+# handling things, and eating — and fighting, which is its own gamble.
+_LINGERING = frozenset((Activity.WAITING, Activity.RESTING, Activity.SEARCHING))
+
+# The predator as a cause of death, as the log names it.
+_THE_PREDATOR = "the predator"
 
 
 def _search(txn: Txn, content: Content) -> tuple[Report, ...]:
@@ -320,7 +379,8 @@ def _search(txn: Txn, content: Content) -> tuple[Report, ...]:
         return (NowhereLeft(),)
     start = txn.tick()
     reports = _pass(txn, _SEARCH_TICKS, content, Activity.SEARCHING, interruptible=True)
-    if txn.tick() - start < _SEARCH_TICKS:  # a need stopped the search early, and an interrupted search finds nothing
+    if txn.tick() - start < _SEARCH_TICKS or txn.attack() is not None:
+        # stopped short, or the predator came: an interrupted search finds nothing, even on its last tick
         return reports
     hidden = txn.next_hidden(place.id)
     if hidden is None:
@@ -331,18 +391,14 @@ def _search(txn: Txn, content: Content) -> tuple[Report, ...]:
 
 
 def _search_odds(txn: Txn, content: Content) -> Odds:
-    """A search's odds, read from what the PC carries and the needs as they stand when the search ends. Each kind
-    of thing carried that helps a search adds its points, however many of it are carried."""
+    """A search's odds, read from what the PC carries and its condition as the search ends. Each kind of thing
+    carried that helps a search adds its points, however many of it are carried."""
     modifiers = [
         Modifier(defn.name, defn.search / 100)
         for kind in _kinds_carried(txn, content)
         if (defn := content.item(kind)).search
     ]
-    tired = level(Need.FATIGUE, txn.needs().fatigue)
-    if tired >= 3:
-        modifiers.append(_SEARCH_EXHAUSTED)
-    elif tired == 2:
-        modifiers.append(_SEARCH_VERY_TIRED)
+    modifiers.extend(_condition(txn.needs(), txn.wounds()))
     return Odds(_SEARCH_BASE, tuple(modifiers))
 
 
@@ -352,24 +408,62 @@ def _kinds_carried(txn: Txn, content: Content) -> tuple[ItemKind, ...]:
     return tuple(sorted({item.kind for item in txn.carried()}, key=order.__getitem__))
 
 
+def _condition(needs: Needs, wounds: int) -> tuple[Modifier, ...]:
+    """What the PC's condition costs a roll, in a fixed order: fatigue first, then wounds, each level worth more
+    than the last."""
+    modifiers: list[Modifier] = []
+    tired = level(Need.FATIGUE, needs.fatigue)
+    if tired >= 3:
+        modifiers.append(_EXHAUSTED)
+    elif tired == 2:
+        modifiers.append(_VERY_TIRED)
+    hurt = wound_level(wounds)
+    if hurt == 2:
+        modifiers.append(_BADLY_WOUNDED)
+    elif hurt == 1:
+        modifiers.append(_WOUNDED)
+    return tuple(modifiers)
+
+
+def _gamble(base: float, txn: Txn) -> Odds:
+    """A gamble against the predator, at BASE, as the PC stands for it."""
+    return Odds(base, _condition(txn.needs(), txn.wounds()))
+
+
+def _attack_odds(view: View, content: Content, at: GameTime) -> Odds:
+    """The hunting predator's odds of attacking the PC where it is, at the time AT."""
+    place = view.pc_place().id
+    return attack_odds(at_home=_at_home(view.places(), place, content), at_night=at.phase is Phase.NIGHT)
+
+
+def _at_home(places: tuple[PlaceWithKind, ...], place: NodeId, content: Content) -> bool:
+    """Whether PLACE is one of the home section's places."""
+    kind = next(entry.kind for entry in places if entry.place == place)
+    return kind in content.home.places
+
+
 @dataclass(slots=True)
 class _Hazards:
     """The hazard clocks' side of one action's ticks: each clock as the ticks find it, the signs this clone has come
     across, and the facts to record once the ticks are done. The rolls that decide a move come from the keyed
-    streams, not logged rolls — the exception to every roll being logged (hazards.py)."""
+    streams, not logged rolls — the exception to every roll being logged (hazards.py). Here too belongs the
+    predator's hunt: once its clock stands at the hunt, it may attack a clone that lingers."""
 
     txn: Txn
     content: Content
     run: int
     here: NodeId
+    at_home: bool
     clocks: dict[Clock, ClockState]
     seen: set[Sign]
     facts: list[Fact]
+    struck: bool = False
 
-    def turn(self, at: Tick, reports: list[Report]) -> bool:
+    def turn(self, at: Tick, activity: Activity, reports: list[Report]) -> bool:
         """Each clock's turn at tick AT, in `Clock` order: it may move up a stage and leave its sign, which the clone
         notices if it is left right where the clone is, and the cries carry at midnight once the predator is far
-        enough along. Returns whether something happened the player can react to."""
+        enough along. Then the predator's own turn: hunting, it may attack. Returns whether something happened the
+        player can react to."""
         stopped = False
         for clock in Clock:
             state = self.clocks[clock]
@@ -399,47 +493,143 @@ class _Hazards:
                     self.seen.add(cries)
                 stopped = True
             self.clocks[clock] = standing
+        if self._strikes(activity, at):
+            self.struck = True
+            reports.append(Attacked())
+            odds = attack_odds(at_home=self.at_home, at_night=game_time(at).phase is Phase.NIGHT)
+            self.facts.append(PredatorAttacked(self.here, at, odds))
+            hunt = Sign(Clock.PREDATOR, 4)
+            if hunt not in self.seen:  # the attack itself is the clone's sight of the hunt
+                self.facts.append(SignSeen(self.run, Clock.PREDATOR, 4))
+                self.seen.add(hunt)
+            return True
         return stopped
+
+    def _strikes(self, activity: Activity, at: Tick) -> bool:
+        """Whether the predator attacks at tick AT. Only a clone that lingers is exposed, and only one attack is
+        under way at a time. Like the clocks' rolls, the draw comes from a keyed stream and is logged only when it
+        fires, in the fact it causes (hazards.py)."""
+        hunting = self.clocks[Clock.PREDATOR].stage >= 4
+        if not hunting or activity not in _LINGERING or self.txn.attack() is not None:
+            return False
+        odds = attack_odds(at_home=self.at_home, at_night=game_time(at).phase is Phase.NIGHT)
+        return self.txn.stream("attack", at).random() < tick_chance(odds.chance)
 
 
 def _pass(txn: Txn, ticks: int, content: Content, activity: Activity, *, interruptible: bool) -> tuple[Report, ...]:
     """Let TICKS ticks pass for ACTIVITY, one at a time. This is the scheduler (design §6): every time-driven system
-    takes its turn each tick, in a fixed order: the needs, then the hazard clocks (design §7.2). A need getting worse,
-    or a sign coming to the clone's notice, is reported as it happens and stops an interruptible action with ticks
-    left, so the player can react; a need coming back down to 0 is reported too, but only getting worse and the
-    clocks stop anything. The clocks' facts are recorded after the needs', in the order they happened: each advance,
-    then the sign it left, then the clone coming across it."""
+    takes its turn each tick, in a fixed order: the needs, then the wounds' healing, then the hazard clocks
+    (design §7.2), then the predator's
+    hunt. A need getting worse, or a sign coming to the clone's notice, is reported as it happens and stops an
+    interruptible action with ticks left, so the player can react; a need coming back down to 0 is reported too,
+    but only getting worse and the clocks stop anything. An attack stops the action at that tick even on its last
+    one. The clocks' facts are recorded after the needs', in the order they happened: each advance, then the sign
+    it left, then the clone coming across it."""
     assert ticks > 0, "an action takes at least one tick"
     start = txn.tick()
     pc = txn.pc()
     needs = txn.needs()
+    place = txn.pc_place()
     hazards = _Hazards(
         txn,
         content,
         txn.run(),
-        txn.pc_place().id,
+        place.id,
+        _at_home(txn.places(), place.id, content),
         {state.clock: state for state in txn.clocks()},
         set(txn.signs_seen()),
         [],
     )
+    wounds_at_start = txn.wounds()
+    wounds = wounds_at_start
     reports: list[Report] = []
     passed = 0
     for _ in range(ticks):
         stepped = tick(needs, activity)
+        healing = heal(wounds, activity)
         passed += 1
         at = Tick(start + passed)
         worsened = _needs_turn(needs, stepped, reports)
-        noticed = hazards.turn(at, reports)  # every clock takes its turn every tick, whatever the needs did
-        stopped = worsened or noticed
+        if wound_level(healing) < wound_level(wounds):
+            reports.append(WoundsHealed(wound_level(healing)))
+        wounds = healing
+        noticed = hazards.turn(at, activity, reports)  # every clock takes its turn every tick, whatever the needs did
         needs = stepped
+        if hazards.struck:  # the predator has the PC: the action stops, even on its last tick, attack or nothing
+            break
+        stopped = worsened or noticed
         if stopped and interruptible and passed < ticks:
             reports.append(Interrupted(activity))
             break
     txn.record(TimePassed(start, Tick(start + passed), activity))
     txn.record(NeedsChanged(pc, needs.thirst, needs.hunger, needs.fatigue))
+    if wounds != wounds_at_start:  # nothing heals and nothing is recorded while the clone is unhurt
+        txn.record(WoundsChanged(pc, wounds))
     for fact in hazards.facts:
         txn.record(fact)
     return tuple(reports)
+
+
+def _walk(txn: Txn, content: Content, way: Exit) -> tuple[Report, ...]:
+    """Walk a path: its ticks, the move, the first visit, the signs at the far end, and a look around."""
+    place = txn.pc_place()
+    reports = _pass(txn, way.ticks, content, Activity.WALKING, interruptible=False)
+    txn.record(PcMoved(txn.pc(), place.id, way.to, way.direction, way.place_name))
+    if not txn.is_visited(way.to):
+        txn.record(PlaceVisited(way.to))
+    seen = set(txn.signs_seen())
+    for sign in txn.signs_at(way.to):  # the arrival comes across every sign there the clone hasn't seen
+        if sign not in seen:
+            txn.record(SignSeen(txn.run(), sign.clock, sign.stage))
+    return (*reports, _look(txn, content))
+
+
+def _run(txn: Txn, content: Content) -> tuple[Report, ...]:
+    """The PC's flight, once it is free: back the way it came, or — if it hasn't walked since it woke — down the
+    first path out, in `Direction` order. The run is a walk like any other."""
+    exits = txn.exits(txn.pc_place().id)
+    assert exits, "nowhere to run"
+    way = next((out for out in exits if out.to == txn.came_from()), exits[0])
+    return _walk(txn, content, way)
+
+
+def _fight(txn: Txn, content: Content) -> tuple[Report, ...]:
+    """Fight the predator off, in the place it has the PC: a tick of it, then a roll to drive it off — and failing
+    that, what it costs, as `_mauled` deals out. The fight is never interrupted: nothing else is left."""
+    place = txn.attack()
+    if place is None:
+        return (NothingToFight(),)
+    reports = _pass(txn, 1, content, Activity.FIGHTING, interruptible=False)
+    if txn.roll(_gamble(_FIGHT_BASE, txn), "fight", place):
+        txn.record(PredatorDrivenOff())
+        return reports
+    return _mauled(txn, place, reports)
+
+
+def _flee(txn: Txn, content: Content) -> tuple[Report, ...]:
+    """Run from the predator that has the PC: a roll to get away — and on it, the run back the way the PC came.
+    Failing it, a tick of fighting for its life, as `_mauled` deals out."""
+    place = txn.attack()
+    if place is None:
+        return (NothingToFlee(),)
+    if txn.roll(_gamble(_FLEE_BASE, txn), "flee", place):
+        txn.record(PcEscaped())
+        return _run(txn, content)
+    reports = _pass(txn, 1, content, Activity.FIGHTING, interruptible=False)
+    return _mauled(txn, place, reports)
+
+
+def _mauled(txn: Txn, place: NodeId, reports: tuple[Report, ...]) -> tuple[Report, ...]:
+    """The predator got its teeth in. A badly wounded clone has no third wound to spare: it dies with no roll to
+    save it. Otherwise, a roll to live through it wounded, after which the predator retreats to its cries; a clone
+    that dies leaves it hunting."""
+    if wound_level(txn.wounds()) == 2 or not txn.roll(_gamble(_SURVIVE_BASE, txn), "survive", place):
+        txn.record(PcDied(txn.pc(), _THE_PREDATOR, place))
+        return reports
+    wounds = take_wound(txn.wounds())
+    txn.record(PcWounded(txn.pc(), wounds))
+    txn.record(PredatorRetreated())
+    return (*reports, Wounded(wound_level(wounds)))
 
 
 def _needs_turn(needs: Needs, stepped: Needs, reports: list[Report]) -> bool:

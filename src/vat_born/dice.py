@@ -33,7 +33,8 @@ class Odds:
 
     @property
     def chance(self) -> float:
-        return min(1.0, max(0.0, self.base + sum(modifier.delta for modifier in self.modifiers)))
+        # Rounded so float noise in the sum (0.35 - 0.2 is 0.14999999999999997) stays out of the log and the rolls.
+        return round(min(1.0, max(0.0, self.base + sum(modifier.delta for modifier in self.modifiers))), 9)
 
 
 @final

@@ -11,7 +11,9 @@ from vat_born.intents import (
     Drop,
     DropAll,
     Eat,
+    Fight,
     Fill,
+    Flee,
     Intent,
     Inventory,
     Look,
@@ -69,6 +71,8 @@ HELP = (
     Usage("take <thing>", 'pick up what you see: "take ration bar", "take bar", "take all"'),
     Usage("drop <thing>", 'put down what you carry: "drop canteen", "drop all"'),
     Usage("eat <food>", 'eat something you carry: "eat ration bar", "eat stew"'),
+    Usage("fight", "fight off what's attacking you; it asks first, with the odds"),
+    Usage("flee", "run back the way you came from what's attacking you; it asks first, with the odds"),
     Usage("help", "this list"),
     Usage("quit", "stop playing; the world keeps your place"),
 )
@@ -144,6 +148,10 @@ def parse(line: str) -> Command:
             return _dropping(rest)
         case "eat":
             return _eating(rest)
+        case "fight" | "attack":  # extra words are ignored, as in "fight it"
+            return Fight()
+        case "flee" | "run":  # extra words are ignored, as in "run for it"
+            return Flee()
         case "go":
             return _go(rest)
         case "help" | "?":

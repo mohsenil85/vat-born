@@ -1,9 +1,12 @@
 """The PC's needs. Each counts the ticks since it was last answered, and the count reads as a level that says how
-the clone is doing; what comes after the last level is death, which waits for M5."""
+the clone is doing; what comes after the last level is death, which waits for M5. Wounds count the other way:
+down, as they heal."""
 
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import assert_never
+
+from vat_born.clock import TICKS_PER_DAY, TICKS_PER_HOUR
 
 
 class Need(StrEnum):
@@ -24,6 +27,7 @@ class Activity(StrEnum):
     SEARCHING = "searching"
     HANDLING = "handling"
     EATING = "eating"
+    FIGHTING = "fighting"
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,3 +71,26 @@ def tick(needs: Needs, activity: Activity) -> Needs:
     thirst = 0 if activity is Activity.DRINKING else needs.thirst + 1
     fatigue = max(needs.fatigue - 2, 0) if activity is Activity.RESTING else needs.fatigue + 1
     return Needs(thirst, needs.hunger + 1, fatigue)
+
+
+# A wound is a day and a half of healing awake; a badly wounded clone carries two wounds' worth. A third wound
+# kills instead of being counted, so the count never rises past two.
+_WOUND_TICKS = TICKS_PER_DAY + TICKS_PER_HOUR * 12
+
+
+def wound_level(wounds: int) -> int:
+    """How badly wounded with WOUNDS ticks of healing left: 0 unhurt, 1 wounded, 2 badly wounded."""
+    if wounds <= 0:
+        return 0
+    return 1 if wounds <= _WOUND_TICKS else 2
+
+
+def take_wound(wounds: int) -> int:
+    """The count after one wound more: a wound's worth of healing at a time, never past two of them."""
+    return min(wounds + _WOUND_TICKS, 2 * _WOUND_TICKS)
+
+
+def heal(wounds: int, activity: Activity) -> int:
+    """The count after one tick spent doing ACTIVITY: wounds close three times as fast resting as awake."""
+    rate = 3 if activity is Activity.RESTING else 1
+    return max(wounds - rate, 0)
