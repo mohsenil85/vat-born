@@ -1,24 +1,22 @@
 # Vat-Born
 
-A text-first survival/base-building roguelike aboard a colony ship. The engine is a skeleton so far: you can start a
-world, look around, walk between the rooms around the vat bay and out through the bulkhead onto the decks beyond it
-— a corridor, side rooms, and a ladder down, laid out by the world's seed — check the time, ask where you are and
-the shortest known way home to the vat bay, read the map of the places you've been, search the places you find
-for the things they hide, until each has given up everything it had, pick up what you find and carry it with you
-from place to place, putting it down where you choose, eat the food you find, when hunger builds, and carry water
-in a canteen, filled where there's water and drunk from anywhere, and let time pass, which wears on the clone:
-thirst, hunger, and fatigue build and show in `status`. Dangers gather in the background, unseen: something walks
-the decks, and the air recycler hums on. Each can show itself in signs — tracks, a kill, a faltering hum, a warning
-light — which `status` names as dangers once you've come across them. When the thing that walks the decks has the
-hunt about it and catches you waiting, resting, or searching, it attacks, and nothing will do but fighting it off
-or fleeing back the way you came — each a gamble with the odds shown before you commit, and each wound it leaves
-heals only with time. When the air recycler fails, the air in the home section goes bad: a clone breathing it
-grows short of breath, then gasps, then suffocates — and dies — unless it steps out beyond the bulkhead, where the
-breath comes back. Repairing it is work in the vat bay, two hours a stage it has fallen, kept between stints, so
-the breath can drive you out to the corridors and back until the work is done. A badly wounded clone doesn't
-survive a third. Death comes — of the predator, of bad air, of thirst, of hunger — and the body lies where it
-fell with everything it carried; the ship goes on without anyone for a day or three, and then the next clone
-wakes in the vat bay, knowing the map its predecessors walked and nothing else.
+A text-first survival/base-building roguelike aboard a colony ship. The first slice is playable through death and
+the next clone (milestones M0 to M5 in the [build plan](docs/plan.md)):
+
+- Wake in a clone vat and explore the rooms around the vat bay, then the decks beyond the bulkhead, laid out by the
+  world's seed. `look`, `map`, and `where` (with the way home) take no time.
+- Time wears on the clone: thirst, hunger, and fatigue build and show in `status`. Drink at the tap in the vat bay,
+  rest or sleep, and eat what you find.
+- Search a place for what it hides, an hour at a time, against odds you can see, until it has nothing left. Take,
+  carry, and drop what you find; a canteen carries water, and a lamp helps a search.
+- Dangers gather in the background and show themselves in signs: a predator that leaves tracks, then a kill, then
+  cries in the night before it hunts, and an air recycler that falters before it fails. `status` names the dangers
+  you've come across, with their odds.
+- The hunting predator attacks a clone that lingers. Fight or flee, each a gamble whose odds you see before you
+  commit; wounds heal with time, and a third kills. When the air fails, breath runs short at home until you step out
+  to the decks, or repair the recycler, a long job that keeps its progress.
+- Death doesn't end the world. The body stays where it fell with everything it carried, the ship goes on for a day
+  or three, and the next clone wakes in the vat bay, knowing the map and nothing else.
 
 The Python engine owns world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
 player intent and narrate resolved events, but may not change the rules or state directly.
