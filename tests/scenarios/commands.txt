@@ -10,8 +10,9 @@ Type "help" for the commands.
 > help
 Commands:
   status       the day, the time of day, and how you are; takes no time
-  where        where you are; takes no time
+  where        where you are and the way home; takes no time
   look         describe where you are; takes no time
+  map          the places you know and the ways between them; takes no time
   go <way>     walk to the next place: north, south, east, west, up, down (n, s, e, w, u, d)
   wait [time]  let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait until noon"
   help         this list
@@ -36,4 +37,5 @@ That's too long to wait in one go: 30 days at most.
 Day 1, morning. You are clone 1.
 > where am I
 You are in the vat bay.
+You are home.
 > quit

@@ -10,19 +10,23 @@ from vat_born.events import (
     CloneWoke,
     Event,
     LookReport,
+    MapEntry,
+    MapReport,
     NoPath,
     PathAdded,
     PcMoved,
     PhaseChanged,
     PlaceAdded,
     PlaceReport,
+    PlaceVisited,
     Resumed,
     Rolled,
+    Route,
     StatusReport,
     TimePassed,
     WorldCreated,
 )
-from vat_born.world import Exit
+from vat_born.world import Direction, Exit
 
 _NUMBERS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
 _MINUTES = ("ten minutes", "twenty minutes", "half an hour", "forty minutes", "fifty minutes")
@@ -33,7 +37,7 @@ def render(event: Event) -> list[str]:
     match event:
         case WorldCreated(seed=seed):
             return [f"A new world, seed {seed}."]
-        case PlaceAdded() | PathAdded():
+        case PlaceAdded() | PathAdded() | PlaceVisited():
             return []
         case CloneWoke(place_name=place):
             return [f"You wake in a clone vat in {place}."]
@@ -47,12 +51,21 @@ def render(event: Event) -> list[str]:
             return [f"Seed {seed}, clone {run}. {describe_time(time)}.", f"You are in {place}."]
         case StatusReport(time=time, run=run):
             return [f"{describe_time(time)}. You are clone {run}."]
-        case PlaceReport(place_name=place):
-            return [f"You are in {place}."]
+        case PlaceReport(place_name=place, route=route):
+            line = f"You are in {place}."
+            match route:
+                case None:
+                    return [line, "You don't know the way home from here."]
+                case Route(steps=steps, ticks=ticks):
+                    if not steps:
+                        return [line, "You are home."]
+                    return [line, f"The way home: {_route(steps)} ({describe_duration(ticks)})."]
         case NoPath(direction=direction):
             return [f"You can't go {direction} from here."]
         case LookReport(place_name=place, description=description, exits=exits):
             return [place[:1].upper() + place[1:], description, _paths(exits)]
+        case MapReport(places=places):
+            return [_on_the_map(entry) for entry in places]
         case PhaseChanged(before=before, after=after):
             if after.day == before.day:
                 return [f"It is now {after.phase}."]
@@ -104,13 +117,48 @@ def _time_passed(event: TimePassed) -> list[str]:
 
 def _paths(exits: tuple[Exit, ...]) -> str:
     """The exits as one line, in `Direction` order; only a walk longer than ten minutes says how long it is."""
+    return f"Paths: {_exits(exits)}."
+
+
+def _exits(exits: tuple[Exit, ...], *, unknown: bool = False) -> str:
+    """The exits as a comma-separated list, in `Direction` order. With UNKNOWN, a way into unvisited ground says so,
+    after any duration."""
     if not exits:
-        return "Paths: none."
-    ways = ", ".join(
-        f"{out.direction} to {out.place_name}" + (f" ({describe_duration(out.ticks)})" if out.ticks > 1 else "")
-        for out in exits
-    )
-    return f"Paths: {ways}."
+        return "none"
+    return ", ".join(_exit(out, unknown=unknown) for out in exits)
+
+
+def _exit(out: Exit, *, unknown: bool) -> str:
+    inside = [describe_duration(out.ticks)] if out.ticks > 1 else []
+    if unknown and not out.explored:
+        inside.append("unexplored")
+    way = f"{out.direction} to {out.place_name}"
+    return f"{way} ({', '.join(inside)})" if inside else way
+
+
+def _on_the_map(entry: MapEntry) -> str:
+    place = entry.place_name[:1].upper() + entry.place_name[1:]
+    here = " (you are here)" if entry.here else ""
+    return f"{place}{here}: {_exits(entry.exits, unknown=True)}."
+
+
+def _route(steps: tuple[Direction, ...]) -> str:
+    """The steps as a person would give them: "west, then up, then south five times"."""
+    runs: list[tuple[Direction, int]] = []
+    for step in steps:
+        if runs and runs[-1][0] == step:
+            runs[-1] = (step, runs[-1][1] + 1)
+        else:
+            runs.append((step, 1))
+    return ", then ".join(_steps_of_one_way(way, n) for way, n in runs)
+
+
+def _steps_of_one_way(way: Direction, n: int) -> str:
+    if n == 1:
+        return str(way)
+    if n == 2:
+        return f"{way} twice"
+    return f"{way} {_number(n)} times"
 
 
 def _count(n: int, unit: str) -> str:

@@ -49,9 +49,10 @@ class Place:
 
 @dataclass(frozen=True, slots=True)
 class Exit:
-    """A path out of a place: where it leads and how long the walk is."""
+    """A path out of a place: where it leads, how long the walk is, and whether the far end is known ground."""
 
     direction: Direction
     to: NodeId
     place_name: str
     ticks: int
+    explored: bool

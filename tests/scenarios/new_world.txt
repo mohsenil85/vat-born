@@ -11,5 +11,6 @@ Type "help" for the commands.
 Day 1, morning. You are clone 1.
 > where
 You are in the vat bay.
+You are home.
 > status
 Day 1, morning. You are clone 1.

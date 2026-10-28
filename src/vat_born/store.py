@@ -14,7 +14,17 @@ from typing import Self, assert_never, cast, final
 
 from vat_born.clock import Tick
 from vat_born.dice import Dice, Key, Odds, Stream
-from vat_born.events import CloneWoke, Fact, PathAdded, PcMoved, PlaceAdded, Rolled, TimePassed, WorldCreated
+from vat_born.events import (
+    CloneWoke,
+    Fact,
+    PathAdded,
+    PcMoved,
+    PlaceAdded,
+    PlaceVisited,
+    Rolled,
+    TimePassed,
+    WorldCreated,
+)
 from vat_born.world import CharacterId, Direction, Exit, NodeId, Place
 
 # SQL would sort the direction words alphabetically, so the order of a place's paths is set in Python instead.
@@ -22,7 +32,7 @@ _DIRECTION_ORDER = {way: n for n, way in enumerate(Direction)}
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -54,11 +64,18 @@ CREATE TABLE edges (
     PRIMARY KEY (from_node, direction)
 ) STRICT;
 
--- One row per clone: the run counter (design §4).
+-- One row per clone: the run counter (design §4) and where this one woke, which is its way home.
 CREATE TABLE runs (
     n INTEGER PRIMARY KEY,
     pc INTEGER NOT NULL REFERENCES characters (id),
+    home INTEGER NOT NULL REFERENCES nodes (id),
     started_tick INTEGER NOT NULL
+) STRICT;
+
+-- The places a clone has been, kept for the next one (design §4: a new clone knows places, not details).
+CREATE TABLE visited (
+    node INTEGER PRIMARY KEY REFERENCES nodes (id),
+    tick INTEGER NOT NULL
 ) STRICT;
 
 -- Every fact, in order.
@@ -136,21 +153,55 @@ class View:
         return CharacterId(row[0])
 
     def exits(self, place: NodeId) -> tuple[Exit, ...]:
-        """The paths out of PLACE, in `Direction` order."""
+        """The paths out of PLACE, in `Direction` order, each marked for whether its far end has been visited."""
         rows = cast(
-            "list[tuple[str, int, int, str]]",
+            "list[tuple[str, int, int, str, int | None]]",
             self._conn.execute(
-                "SELECT edges.direction, edges.to_node, edges.ticks, nodes.name FROM edges"
-                " JOIN nodes ON nodes.id = edges.to_node WHERE edges.from_node = ?",
+                "SELECT edges.direction, edges.to_node, edges.ticks, nodes.name, visited.node FROM edges"
+                " JOIN nodes ON nodes.id = edges.to_node"
+                " LEFT JOIN visited ON visited.node = edges.to_node"
+                " WHERE edges.from_node = ?",
                 (place,),
             ).fetchall(),
         )
         return tuple(
             sorted(
-                (Exit(Direction(row[0]), NodeId(row[1]), row[3], row[2]) for row in rows),
+                (Exit(Direction(row[0]), NodeId(row[1]), row[3], row[2], row[4] is not None) for row in rows),
                 key=lambda way: _DIRECTION_ORDER[way.direction],
             )
         )
+
+    def visited(self) -> tuple[NodeId, ...]:
+        """The places a clone has been, in ascending node ID order."""
+        rows = cast("list[tuple[int]]", self._conn.execute("SELECT node FROM visited ORDER BY node").fetchall())
+        return tuple(NodeId(row[0]) for row in rows)
+
+    def is_visited(self, place: NodeId) -> bool:
+        row = cast(
+            "tuple[int] | None", self._conn.execute("SELECT node FROM visited WHERE node = ?", (place,)).fetchone()
+        )
+        return row is not None
+
+    def place(self, node: NodeId) -> Place:
+        row = cast(
+            "tuple[int, str, str] | None",
+            self._conn.execute("SELECT id, name, description FROM nodes WHERE id = ?", (node,)).fetchone(),
+        )
+        assert row is not None, f"no place {node}"
+        return Place(NodeId(row[0]), row[1], row[2])
+
+    def home(self) -> Place:
+        """Where the current clone woke."""
+        row = cast(
+            "tuple[int, str, str] | None",
+            self._conn.execute(
+                "SELECT nodes.id, nodes.name, nodes.description FROM runs"
+                " JOIN nodes ON nodes.id = runs.home"
+                " ORDER BY runs.n DESC LIMIT 1",
+            ).fetchone(),
+        )
+        assert row is not None, "no clone has woken"
+        return Place(NodeId(row[0]), row[1], row[2])
 
 
 @final
@@ -282,7 +333,9 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             )
         case CloneWoke(run=run, pc=pc, place=place):
             conn.execute("INSERT INTO characters (id, kind, node) VALUES (?, 'pc', ?)", (pc, place))
-            conn.execute("INSERT INTO runs (n, pc, started_tick) SELECT ?, ?, tick FROM world", (run, pc))
+            conn.execute(
+                "INSERT INTO runs (n, pc, home, started_tick) SELECT ?, ?, ?, tick FROM world", (run, pc, place)
+            )
         case PathAdded(place=place, to=to, direction=direction, ticks=ticks):
             conn.execute(
                 "INSERT INTO edges (from_node, to_node, direction, ticks) VALUES (?, ?, ?, ?)",
@@ -295,6 +348,9 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
         case PcMoved(pc=pc, origin=origin, destination=destination):
             moved = conn.execute("UPDATE characters SET node = ? WHERE id = ? AND node = ?", (destination, pc, origin))
             assert moved.rowcount == 1, f"character {pc} was not at {origin}"
+        case PlaceVisited(place=place):
+            # The primary key refuses a second row for one place, so recording a visit twice fails loudly.
+            conn.execute("INSERT INTO visited (node, tick) SELECT ?, tick FROM world", (place,))
         case TimePassed(start=start, end=end):
             assert end > start, "time only moves forward"
             moved = conn.execute("UPDATE world SET tick = ? WHERE tick = ?", (end, start))

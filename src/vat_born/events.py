@@ -64,6 +64,13 @@ class PcMoved:
 
 
 @dataclass(frozen=True, slots=True)
+class PlaceVisited:
+    """The PC has been to this place. The knowledge belongs to the world, so later clones share it."""
+
+    place: NodeId
+
+
+@dataclass(frozen=True, slots=True)
 class TimePassed:
     start: Tick
     end: Tick
@@ -80,7 +87,7 @@ class Rolled:
     success: bool
 
 
-type Fact = WorldCreated | PlaceAdded | CloneWoke | PathAdded | PcMoved | TimePassed | Rolled
+type Fact = WorldCreated | PlaceAdded | CloneWoke | PathAdded | PcMoved | PlaceVisited | TimePassed | Rolled
 
 
 # Reports
@@ -101,8 +108,17 @@ class StatusReport:
 
 
 @dataclass(frozen=True, slots=True)
+class Route:
+    """A way between two places: the directions to walk, in order, and how long the whole walk takes."""
+
+    steps: tuple[Direction, ...]
+    ticks: int
+
+
+@dataclass(frozen=True, slots=True)
 class PlaceReport:
     place_name: str
+    route: Route | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +126,20 @@ class LookReport:
     place_name: str
     description: str
     exits: tuple[Exit, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class MapEntry:
+    """One place on the map: its name, whether the PC is in it, and the paths out of it."""
+
+    place_name: str
+    here: bool
+    exits: tuple[Exit, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class MapReport:
+    places: tuple[MapEntry, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -125,6 +155,6 @@ class PhaseChanged:
     after: GameTime
 
 
-type Report = Resumed | StatusReport | PlaceReport | LookReport | NoPath | PhaseChanged
+type Report = Resumed | StatusReport | PlaceReport | LookReport | MapReport | NoPath | PhaseChanged
 
 type Event = Fact | Report

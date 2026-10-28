@@ -56,6 +56,7 @@ Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the
   | t0 path_added {"place": 22, "to": 23, "direction": "east", "ticks": 1}
   | t0 path_added {"place": 23, "to": 24, "direction": "east", "ticks": 1}
   | t0 clone_woke {"run": 1, "pc": 1, "place": 1, "place_name": "the vat bay"}
+  | t0 place_visited {"place": 1}
 Type "help" for the commands.
 > n
 You head north to the bulkhead.
@@ -64,6 +65,7 @@ A pressure door twice your height stands half open between this section and the 
 Paths: north to the corridor at frame 10, south to the vat bay (twenty minutes).
   | t2 time_passed {"start": 0, "end": 2, "activity": "walking"}
   | t2 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+  | t2 place_visited {"place": 4}
 > n
 You head north to the corridor at frame 10.
 The corridor at frame 10
@@ -71,6 +73,7 @@ A long corridor runs fore and aft under failing strip lights. Cold air moves alo
 Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
   | t3 time_passed {"start": 2, "end": 3, "activity": "walking"}
   | t3 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+  | t3 place_visited {"place": 5}
 > e
 You head east to the machine shop.
 The machine shop
@@ -78,6 +81,7 @@ Lathes and presses wait under tarps, and a parts cage fills the far wall, its lo
 Paths: west to the corridor at frame 10.
   | t4 time_passed {"start": 3, "end": 4, "activity": "walking"}
   | t4 pc_moved {"pc": 1, "origin": 5, "destination": 12, "direction": "east", "place_name": "the machine shop"}
+  | t4 place_visited {"place": 12}
 > w
 You head west to the corridor at frame 10.
 The corridor at frame 10
@@ -92,6 +96,7 @@ Racks of grow trays climb toward a ceiling of dead lamps. Most of the plants are
 Paths: east to the corridor at frame 10.
   | t6 time_passed {"start": 5, "end": 6, "activity": "walking"}
   | t6 pc_moved {"pc": 1, "origin": 5, "destination": 13, "direction": "west", "place_name": "the hydroponics bay"}
+  | t6 place_visited {"place": 13}
 > e
 You head east to the corridor at frame 10.
 The corridor at frame 10
@@ -106,6 +111,7 @@ A long corridor runs fore and aft under failing strip lights. Cold air moves alo
 Paths: north to the corridor at frame 16 (half an hour), south to the corridor at frame 10 (twenty minutes), west to the med bay.
   | t9 time_passed {"start": 7, "end": 9, "activity": "walking"}
   | t9 pc_moved {"pc": 1, "origin": 5, "destination": 6, "direction": "north", "place_name": "the corridor at frame 14"}
+  | t9 place_visited {"place": 6}
 > look
 The corridor at frame 14
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
@@ -123,6 +129,7 @@ A long corridor runs fore and aft under failing strip lights. Cold air moves alo
 Paths: north to the corridor at frame 19, south to the corridor at frame 14 (half an hour), west to the laundry.
   | t12 time_passed {"start": 9, "end": 12, "activity": "walking"}
   | t12 pc_moved {"pc": 1, "origin": 6, "destination": 7, "direction": "north", "place_name": "the corridor at frame 16"}
+  | t12 place_visited {"place": 7}
 > n
 You head north to the corridor at frame 19.
 The corridor at frame 19
@@ -130,5 +137,7 @@ A long corridor runs fore and aft under failing strip lights. Cold air moves alo
 Paths: north to the corridor at frame 21 (twenty minutes), south to the corridor at frame 16, west to the cargo hold, down to the pump room.
   | t13 time_passed {"start": 12, "end": 13, "activity": "walking"}
   | t13 pc_moved {"pc": 1, "origin": 7, "destination": 8, "direction": "north", "place_name": "the corridor at frame 19"}
+  | t13 place_visited {"place": 8}
 > where
 You are in the corridor at frame 19.
+The way home: south five times (an hour and a half).

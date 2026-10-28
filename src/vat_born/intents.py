@@ -24,6 +24,11 @@ class Look:
 
 
 @dataclass(frozen=True, slots=True)
+class Map:
+    """The places the PC knows and the paths between them."""
+
+
+@dataclass(frozen=True, slots=True)
 class Wait:
     """Let time pass."""
 
@@ -50,6 +55,6 @@ class Move:
     direction: Direction
 
 
-type FreeIntent = Status | Where | Look
+type FreeIntent = Status | Where | Look | Map
 type TimedIntent = Wait | WaitUntil | Move
 type Intent = FreeIntent | TimedIntent

@@ -1,0 +1,110 @@
+# What the clone knows: the places it has been, the map of them, and the way home.
+# seed: 1
+
+A new world, seed 1.
+You wake in a clone vat in the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+Type "help" for the commands.
+> map
+The vat bay (you are here): north to the bulkhead (twenty minutes, unexplored), east to the workshop (unexplored), west to the storeroom (unexplored).
+> where
+You are in the vat bay.
+You are home.
+> n
+You head north to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10, south to the vat bay (twenty minutes).
+  | t2 time_passed {"start": 0, "end": 2, "activity": "walking"}
+  | t2 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+  | t2 place_visited {"place": 4}
+> n
+You head north to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
+  | t3 time_passed {"start": 2, "end": 3, "activity": "walking"}
+  | t3 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+  | t3 place_visited {"place": 5}
+> map
+The vat bay: north to the bulkhead (twenty minutes), east to the workshop (unexplored), west to the storeroom (unexplored).
+The bulkhead: north to the corridor at frame 10, south to the vat bay (twenty minutes).
+The corridor at frame 10 (you are here): north to the corridor at frame 14 (twenty minutes, unexplored), south to the bulkhead, east to the machine shop (unexplored), west to the hydroponics bay (unexplored).
+> where
+You are in the corridor at frame 10.
+The way home: south twice (half an hour).
+> e
+You head east to the machine shop.
+The machine shop
+Lathes and presses wait under tarps, and a parts cage fills the far wall, its lock shot through. The air tastes of metal.
+Paths: west to the corridor at frame 10.
+  | t4 time_passed {"start": 3, "end": 4, "activity": "walking"}
+  | t4 pc_moved {"pc": 1, "origin": 5, "destination": 12, "direction": "east", "place_name": "the machine shop"}
+  | t4 place_visited {"place": 12}
+> w
+You head west to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
+  | t5 time_passed {"start": 4, "end": 5, "activity": "walking"}
+  | t5 pc_moved {"pc": 1, "origin": 12, "destination": 5, "direction": "west", "place_name": "the corridor at frame 10"}
+> n
+You head north to the corridor at frame 14.
+The corridor at frame 14
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 16 (half an hour), south to the corridor at frame 10 (twenty minutes), west to the med bay.
+  | t7 time_passed {"start": 5, "end": 7, "activity": "walking"}
+  | t7 pc_moved {"pc": 1, "origin": 5, "destination": 6, "direction": "north", "place_name": "the corridor at frame 14"}
+  | t7 place_visited {"place": 6}
+> n
+You head north to the corridor at frame 16.
+The corridor at frame 16
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 19, south to the corridor at frame 14 (half an hour), west to the laundry.
+  | t10 time_passed {"start": 7, "end": 10, "activity": "walking"}
+  | t10 pc_moved {"pc": 1, "origin": 6, "destination": 7, "direction": "north", "place_name": "the corridor at frame 16"}
+  | t10 place_visited {"place": 7}
+> n
+You head north to the corridor at frame 19.
+The corridor at frame 19
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 21 (twenty minutes), south to the corridor at frame 16, west to the cargo hold, down to the pump room.
+  | t11 time_passed {"start": 10, "end": 11, "activity": "walking"}
+  | t11 pc_moved {"pc": 1, "origin": 7, "destination": 8, "direction": "north", "place_name": "the corridor at frame 19"}
+  | t11 place_visited {"place": 8}
+> d
+You head down to the pump room.
+The pump room
+Pipes as thick as your waist run off into the dark, sweating and ticking. Somewhere below the grating, water moves.
+Paths: east to the reclamation tanks, up to the corridor at frame 19.
+  | t12 time_passed {"start": 11, "end": 12, "activity": "walking"}
+  | t12 pc_moved {"pc": 1, "origin": 8, "destination": 22, "direction": "down", "place_name": "the pump room"}
+  | t12 place_visited {"place": 22}
+> e
+You head east to the reclamation tanks.
+The reclamation tanks
+Three tanks the size of houses loom over a narrow catwalk, their gauges frozen. A ladder climbs the nearest to a hatch that has been welded shut.
+Paths: east to the cable vault, west to the pump room.
+  | t13 time_passed {"start": 12, "end": 13, "activity": "walking"}
+  | t13 pc_moved {"pc": 1, "origin": 22, "destination": 23, "direction": "east", "place_name": "the reclamation tanks"}
+  | t13 place_visited {"place": 23}
+> map
+The vat bay: north to the bulkhead (twenty minutes), east to the workshop (unexplored), west to the storeroom (unexplored).
+The bulkhead: north to the corridor at frame 10, south to the vat bay (twenty minutes).
+The corridor at frame 10: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay (unexplored).
+The corridor at frame 14: north to the corridor at frame 16 (half an hour), south to the corridor at frame 10 (twenty minutes), west to the med bay (unexplored).
+The corridor at frame 16: north to the corridor at frame 19, south to the corridor at frame 14 (half an hour), west to the laundry (unexplored).
+The corridor at frame 19: north to the corridor at frame 21 (twenty minutes, unexplored), south to the corridor at frame 16, west to the cargo hold (unexplored), down to the pump room.
+The machine shop: west to the corridor at frame 10.
+The pump room: east to the reclamation tanks, up to the corridor at frame 19.
+The reclamation tanks (you are here): east to the cable vault (unexplored), west to the pump room.
+> where
+You are in the reclamation tanks.
+The way home: west, then up, then south five times (about two hours).
+> u
+You can't go up from here.
+> where
+You are in the reclamation tanks.
+The way home: west, then up, then south five times (about two hours).

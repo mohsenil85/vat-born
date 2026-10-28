@@ -2,8 +2,8 @@
 
 A text-first survival/base-building roguelike aboard a colony ship. The engine is a skeleton so far: you can start a
 world, look around, walk between the rooms around the vat bay and out through the bulkhead onto the decks beyond it
-— a corridor, side rooms, and a ladder down, laid out by the world's seed — check the time and where you are, and
-let time pass.
+— a corridor, side rooms, and a ladder down, laid out by the world's seed — check the time, ask where you are and
+the shortest known way home to the vat bay, read the map of the places you've been, and let time pass.
 
 The Python engine owns world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
 player intent and narrate resolved events, but may not change the rules or state directly.

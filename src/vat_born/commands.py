@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 
 from vat_born.clock import MINUTES_PER_TICK
-from vat_born.intents import Intent, Look, Move, Status, Wait, WaitUntil, Where
+from vat_born.intents import Intent, Look, Map, Move, Status, Wait, WaitUntil, Where
 from vat_born.world import Direction
 
 
@@ -35,8 +35,9 @@ class Usage:
 
 HELP = (
     Usage("status", "the day, the time of day, and how you are; takes no time"),
-    Usage("where", "where you are; takes no time"),
+    Usage("where", "where you are and the way home; takes no time"),
     Usage("look", "describe where you are; takes no time"),
+    Usage("map", "the places you know and the ways between them; takes no time"),
     Usage("go <way>", "walk to the next place: north, south, east, west, up, down (n, s, e, w, u, d)"),
     Usage("wait [time]", 'let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait until noon"'),
     Usage("help", "this list"),
@@ -81,6 +82,8 @@ def parse(line: str) -> Command:
             return Where()
         case "look" | "l":
             return Look()
+        case "map" | "m":
+            return Map()
         case "wait":
             return _wait(rest)
         case "go":

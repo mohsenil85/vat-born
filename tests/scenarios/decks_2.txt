@@ -52,6 +52,7 @@ Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the
   | t0 path_added {"place": 20, "to": 21, "direction": "east", "ticks": 1}
   | t0 path_added {"place": 21, "to": 22, "direction": "east", "ticks": 1}
   | t0 clone_woke {"run": 1, "pc": 1, "place": 1, "place_name": "the vat bay"}
+  | t0 place_visited {"place": 1}
 Type "help" for the commands.
 > n
 You head north to the bulkhead.
@@ -60,6 +61,7 @@ A pressure door twice your height stands half open between this section and the 
 Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
   | t2 time_passed {"start": 0, "end": 2, "activity": "walking"}
   | t2 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+  | t2 place_visited {"place": 4}
 > n
 You head north to the corridor at frame 10.
 The corridor at frame 10
@@ -67,6 +69,7 @@ A long corridor runs fore and aft under failing strip lights. Cold air moves alo
 Paths: north to the corridor at frame 14 (half an hour), south to the bulkhead (twenty minutes), west to the gymnasium.
   | t4 time_passed {"start": 2, "end": 4, "activity": "walking"}
   | t4 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+  | t4 place_visited {"place": 5}
 > e
 You can't go east from here.
 > w
@@ -76,6 +79,7 @@ A running track circles a sunken court, its lane lines still bright. A climbing 
 Paths: east to the corridor at frame 10.
   | t5 time_passed {"start": 4, "end": 5, "activity": "walking"}
   | t5 pc_moved {"pc": 1, "origin": 5, "destination": 12, "direction": "west", "place_name": "the gymnasium"}
+  | t5 place_visited {"place": 12}
 > w
 You can't go west from here.
 > e
@@ -92,6 +96,7 @@ A long corridor runs fore and aft under failing strip lights. Cold air moves alo
 Paths: north to the corridor at frame 16, south to the corridor at frame 10 (half an hour), east to the galley.
   | t9 time_passed {"start": 6, "end": 9, "activity": "walking"}
   | t9 pc_moved {"pc": 1, "origin": 5, "destination": 6, "direction": "north", "place_name": "the corridor at frame 14"}
+  | t9 place_visited {"place": 6}
 > look
 The corridor at frame 14
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
@@ -105,6 +110,7 @@ Long steel tables are bolted to the deck in rows, and the serving hatch hangs ha
 Paths: west to the corridor at frame 14.
   | t10 time_passed {"start": 9, "end": 10, "activity": "walking"}
   | t10 pc_moved {"pc": 1, "origin": 6, "destination": 13, "direction": "east", "place_name": "the galley"}
+  | t10 place_visited {"place": 13}
 > u
 You can't go up from here.
 > n
@@ -113,3 +119,4 @@ You can't go north from here.
 You can't go north from here.
 > where
 You are in the galley.
+The way home: west, then south three times (about an hour).
