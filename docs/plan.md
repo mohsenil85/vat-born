@@ -19,7 +19,8 @@ change.
 ## Time and actions
 
 - **A tick is 10 minutes**, so a day is 144 ticks. *Proposed:* the phases are morning 06–12, afternoon 12–18, evening
-  18–22, and night 22–06, and day 1 starts at 06:00.
+  18–22, and night 22–06, and day 1 starts at 06:00. A game day runs from 06:00 to 06:00, so a night belongs to the
+  day it began in.
 - **Free actions take no time and are unlimited:** `look`, `examine`, `inventory`, `map`, `status`, `where`, and the
   log. They describe only what the PC knows. Every other action costs at least one tick.
 - **The player sees the day, the phase, and plain durations** ("Day 3, evening", "about an hour"), never raw ticks.
@@ -62,8 +63,8 @@ change.
 ## People and content
 
 - **PC needs:** hydration, calories, fatigue, and injuries. Morale waits until allies and the narrator can drive it.
-- *Proposed:* **no skills in the slice.** Odds modifiers come from tools, conditions, needs, and injuries. Skills
-  that improve with use (§8.1) wait until the playtest shows whether the loop needs them.
+- **No skills in the slice.** Odds modifiers come from tools, conditions, needs, and injuries. Skills that improve
+  with use (§8.1) wait until the playtest shows whether the loop needs them.
 - **Allies follow standing orders unless a need or their own goal wins out**, and the engine decides refusals and
   desertion (§8.2). *Proposed:* in the slice, allies come only from other vats (§16 Q18).
 - **The faction is a wary scavenger clan.** Neutral at first, they trade, compete for the same salvage, and can tip
@@ -73,8 +74,6 @@ change.
 - *Proposed:* **worldgen takes only a seed** (§16 Q8).
 
 ## How the engine is driven
-
-*Proposed:*
 
 - `vat-born [--seed N] [--world PATH]` plays one persistent world, stored in a SQLite file that is created on first
   use. `--world` names the file. Without it, worlds live in the user data directory, one per seed (§3.2): `--seed N`
@@ -87,26 +86,28 @@ change.
 
 ## Invariants in code
 
-*Proposed:* M0 builds the engine invariants from AGENTS.md into the engine's structure, so a worker can't break one
-by missing a sentence:
+M0 built the engine invariants from AGENTS.md into the engine's structure, so a worker can't break one by missing a
+sentence:
 
-- **Randomness comes from named streams.** Game code never holds a `random.Random`; it asks the world's dice for a
-  draw keyed by what the draw is for (seed, purpose, tick, subject). A new roll in one system then doesn't shift
-  every later roll on the seed, a resumed world needs no saved generator state, and transcripts change only where
-  behavior did.
-- **Every chance is rolled against odds:** a base rate plus named modifiers. The dice log each roll with its
+- **Randomness comes from named streams.** Every draw comes from a stream keyed by what it is for (seed, purpose,
+  tick, subject), never from one shared generator. A new roll in one system then doesn't shift every later roll on
+  the seed, a resumed world needs no saved generator state, and transcripts change only where behavior did. The
+  `random` module and the wall clock are lint errors everywhere but `dice.py`.
+- **Every chance is rolled against odds:** a base rate plus named modifiers. Each roll is logged with its
   breakdown, so the log and the player see the same numbers.
-- **The schema keeps the log append-only:** triggers reject updates and deletes.
-- **Free actions get a read-only view** of the world, so they can't change state or create knowledge.
+- **State changes only by recording a fact,** which applies it and appends it to the log in one step, so the log
+  can't miss a change. The schema keeps the log append-only: triggers reject updates and deletes.
+- **Free actions get a read-only view** of the world, and SQLite refuses writes outside a timed action's
+  transaction, so free actions can't change state or create knowledge.
 
 ## Testing
 
 The orchestrator is also the integration tester (decided 2026-10-27). There are no unit tests.
 
 - **Scenarios are transcripts.** Each file in `tests/scenarios/` holds a seed, a line saying what it covers, and a
-  session: each command, then the text the player saw and the events it logged. `uv run pytest` replays every
-  scenario in a fresh scratch world and compares. One command regenerates the files when a change is meant to alter
-  them, so review reads behavior changes as transcript diffs.
+  session: each command, then the text the player saw and the events it logged (`vat-born --show-log`).
+  `uv run pytest` replays every scenario in a fresh scratch world and compares; `uv run pytest --regen` rewrites the
+  files when a change is meant to alter them, so review reads behavior changes as transcript diffs.
 - **Each scenario also replays under a different hash seed, and split across two processes** (stop halfway, then
   resume). Both must give the same transcript, which catches set-order bugs and state that isn't saved.
 - **A crash sweep** plays many seeds for a few in-game days and checks only that nothing crashes, the engine's own
@@ -134,8 +135,8 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
 - **M3 Search and items:** hidden pools, `search`, items and inventory, and explicit odds with their breakdown.
 - **M4 Danger:** both hazard clocks with their telegraphs, odds in `status`, confirmations, `fight`, and injuries.
 - **M5 Death:** permadeath, bones, the respawn gap and its report, and clone knowledge.
-- **Playtest** (*proposed*): the designer plays the death-and-respawn loop on one seed, with template text. This is
-  the §14 success test, run early on purpose: if the loop isn't fun, we change course before building M6–M9.
+- **Playtest:** the designer plays the death-and-respawn loop on one seed, with template text. This is the §14
+  success test, run early on purpose: if the loop isn't fun, we change course before building M6–M9.
 - **M6 Base:** the four rooms, construction with saved progress, and upgrades with their effects on the clocks.
 - **M7 People:** one ally from another vat (orders, needs, jobs, reports), the scavenger faction, and both set pieces.
 - **M8 End of the slice:** the locked captain's-seat door.
@@ -144,7 +145,8 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
 - Then the success test (§14) again, on the whole slice with the narrator: is a death-and-respawn loop on one seed
   fun as text alone?
 
-Status: M0 not started.
+Status: M0 done (2026-10-27): a world can be made or resumed, and `status`, `where`, and `wait` work. Next: M1,
+starting with the calibration tasks.
 
 ## Running the work
 

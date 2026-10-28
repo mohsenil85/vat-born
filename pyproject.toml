@@ -35,34 +35,25 @@ ignore = [
     "TD", "FIX",                  # TODO comments are allowed
     "EM", "TRY003",               # `raise ValueError(f"...")` is fine
     "S101",                       # assert is fine for invariants and type narrowing
-    "S311",                       # flags random.Random itself; banned-api below polices the global RNG instead
     "PLR2004",                    # magic-value comparisons
     "C901", "PLR0911", "PLR0912", # misfire on exhaustive `match` dispatch, which we want
     "TC",                         # keep imports at runtime; no TYPE_CHECKING blocks
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"src/vat_born/cli.py" = ["T201"] # frontends print; the engine emits events
-"tests/**" = ["INP001"]
+"src/vat_born/cli.py" = ["T201"]            # frontends print; the engine emits events
+"src/vat_born/dice.py" = ["S311", "TID251"] # the one module that wraps `random`, one keyed stream per draw
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
-"random.binomialvariate".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.choice".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.choices".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.expovariate".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.gauss".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.normalvariate".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.randint".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.random".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.randrange".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.sample".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.seed".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.shuffle".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.triangular".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
-"random.uniform".msg = "Draw from the world's seeded random.Random; the global RNG breaks seed replay."
+"random".msg = "Roll through the world's dice (Txn.roll, Txn.stream) so every draw is keyed and replays from the seed."
+"time".msg = "Game time is ticks (vat_born.clock); the wall clock must never affect an outcome."
+"datetime.date.today".msg = "Game time is ticks (vat_born.clock); the wall clock must never affect an outcome."
+"datetime.datetime.now".msg = "Game time is ticks (vat_born.clock); the wall clock must never affect an outcome."
+"datetime.datetime.today".msg = "Game time is ticks (vat_born.clock); the wall clock must never affect an outcome."
+"datetime.datetime.utcnow".msg = "Game time is ticks (vat_born.clock); the wall clock must never affect an outcome."
 
 [tool.basedpyright]
 typeCheckingMode = "recommended"          # every rule on; warnings fail the run too

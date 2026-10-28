@@ -1,0 +1,5 @@
+# Places, by kind. A name reads mid-sentence: "You are in the vat bay."
+# Every clone wakes in the vat bay; worldgen (M1) places the rest.
+
+[vat_bay]
+name = "the vat bay"

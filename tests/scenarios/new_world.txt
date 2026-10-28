@@ -1,0 +1,15 @@
+# A new clone wakes in the vat bay. Free actions take no time and log nothing.
+# seed: 7
+
+A new world, seed 7.
+You wake in a clone vat in the vat bay.
+  | t0 world_created {"seed": 7}
+  | t0 place_added {"place": 1, "layer": "decks", "kind": "vat_bay", "name": "the vat bay"}
+  | t0 clone_woke {"run": 1, "pc": 1, "place": 1, "place_name": "the vat bay"}
+Type "help" for the commands.
+> status
+Day 1, morning. You are clone 1.
+> where
+You are in the vat bay.
+> status
+Day 1, morning. You are clone 1.

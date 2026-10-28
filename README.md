@@ -1,10 +1,21 @@
 # Vat-Born
 
-A text-first survival/base-building roguelike aboard a colony ship. This repository is at the engine-scaffold stage;
-there is no playable game yet.
+A text-first survival/base-building roguelike aboard a colony ship. The engine is a skeleton so far: you can start a
+world, check the time and where you are, and let time pass.
 
-The Python engine will own world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
+The Python engine owns world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
 player intent and narrate resolved events, but may not change the rules or state directly.
+
+## Playing
+
+```sh
+uv run vat-born                 # resume the last world you played, or start a new one
+uv run vat-born --seed 42       # play world 42, making it on first use
+uv run vat-born --world PATH    # play the world stored in PATH
+```
+
+Worlds are SQLite files in `$XDG_DATA_HOME/vat-born` (by default `~/.local/share/vat-born`), one per seed. Type
+`help` in the game for the commands.
 
 ## Development
 
@@ -12,10 +23,10 @@ Requires [uv](https://docs.astral.sh/uv/), which provides Python 3.14 and the pi
 
 ```sh
 uv sync                                                                # create .venv from uv.lock
-uv run vat-born                                                        # run the scaffold
 uv run ruff check --fix && uv run ruff format && uv run basedpyright   # lint, format, type-check
-uv run pytest
-git config core.hooksPath .githooks                                    # once per clone: commits run the check
+uv run pytest                                                          # replay the scenario transcripts
+uv run pytest --regen                                                  # rewrite them after an intended change
+git config core.hooksPath .githooks                                    # once per clone: commits run all of it
 ```
 
 Coding agents: read [AGENTS.md](AGENTS.md) first.

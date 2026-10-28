@@ -1,0 +1,68 @@
+# Waiting passes time in ten-minute ticks, and the phase and the day follow the clock.
+# seed: 7
+
+A new world, seed 7.
+You wake in a clone vat in the vat bay.
+  | t0 world_created {"seed": 7}
+  | t0 place_added {"place": 1, "layer": "decks", "kind": "vat_bay", "name": "the vat bay"}
+  | t0 clone_woke {"run": 1, "pc": 1, "place": 1, "place_name": "the vat bay"}
+Type "help" for the commands.
+> wait
+You wait ten minutes.
+  | t1 time_passed {"start": 0, "end": 1, "activity": "waiting"}
+> wait 20 minutes
+You wait twenty minutes.
+  | t3 time_passed {"start": 1, "end": 3, "activity": "waiting"}
+> wait 15 minutes
+You wait twenty minutes.
+  | t5 time_passed {"start": 3, "end": 5, "activity": "waiting"}
+> status
+Day 1, morning. You are clone 1.
+> wait an hour
+You wait an hour.
+  | t11 time_passed {"start": 5, "end": 11, "activity": "waiting"}
+> wait 90 minutes
+You wait an hour and a half.
+  | t20 time_passed {"start": 11, "end": 20, "activity": "waiting"}
+> wait 2h
+You wait two hours.
+  | t32 time_passed {"start": 20, "end": 32, "activity": "waiting"}
+> status
+Day 1, morning. You are clone 1.
+> wait 3 hours
+You wait three hours.
+It is now afternoon.
+  | t50 time_passed {"start": 32, "end": 50, "activity": "waiting"}
+> status
+Day 1, afternoon. You are clone 1.
+> wait 130 minutes
+You wait about two hours.
+  | t63 time_passed {"start": 50, "end": 63, "activity": "waiting"}
+> wait 2 hours
+You wait two hours.
+It is now evening.
+  | t75 time_passed {"start": 63, "end": 75, "activity": "waiting"}
+> status
+Day 1, evening. You are clone 1.
+> wait 8 hours
+You wait eight hours.
+It is now night.
+  | t123 time_passed {"start": 75, "end": 123, "activity": "waiting"}
+> status
+Day 1, night. You are clone 1.
+> wait 4 hours
+You wait four hours.
+It is now day 2, morning.
+  | t147 time_passed {"start": 123, "end": 147, "activity": "waiting"}
+> status
+Day 2, morning. You are clone 1.
+> wait a day
+You wait a day.
+It is now day 3, morning.
+  | t291 time_passed {"start": 147, "end": 291, "activity": "waiting"}
+> wait 2 days
+You wait two days.
+It is now day 5, morning.
+  | t579 time_passed {"start": 291, "end": 579, "activity": "waiting"}
+> status
+Day 5, morning. You are clone 1.

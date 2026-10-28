@@ -1,0 +1,37 @@
+# The command line: help, words it does not know, durations it cannot read, case, extra words, and quitting.
+# seed: 3
+
+A new world, seed 3.
+You wake in a clone vat in the vat bay.
+  | t0 world_created {"seed": 3}
+  | t0 place_added {"place": 1, "layer": "decks", "kind": "vat_bay", "name": "the vat bay"}
+  | t0 clone_woke {"run": 1, "pc": 1, "place": 1, "place_name": "the vat bay"}
+Type "help" for the commands.
+> help
+Commands:
+  status       the day, the time of day, and how you are; takes no time
+  where        where you are; takes no time
+  wait [time]  let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait a day"
+  help         this list
+  quit         stop playing; the world keeps your place
+> xyzzy
+I don't know "xyzzy". Type "help" for the commands.
+> wait banana
+Wait how long? Try "wait", "wait 30 minutes", or "wait 2 hours".
+> wait 0 minutes
+Wait how long? Try "wait", "wait 30 minutes", or "wait 2 hours".
+> wait -5 minutes
+Wait how long? Try "wait", "wait 30 minutes", or "wait 2 hours".
+> wait 1.5 hours
+Wait how long? Try "wait", "wait 30 minutes", or "wait 2 hours".
+> wait 3 fortnights
+Wait how long? Try "wait", "wait 30 minutes", or "wait 2 hours".
+> wait 31 days
+That's too long to wait in one go: 30 days at most.
+> wait 99999999999999999999 days
+That's too long to wait in one go: 30 days at most.
+> STATUS
+Day 1, morning. You are clone 1.
+> where am I
+You are in the vat bay.
+> quit

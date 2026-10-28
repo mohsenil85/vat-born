@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Runs the AGENTS.md check on exactly what is being committed: a snapshot of the index (code, config, and lockfile)
-# with its own throwaway venv, so a commit that leaves out a file the staged code needs fails here instead of on main.
+# Runs the AGENTS.md check and the tests on exactly what is being committed: a snapshot of the index (code, config,
+# tests, and lockfile) with its own throwaway venv, so a commit that leaves out a file the staged code needs fails
+# here instead of on main.
 # Enable once per clone:
 #   git config core.hooksPath .githooks
 set -euo pipefail
@@ -10,7 +11,7 @@ trap 'rm -rf "$snapshot"' EXIT
 snapshot=$(cd "$snapshot" && pwd -P)
 
 fail() {
-    echo "pre-commit: the check failed on the staged files. Fix them, stage the fixes, and commit again." >&2
+    echo "pre-commit: the check or the tests failed on the staged files. Fix them, stage the fixes, commit again." >&2
     echo "pre-commit: never bypass this hook with --no-verify." >&2
     exit 1
 }
@@ -27,4 +28,5 @@ check() {
 check ruff check --no-cache
 check ruff format --check --no-cache
 check basedpyright
+check pytest -q -p no:cacheprovider
 [ "$status" -eq 0 ] || fail
