@@ -38,6 +38,7 @@ All in `src/vat_born/`:
 - `store.py`: the SQLite schema and all the SQL: `View`, `Txn`, and how each fact is applied.
 - `dice.py`: keyed random streams and `Odds`.
 - `clock.py`: ticks, days, and phases.
+- `needs.py`: thirst, hunger, and fatigue: how they count up each tick and the levels they read as.
 - `worldgen.py`: the decks beyond the home section, laid out from the seed as facts for the engine to record.
 - `render.py`: events to the text a player reads.
 - `content/`: the TOML content (`places.toml`, the fixed `home.toml` section, worldgen's `decks.toml` tables) and
@@ -50,8 +51,10 @@ All in `src/vat_born/`:
 3. Resolve it in `engine.py`:
    - a free action reads the `View` and returns reports;
    - a timed action records facts on the `Txn`. Each new fact needs a dataclass in `events.py`, a case in
-     `store.py`'s `_apply` (bump `SCHEMA_VERSION` if the schema changes), and a case in `render.py`. A timed action
-     that can't be done records nothing and returns a report saying why; no time passes.
+     `store.py`'s `_apply` (bump `SCHEMA_VERSION` if the schema changes), and a case in `render.py`. Time passes
+     only through `engine._pass`, the tick loop where the PC's needs (and later the hazard clocks and allies) take
+     their turns; never record `TimePassed` yourself. A timed action that can't be done records nothing and returns
+     a report saying why; no time passes.
 4. basedpyright fails until every `match` covers the new types, which is how you find the places left to change.
 5. Your task names the scenarios that show the action. Regenerate them and read every line.
 
