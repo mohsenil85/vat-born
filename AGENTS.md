@@ -39,6 +39,7 @@ All in `src/vat_born/`:
 - `dice.py`: keyed random streams and `Odds`.
 - `clock.py`: ticks, days, and phases.
 - `needs.py`: thirst, hunger, and fatigue: how they count up each tick and the levels they read as.
+- `hazards.py`: the hazard clocks (the predator, the air recycler): their stages, paces, and odds.
 - `worldgen.py`: the decks beyond the home section, and what each place hides, drawn from the seed as facts for the
   engine to record.
 - `render.py`: events to the text a player reads.
@@ -53,8 +54,8 @@ All in `src/vat_born/`:
    - a free action reads the `View` and returns reports;
    - a timed action records facts on the `Txn`. Each new fact needs a dataclass in `events.py`, a case in
      `store.py`'s `_apply` (bump `SCHEMA_VERSION` if the schema changes), and a case in `render.py`. Time passes
-     only through `engine._pass`, the tick loop where the PC's needs (and later the hazard clocks and allies) take
-     their turns; never record `TimePassed` yourself. A timed action that can't be done records nothing and returns
+     only through `engine._pass`, the tick loop where the PC's needs and the hazard clocks (and later the allies)
+     take their turns; never record `TimePassed` yourself. A timed action that can't be done records nothing and returns
      a report saying why; no time passes.
 4. basedpyright fails until every `match` covers the new types, which is how you find the places left to change.
 5. Your task names the scenarios that show the action. Regenerate them and read every line.
@@ -102,6 +103,8 @@ If an orchestrator gave you a task, these hold unless the task says otherwise:
 - Your report lists every file you changed, each transcript included, with the reason it changed.
 - If the task contradicts itself or the code, make the smallest change that resolves it, and flag it under
   Questions.
+- Work in small steps: make each edit as soon as you know it and run the check as you go. Planning a whole task in
+  one turn can use up the turn's output before anything is written.
 
 ## Python and tooling
 
@@ -141,7 +144,8 @@ These come from `docs/design.md`, and the engine's structure enforces most of th
   rolls, or writes game state; the engine validates intents and applies every change.
 - Same seed and same inputs give the same outcomes. All randomness comes from the world's dice, through the `Txn`:
   `txn.roll(odds, purpose, *key)` for a chance and `txn.stream(purpose, *key)` for any other draw. Each draw is keyed
-  by what it's for, so adding one never shifts another. `random` and the wall clock are lint errors outside
+  by what it's for, so adding one never shifts another. The one chance not rolled through `txn.roll` is a hazard
+  clock's per-tick roll, drawn from a keyed stream and logged only when it fires (see `hazards.py`). `random` and the wall clock are lint errors outside
   `dice.py`. `hash()` and set iteration order must never affect an outcome, so sort before you iterate; the tests
   replay every scenario under a second hash seed to catch it.
 - State changes only through `txn.record(fact)`, which applies the fact and appends it to the event log. The schema
