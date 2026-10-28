@@ -95,60 +95,69 @@ You stop waiting.
 > status
 Day 2, evening. You are clone 1.
 You're very thirsty, hungry, and exhausted.
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t217 time_passed {"start": 216, "end": 217, "activity": "drinking"}
+  | t217 needs_changed {"pc": 1, "thirst": 0, "hunger": 217, "fatigue": 217}
 > wait until noon
 You wait 12 hours.
 It is now day 3, morning.
-You're dying of thirst.
+You're getting thirsty.
 You stop waiting.
-  | t288 time_passed {"start": 216, "end": 288, "activity": "waiting"}
-  | t288 needs_changed {"pc": 1, "thirst": 288, "hunger": 288, "fatigue": 288}
-  | t288 clock_advanced {"clock": "predator", "stage": 1, "at": 288, "daily": 0.5, "forced": true}
-  | t288 sign_left {"clock": "predator", "stage": 1, "place": 5, "at": 288}
+  | t289 time_passed {"start": 217, "end": 289, "activity": "waiting"}
+  | t289 needs_changed {"pc": 1, "thirst": 72, "hunger": 289, "fatigue": 289}
+  | t289 clock_advanced {"clock": "predator", "stage": 1, "at": 288, "daily": 0.5, "forced": true}
+  | t289 sign_left {"clock": "predator", "stage": 1, "place": 5, "at": 288}
 > wait till dusk
-You wait 12 hours.
+You wait about 12 hours.
 It is now evening.
-  | t360 time_passed {"start": 288, "end": 360, "activity": "waiting"}
-  | t360 needs_changed {"pc": 1, "thirst": 360, "hunger": 360, "fatigue": 360}
+  | t360 time_passed {"start": 289, "end": 360, "activity": "waiting"}
+  | t360 needs_changed {"pc": 1, "thirst": 143, "hunger": 360, "fatigue": 360}
 > wait 'til night
-You wait four hours.
-It is now night.
-  | t384 time_passed {"start": 360, "end": 384, "activity": "waiting"}
-  | t384 needs_changed {"pc": 1, "thirst": 384, "hunger": 384, "fatigue": 384}
+You wait ten minutes.
+You're very thirsty now.
+You stop waiting.
+  | t361 time_passed {"start": 360, "end": 361, "activity": "waiting"}
+  | t361 needs_changed {"pc": 1, "thirst": 144, "hunger": 361, "fatigue": 361}
 > wait until midnight
-You wait two hours.
-  | t396 time_passed {"start": 384, "end": 396, "activity": "waiting"}
-  | t396 needs_changed {"pc": 1, "thirst": 396, "hunger": 396, "fatigue": 396}
+You wait about six hours.
+It is now night.
+  | t396 time_passed {"start": 361, "end": 396, "activity": "waiting"}
+  | t396 needs_changed {"pc": 1, "thirst": 179, "hunger": 396, "fatigue": 396}
 > status
 Day 3, night. You are clone 1.
-You're dying of thirst, hungry, and exhausted.
+You're very thirsty, hungry, and exhausted.
 > wait for dawn
 You wait six hours.
 It is now day 4, morning.
 You're very hungry now.
 Now and then the hum behind the walls stutters, like a missed breath.
   | t432 time_passed {"start": 396, "end": 432, "activity": "waiting"}
-  | t432 needs_changed {"pc": 1, "thirst": 432, "hunger": 432, "fatigue": 432}
+  | t432 needs_changed {"pc": 1, "thirst": 215, "hunger": 432, "fatigue": 432}
   | t432 clock_advanced {"clock": "air", "stage": 1, "at": 432, "daily": 0.25, "forced": true}
   | t432 sign_left {"clock": "air", "stage": 1, "place": 1, "at": 432}
   | t432 sign_seen {"run": 1, "clock": "air", "stage": 1}
 > status
 Day 4, morning. You are clone 1.
-You're dying of thirst, very hungry, and exhausted.
+You're very thirsty, very hungry, and exhausted.
 The air recycler is faltering. It grows worse at 25% a day.
 > wait until the evening
 You wait 12 hours.
 It is now evening.
   | t504 time_passed {"start": 432, "end": 504, "activity": "waiting"}
-  | t504 needs_changed {"pc": 1, "thirst": 504, "hunger": 504, "fatigue": 504}
+  | t504 needs_changed {"pc": 1, "thirst": 287, "hunger": 504, "fatigue": 504}
 > wait for 2 hours
-You wait two hours.
-  | t516 time_passed {"start": 504, "end": 516, "activity": "waiting"}
-  | t516 needs_changed {"pc": 1, "thirst": 516, "hunger": 516, "fatigue": 516}
+You wait ten minutes.
+You're dying of thirst.
+You stop waiting.
+  | t505 time_passed {"start": 504, "end": 505, "activity": "waiting"}
+  | t505 needs_changed {"pc": 1, "thirst": 288, "hunger": 505, "fatigue": 505}
 > wait until noon
-You wait 16 hours.
+You wait about 18 hours.
 It is now day 5, afternoon.
-  | t612 time_passed {"start": 516, "end": 612, "activity": "waiting"}
-  | t612 needs_changed {"pc": 1, "thirst": 612, "hunger": 612, "fatigue": 612}
+  | t612 time_passed {"start": 505, "end": 612, "activity": "waiting"}
+  | t612 needs_changed {"pc": 1, "thirst": 395, "hunger": 612, "fatigue": 612}
   | t612 clock_advanced {"clock": "predator", "stage": 2, "at": 523, "daily": 0.6, "forced": false}
   | t612 sign_left {"clock": "predator", "stage": 2, "place": 11, "at": 523}
 > wait until lunch

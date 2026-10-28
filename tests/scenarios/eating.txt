@@ -254,6 +254,19 @@ You take a ration bar.
   | t90 time_passed {"start": 89, "end": 90, "activity": "handling"}
   | t90 needs_changed {"pc": 1, "thirst": 90, "hunger": 90, "fatigue": 90}
   | t90 item_taken {"pc": 1, "item": 1, "place": 3, "name": "ration bar"}
+> e
+You head east to the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+  | t91 time_passed {"start": 90, "end": 91, "activity": "walking"}
+  | t91 needs_changed {"pc": 1, "thirst": 91, "hunger": 91, "fatigue": 91}
+  | t91 pc_moved {"pc": 1, "origin": 3, "destination": 1, "direction": "east", "place_name": "the vat bay"}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t92 time_passed {"start": 91, "end": 92, "activity": "drinking"}
+  | t92 needs_changed {"pc": 1, "thirst": 0, "hunger": 92, "fatigue": 92}
 > i
 You're carrying a ration bar, a tin of stew, two handfuls of pale shoots, and a hand lamp.
 > eat lamp
@@ -261,77 +274,92 @@ You can't eat a hand lamp.
 > eat of
 Which do you mean: the tin of stew or the handful of pale shoots?
 > wait 3 days
-You wait an hour.
+You wait forty minutes.
 It is now night.
 You're getting tired.
 You stop waiting.
-  | t96 time_passed {"start": 90, "end": 96, "activity": "waiting"}
-  | t96 needs_changed {"pc": 1, "thirst": 96, "hunger": 96, "fatigue": 96}
+  | t96 time_passed {"start": 92, "end": 96, "activity": "waiting"}
+  | t96 needs_changed {"pc": 1, "thirst": 4, "hunger": 96, "fatigue": 96}
 > wait 3 days
 You wait eight hours.
 It is now day 2, morning.
-You're very thirsty now.
 You're getting hungry.
 You're very tired now.
 You stop waiting.
   | t144 time_passed {"start": 96, "end": 144, "activity": "waiting"}
-  | t144 needs_changed {"pc": 1, "thirst": 144, "hunger": 144, "fatigue": 144}
+  | t144 needs_changed {"pc": 1, "thirst": 52, "hunger": 144, "fatigue": 144}
 > wait 3 days
-You wait 12 hours.
+You wait about three hours.
+You're getting thirsty.
+You stop waiting.
+  | t164 time_passed {"start": 144, "end": 164, "activity": "waiting"}
+  | t164 needs_changed {"pc": 1, "thirst": 72, "hunger": 164, "fatigue": 164}
+> wait 3 days
+You wait about nine hours.
 It is now evening.
 You're exhausted.
 You stop waiting.
-  | t216 time_passed {"start": 144, "end": 216, "activity": "waiting"}
-  | t216 needs_changed {"pc": 1, "thirst": 216, "hunger": 216, "fatigue": 216}
+  | t216 time_passed {"start": 164, "end": 216, "activity": "waiting"}
+  | t216 needs_changed {"pc": 1, "thirst": 124, "hunger": 216, "fatigue": 216}
 > wait 3 days
-You wait 12 hours.
-It is now day 3, morning.
-You're dying of thirst.
+You wait about three hours.
+You're very thirsty now.
 You stop waiting.
-  | t288 time_passed {"start": 216, "end": 288, "activity": "waiting"}
-  | t288 needs_changed {"pc": 1, "thirst": 288, "hunger": 288, "fatigue": 288}
-  | t288 clock_advanced {"clock": "predator", "stage": 1, "at": 226, "daily": 0.4, "forced": false}
-  | t288 sign_left {"clock": "predator", "stage": 1, "place": 5, "at": 226}
+  | t236 time_passed {"start": 216, "end": 236, "activity": "waiting"}
+  | t236 needs_changed {"pc": 1, "thirst": 144, "hunger": 236, "fatigue": 236}
+  | t236 clock_advanced {"clock": "predator", "stage": 1, "at": 226, "daily": 0.4, "forced": false}
+  | t236 sign_left {"clock": "predator", "stage": 1, "place": 5, "at": 226}
 > wait 3 days
 You wait a day.
+It is now day 3, evening.
+You're dying of thirst.
+You stop waiting.
+  | t380 time_passed {"start": 236, "end": 380, "activity": "waiting"}
+  | t380 needs_changed {"pc": 1, "thirst": 288, "hunger": 380, "fatigue": 380}
+> wait 3 days
+You wait about nine hours.
 It is now day 4, morning.
 You're very hungry now.
+Now and then the hum behind the walls stutters, like a missed breath.
 You stop waiting.
-  | t432 time_passed {"start": 288, "end": 432, "activity": "waiting"}
-  | t432 needs_changed {"pc": 1, "thirst": 432, "hunger": 432, "fatigue": 432}
+  | t432 time_passed {"start": 380, "end": 432, "activity": "waiting"}
+  | t432 needs_changed {"pc": 1, "thirst": 340, "hunger": 432, "fatigue": 432}
   | t432 clock_advanced {"clock": "predator", "stage": 2, "at": 416, "daily": 0.5, "forced": false}
   | t432 sign_left {"clock": "predator", "stage": 2, "place": 14, "at": 416}
   | t432 clock_advanced {"clock": "air", "stage": 1, "at": 432, "daily": 0.25, "forced": true}
   | t432 sign_left {"clock": "air", "stage": 1, "place": 1, "at": 432}
+  | t432 sign_seen {"run": 1, "clock": "air", "stage": 1}
 > status
 Day 4, morning. You are clone 1.
 You're dying of thirst, very hungry, and exhausted.
+The air recycler is faltering. It grows worse at 25% a day.
 > eat stew
 You eat a tin of stew.
 You're only hungry now.
   | t433 time_passed {"start": 432, "end": 433, "activity": "eating"}
-  | t433 needs_changed {"pc": 1, "thirst": 433, "hunger": 433, "fatigue": 433}
+  | t433 needs_changed {"pc": 1, "thirst": 341, "hunger": 433, "fatigue": 433}
   | t433 ate {"pc": 1, "item": 5, "name": "tin of stew", "hunger": 289}
 > eat shoots
 You eat a handful of pale shoots.
 You're still hungry.
   | t434 time_passed {"start": 433, "end": 434, "activity": "eating"}
-  | t434 needs_changed {"pc": 1, "thirst": 434, "hunger": 290, "fatigue": 434}
+  | t434 needs_changed {"pc": 1, "thirst": 342, "hunger": 290, "fatigue": 434}
   | t434 ate {"pc": 1, "item": 3, "name": "handful of pale shoots", "hunger": 218}
 > eat bars
 You eat a ration bar.
 You're no longer hungry.
   | t435 time_passed {"start": 434, "end": 435, "activity": "eating"}
-  | t435 needs_changed {"pc": 1, "thirst": 435, "hunger": 219, "fatigue": 435}
+  | t435 needs_changed {"pc": 1, "thirst": 343, "hunger": 219, "fatigue": 435}
   | t435 ate {"pc": 1, "item": 1, "name": "ration bar", "hunger": 75}
 > eat pale shoots
 You eat a handful of pale shoots.
   | t436 time_passed {"start": 435, "end": 436, "activity": "eating"}
-  | t436 needs_changed {"pc": 1, "thirst": 436, "hunger": 76, "fatigue": 436}
+  | t436 needs_changed {"pc": 1, "thirst": 344, "hunger": 76, "fatigue": 436}
   | t436 ate {"pc": 1, "item": 4, "name": "handful of pale shoots", "hunger": 4}
 > status
 Day 4, morning. You are clone 1.
 You're dying of thirst and exhausted.
+The air recycler is faltering. It grows worse at 25% a day.
 > i
 You're carrying a hand lamp.
 > eat shoots

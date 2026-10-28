@@ -1,180 +1,447 @@
-# The predator hunts (M4): waiting out on the decks until its clock stands at the hunt, it comes for the clone
-# mid-wait. Nothing else will do but fighting or fleeing; the clone holds back from running, then fights and lives
-# through it wounded. Its wounds heal over the days of waiting, until the predator comes again and the clone isn't
-# so lucky. `status` names the hunt, the odds of an attack where the clone is, and the wounds among its needs.
-# seed: 2
+# The predator hunts. A clone rests and drinks at home until it hears the cries, then rests out on the decks; when
+# the predator comes, it fights and lives through it wounded, and the next time it runs for it and dies.
+# seed: 69
 
-A new world, seed 2.
+A new world, seed 69.
 You wake in a clone vat in the vat bay.
 The vat bay
 It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
 Type "help" for the commands.
-> north
+> rest 30 days
+You rest 12 hours.
+It is now evening.
+You're getting thirsty.
+You stop resting.
+  | t72 time_passed {"start": 0, "end": 72, "activity": "resting"}
+  | t72 needs_changed {"pc": 1, "thirst": 72, "hunger": 72, "fatigue": 0}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t73 time_passed {"start": 72, "end": 73, "activity": "drinking"}
+  | t73 needs_changed {"pc": 1, "thirst": 0, "hunger": 73, "fatigue": 1}
+> rest 30 days
+You rest about 12 hours.
+It is now day 2, morning.
+You feel rested.
+You're getting hungry.
+You stop resting.
+  | t144 time_passed {"start": 73, "end": 144, "activity": "resting"}
+  | t144 needs_changed {"pc": 1, "thirst": 71, "hunger": 144, "fatigue": 0}
+> rest 30 days
+You rest ten minutes.
+You're getting thirsty.
+You stop resting.
+  | t145 time_passed {"start": 144, "end": 145, "activity": "resting"}
+  | t145 needs_changed {"pc": 1, "thirst": 72, "hunger": 145, "fatigue": 0}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t146 time_passed {"start": 145, "end": 146, "activity": "drinking"}
+  | t146 needs_changed {"pc": 1, "thirst": 0, "hunger": 146, "fatigue": 1}
+> rest 30 days
+You rest 12 hours.
+It is now evening.
+You feel rested.
+You're getting thirsty.
+You stop resting.
+  | t218 time_passed {"start": 146, "end": 218, "activity": "resting"}
+  | t218 needs_changed {"pc": 1, "thirst": 72, "hunger": 218, "fatigue": 0}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t219 time_passed {"start": 218, "end": 219, "activity": "drinking"}
+  | t219 needs_changed {"pc": 1, "thirst": 0, "hunger": 219, "fatigue": 1}
+> rest 30 days
+You rest 12 hours.
+It is now day 3, morning.
+You feel rested.
+You're getting thirsty.
+You stop resting.
+  | t291 time_passed {"start": 219, "end": 291, "activity": "resting"}
+  | t291 needs_changed {"pc": 1, "thirst": 72, "hunger": 291, "fatigue": 0}
+  | t291 clock_advanced {"clock": "predator", "stage": 1, "at": 246, "daily": 0.4, "forced": false}
+  | t291 sign_left {"clock": "predator", "stage": 1, "place": 7, "at": 246}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t292 time_passed {"start": 291, "end": 292, "activity": "drinking"}
+  | t292 needs_changed {"pc": 1, "thirst": 0, "hunger": 292, "fatigue": 1}
+> rest 30 days
+You rest 12 hours.
+It is now evening.
+You feel rested.
+You're getting thirsty.
+You stop resting.
+  | t364 time_passed {"start": 292, "end": 364, "activity": "resting"}
+  | t364 needs_changed {"pc": 1, "thirst": 72, "hunger": 364, "fatigue": 0}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t365 time_passed {"start": 364, "end": 365, "activity": "drinking"}
+  | t365 needs_changed {"pc": 1, "thirst": 0, "hunger": 365, "fatigue": 1}
+> rest 30 days
+You rest about 11 hours.
+It is now day 4, morning.
+You feel rested.
+You're very hungry now.
+Now and then the hum behind the walls stutters, like a missed breath.
+You stop resting.
+  | t432 time_passed {"start": 365, "end": 432, "activity": "resting"}
+  | t432 needs_changed {"pc": 1, "thirst": 67, "hunger": 432, "fatigue": 0}
+  | t432 clock_advanced {"clock": "predator", "stage": 2, "at": 411, "daily": 0.5, "forced": false}
+  | t432 sign_left {"clock": "predator", "stage": 2, "place": 22, "at": 411}
+  | t432 clock_advanced {"clock": "air", "stage": 1, "at": 432, "daily": 0.25, "forced": true}
+  | t432 sign_left {"clock": "air", "stage": 1, "place": 1, "at": 432}
+  | t432 sign_seen {"run": 1, "clock": "air", "stage": 1}
+> rest 30 days
+You rest fifty minutes.
+You're getting thirsty.
+You stop resting.
+  | t437 time_passed {"start": 432, "end": 437, "activity": "resting"}
+  | t437 needs_changed {"pc": 1, "thirst": 72, "hunger": 437, "fatigue": 0}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t438 time_passed {"start": 437, "end": 438, "activity": "drinking"}
+  | t438 needs_changed {"pc": 1, "thirst": 0, "hunger": 438, "fatigue": 1}
+> rest 30 days
+You rest 12 hours.
+It is now evening.
+You feel rested.
+You're getting thirsty.
+You stop resting.
+  | t510 time_passed {"start": 438, "end": 510, "activity": "resting"}
+  | t510 needs_changed {"pc": 1, "thirst": 72, "hunger": 510, "fatigue": 0}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t511 time_passed {"start": 510, "end": 511, "activity": "drinking"}
+  | t511 needs_changed {"pc": 1, "thirst": 0, "hunger": 511, "fatigue": 1}
+> rest 30 days
+You rest 12 hours.
+It is now day 5, morning.
+You feel rested.
+You're getting thirsty.
+You stop resting.
+  | t583 time_passed {"start": 511, "end": 583, "activity": "resting"}
+  | t583 needs_changed {"pc": 1, "thirst": 72, "hunger": 583, "fatigue": 0}
+  | t583 clock_advanced {"clock": "predator", "stage": 3, "at": 576, "daily": 0.7, "forced": false}
+  | t583 sign_left {"clock": "predator", "stage": 3, "place": null, "at": 576}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t584 time_passed {"start": 583, "end": 584, "activity": "drinking"}
+  | t584 needs_changed {"pc": 1, "thirst": 0, "hunger": 584, "fatigue": 1}
+> rest 30 days
+You rest 12 hours.
+It is now evening.
+You feel rested.
+You're getting thirsty.
+You stop resting.
+  | t656 time_passed {"start": 584, "end": 656, "activity": "resting"}
+  | t656 needs_changed {"pc": 1, "thirst": 72, "hunger": 656, "fatigue": 0}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t657 time_passed {"start": 656, "end": 657, "activity": "drinking"}
+  | t657 needs_changed {"pc": 1, "thirst": 0, "hunger": 657, "fatigue": 1}
+> rest 30 days
+You rest four and a half hours.
+It is now night.
+You feel rested.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop resting.
+  | t684 time_passed {"start": 657, "end": 684, "activity": "resting"}
+  | t684 needs_changed {"pc": 1, "thirst": 27, "hunger": 684, "fatigue": 0}
+  | t684 sign_seen {"run": 1, "clock": "predator", "stage": 3}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t685 time_passed {"start": 684, "end": 685, "activity": "drinking"}
+  | t685 needs_changed {"pc": 1, "thirst": 0, "hunger": 685, "fatigue": 1}
+> n
 You head north to the bulkhead.
 The bulkhead
 A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
 Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
-  | t2 time_passed {"start": 0, "end": 2, "activity": "walking"}
-  | t2 needs_changed {"pc": 1, "thirst": 2, "hunger": 2, "fatigue": 2}
-  | t2 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
-  | t2 place_visited {"place": 4}
-> north
+  | t687 time_passed {"start": 685, "end": 687, "activity": "walking"}
+  | t687 needs_changed {"pc": 1, "thirst": 2, "hunger": 687, "fatigue": 3}
+  | t687 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+  | t687 place_visited {"place": 4}
+> n
 You head north to the corridor at frame 10.
 The corridor at frame 10
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
-Paths: north to the corridor at frame 14 (half an hour), south to the bulkhead (twenty minutes), west to the gymnasium.
-  | t4 time_passed {"start": 2, "end": 4, "activity": "walking"}
-  | t4 needs_changed {"pc": 1, "thirst": 4, "hunger": 4, "fatigue": 4}
-  | t4 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
-  | t4 place_visited {"place": 5}
-> wait 30 days
-You wait about 11 hours.
-It is now evening.
+Paths: north to the corridor at frame 13, south to the bulkhead (twenty minutes), east to the machine shop.
+  | t689 time_passed {"start": 687, "end": 689, "activity": "walking"}
+  | t689 needs_changed {"pc": 1, "thirst": 4, "hunger": 689, "fatigue": 5}
+  | t689 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+  | t689 place_visited {"place": 5}
+> rest 30 days
+You rest about 11 hours.
+It is now day 6, afternoon.
+You feel rested.
 You're getting thirsty.
-You stop waiting.
-  | t72 time_passed {"start": 4, "end": 72, "activity": "waiting"}
-  | t72 needs_changed {"pc": 1, "thirst": 72, "hunger": 72, "fatigue": 72}
-> wait 30 days
-You wait four hours.
+You stop resting.
+  | t757 time_passed {"start": 689, "end": 757, "activity": "resting"}
+  | t757 needs_changed {"pc": 1, "thirst": 72, "hunger": 757, "fatigue": 0}
+  | t757 clock_advanced {"clock": "air", "stage": 2, "at": 720, "daily": 0.35, "forced": true}
+  | t757 sign_left {"clock": "air", "stage": 2, "place": 1, "at": 720}
+> s
+You head south to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
+  | t759 time_passed {"start": 757, "end": 759, "activity": "walking"}
+  | t759 needs_changed {"pc": 1, "thirst": 74, "hunger": 759, "fatigue": 2}
+  | t759 pc_moved {"pc": 1, "origin": 5, "destination": 4, "direction": "south", "place_name": "the bulkhead"}
+> s
+You head south to the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Now and then the hum behind the walls stutters, like a missed breath.
+The air in here tastes stale and close.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+  | t761 time_passed {"start": 759, "end": 761, "activity": "walking"}
+  | t761 needs_changed {"pc": 1, "thirst": 76, "hunger": 761, "fatigue": 4}
+  | t761 pc_moved {"pc": 1, "origin": 4, "destination": 1, "direction": "south", "place_name": "the vat bay"}
+  | t761 sign_seen {"run": 1, "clock": "air", "stage": 2}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t762 time_passed {"start": 761, "end": 762, "activity": "drinking"}
+  | t762 needs_changed {"pc": 1, "thirst": 0, "hunger": 762, "fatigue": 5}
+> n
+You head north to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
+  | t764 time_passed {"start": 762, "end": 764, "activity": "walking"}
+  | t764 needs_changed {"pc": 1, "thirst": 2, "hunger": 764, "fatigue": 7}
+  | t764 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+> n
+You head north to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 13, south to the bulkhead (twenty minutes), east to the machine shop.
+  | t766 time_passed {"start": 764, "end": 766, "activity": "walking"}
+  | t766 needs_changed {"pc": 1, "thirst": 4, "hunger": 766, "fatigue": 9}
+  | t766 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+> rest 30 days
+You rest about 10 hours.
 It is now night.
-You're getting tired.
-You stop waiting.
-  | t96 time_passed {"start": 72, "end": 96, "activity": "waiting"}
-  | t96 needs_changed {"pc": 1, "thirst": 96, "hunger": 96, "fatigue": 96}
-> wait 30 days
-You wait eight hours.
-It is now day 2, morning.
-You're very thirsty now.
-You're getting hungry.
-You're very tired now.
-You stop waiting.
-  | t144 time_passed {"start": 96, "end": 144, "activity": "waiting"}
-  | t144 needs_changed {"pc": 1, "thirst": 144, "hunger": 144, "fatigue": 144}
-> wait 30 days
-You wait 12 hours.
-It is now evening.
-You're exhausted.
-You stop waiting.
-  | t216 time_passed {"start": 144, "end": 216, "activity": "waiting"}
-  | t216 needs_changed {"pc": 1, "thirst": 216, "hunger": 216, "fatigue": 216}
-> wait 30 days
-You wait 12 hours.
-It is now day 3, morning.
-You're dying of thirst.
-You stop waiting.
-  | t288 time_passed {"start": 216, "end": 288, "activity": "waiting"}
-  | t288 needs_changed {"pc": 1, "thirst": 288, "hunger": 288, "fatigue": 288}
-  | t288 clock_advanced {"clock": "predator", "stage": 1, "at": 288, "daily": 0.5, "forced": true}
-  | t288 sign_left {"clock": "predator", "stage": 1, "place": 10, "at": 288}
-> wait 30 days
-You wait a day.
-It is now day 4, morning.
-You're very hungry now.
-You stop waiting.
-  | t432 time_passed {"start": 288, "end": 432, "activity": "waiting"}
-  | t432 needs_changed {"pc": 1, "thirst": 432, "hunger": 432, "fatigue": 432}
-  | t432 clock_advanced {"clock": "air", "stage": 1, "at": 432, "daily": 0.25, "forced": true}
-  | t432 sign_left {"clock": "air", "stage": 1, "place": 1, "at": 432}
-> wait 30 days
-You wait about three days.
-It is now day 6, night.
+You feel rested.
 Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
-You stop waiting.
-  | t828 time_passed {"start": 432, "end": 828, "activity": "waiting"}
-  | t828 needs_changed {"pc": 1, "thirst": 828, "hunger": 828, "fatigue": 828}
-  | t828 clock_advanced {"clock": "predator", "stage": 2, "at": 491, "daily": 0.6, "forced": false}
-  | t828 sign_left {"clock": "predator", "stage": 2, "place": 20, "at": 491}
-  | t828 clock_advanced {"clock": "predator", "stage": 3, "at": 702, "daily": 0.7, "forced": false}
-  | t828 sign_left {"clock": "predator", "stage": 3, "place": null, "at": 702}
-  | t828 clock_advanced {"clock": "air", "stage": 2, "at": 720, "daily": 0.35, "forced": true}
-  | t828 sign_left {"clock": "air", "stage": 2, "place": 1, "at": 720}
-  | t828 sign_seen {"run": 1, "clock": "predator", "stage": 3}
-> wait 30 days
-You wait about 12 hours.
-It is now day 7, afternoon.
+You stop resting.
+  | t828 time_passed {"start": 766, "end": 828, "activity": "resting"}
+  | t828 needs_changed {"pc": 1, "thirst": 66, "hunger": 828, "fatigue": 0}
+> rest 30 days
+You rest an hour.
+You're getting thirsty.
+You stop resting.
+  | t834 time_passed {"start": 828, "end": 834, "activity": "resting"}
+  | t834 needs_changed {"pc": 1, "thirst": 72, "hunger": 834, "fatigue": 0}
+  | t834 clock_advanced {"clock": "predator", "stage": 4, "at": 829, "daily": 0.8, "forced": false}
+> s
+You head south to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
+  | t836 time_passed {"start": 834, "end": 836, "activity": "walking"}
+  | t836 needs_changed {"pc": 1, "thirst": 74, "hunger": 836, "fatigue": 2}
+  | t836 pc_moved {"pc": 1, "origin": 5, "destination": 4, "direction": "south", "place_name": "the bulkhead"}
+> s
+You head south to the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Now and then the hum behind the walls stutters, like a missed breath.
+The air in here tastes stale and close.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+  | t838 time_passed {"start": 836, "end": 838, "activity": "walking"}
+  | t838 needs_changed {"pc": 1, "thirst": 76, "hunger": 838, "fatigue": 4}
+  | t838 pc_moved {"pc": 1, "origin": 4, "destination": 1, "direction": "south", "place_name": "the vat bay"}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t839 time_passed {"start": 838, "end": 839, "activity": "drinking"}
+  | t839 needs_changed {"pc": 1, "thirst": 0, "hunger": 839, "fatigue": 5}
+> n
+You head north to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
+  | t841 time_passed {"start": 839, "end": 841, "activity": "walking"}
+  | t841 needs_changed {"pc": 1, "thirst": 2, "hunger": 841, "fatigue": 7}
+  | t841 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+> n
+You head north to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 13, south to the bulkhead (twenty minutes), east to the machine shop.
+  | t843 time_passed {"start": 841, "end": 843, "activity": "walking"}
+  | t843 needs_changed {"pc": 1, "thirst": 4, "hunger": 843, "fatigue": 9}
+  | t843 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+> rest 30 days
+You rest about five hours.
+It is now day 7, morning.
+You feel rested.
 Something huge comes at you out of the dark, all teeth and hooked claws: the predator!
-  | t901 time_passed {"start": 828, "end": 901, "activity": "waiting"}
-  | t901 needs_changed {"pc": 1, "thirst": 901, "hunger": 901, "fatigue": 901}
-  | t901 clock_advanced {"clock": "predator", "stage": 4, "at": 849, "daily": 0.8, "forced": false}
-  | t901 predator_attacked {"place": 5, "at": 901, "odds": {"base": 0.4, "modifiers": []}}
-  | t901 sign_seen {"run": 1, "clock": "predator", "stage": 4}
-> status
-Day 7, afternoon. You are clone 1.
-You're dying of thirst, very hungry, and exhausted.
-Something is hunting on the decks. An attack where you are: 40% a day.
-> wait
-The predator is on you. Fight, or flee!
-> flee
-Run for it? 30% (base 50%, exhausted -20%) to get away; if not, 50% (base 70%, exhausted -20%) to live through it, wounded. (yes or no)
-> no
-You hold back.
+  | t874 time_passed {"start": 843, "end": 874, "activity": "resting"}
+  | t874 needs_changed {"pc": 1, "thirst": 35, "hunger": 874, "fatigue": 0}
+  | t874 predator_attacked {"place": 5, "at": 874, "odds": {"base": 0.4, "modifiers": []}}
+  | t874 sign_seen {"run": 1, "clock": "predator", "stage": 4}
 > fight
-Fight it? 15% (base 35%, exhausted -20%) to drive it off; if not, 50% (base 70%, exhausted -20%) to live through it, wounded. (yes or no)
+Fight it? 35% to drive it off; if not, 70% to live through it, wounded. (yes or no)
 > yes
-Fight 15% (base 35%, exhausted -20%): failure.
-Survive 50% (base 70%, exhausted -20%): success.
+Fight 35%: failure.
+Survive 70%: success.
 It tears into you.
 It slinks off into the dark, sated for now.
 You're wounded.
-  | t902 time_passed {"start": 901, "end": 902, "activity": "fighting"}
-  | t902 needs_changed {"pc": 1, "thirst": 902, "hunger": 902, "fatigue": 902}
-  | t902 rolled {"purpose": "fight", "key": [5], "odds": {"base": 0.35, "modifiers": [{"reason": "exhausted", "delta": -0.2}]}, "chance": 0.15, "value": 0.9175706246767431, "success": false}
-  | t902 rolled {"purpose": "survive", "key": [5], "odds": {"base": 0.7, "modifiers": [{"reason": "exhausted", "delta": -0.2}]}, "chance": 0.5, "value": 0.0961677264043167, "success": true}
-  | t902 pc_wounded {"pc": 1, "wounds": 216}
-  | t902 predator_retreated {}
-> status
-Day 7, afternoon. You are clone 1.
-You're dying of thirst, very hungry, exhausted, and wounded.
-Something cries on the decks at night. It grows worse at 80% a day.
-> wait 30 days
-You wait about 12 hours.
+  | t875 time_passed {"start": 874, "end": 875, "activity": "fighting"}
+  | t875 needs_changed {"pc": 1, "thirst": 36, "hunger": 875, "fatigue": 1}
+  | t875 rolled {"purpose": "fight", "key": [5], "odds": {"base": 0.35, "modifiers": []}, "chance": 0.35, "value": 0.5331261796848852, "success": false}
+  | t875 rolled {"purpose": "survive", "key": [5], "odds": {"base": 0.7, "modifiers": []}, "chance": 0.7, "value": 0.10671822998196623, "success": true}
+  | t875 pc_wounded {"pc": 1, "wounds": 216}
+  | t875 predator_retreated {}
+> rest 30 days
+You rest six hours.
+It is now afternoon.
+You feel rested.
+You're getting thirsty.
+You stop resting.
+  | t911 time_passed {"start": 875, "end": 911, "activity": "resting"}
+  | t911 needs_changed {"pc": 1, "thirst": 72, "hunger": 911, "fatigue": 0}
+  | t911 wounds_changed {"pc": 1, "wounds": 108}
+> s
+You head south to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
+  | t913 time_passed {"start": 911, "end": 913, "activity": "walking"}
+  | t913 needs_changed {"pc": 1, "thirst": 74, "hunger": 913, "fatigue": 2}
+  | t913 wounds_changed {"pc": 1, "wounds": 106}
+  | t913 pc_moved {"pc": 1, "origin": 5, "destination": 4, "direction": "south", "place_name": "the bulkhead"}
+> s
+You head south to the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Now and then the hum behind the walls stutters, like a missed breath.
+The air in here tastes stale and close.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+  | t915 time_passed {"start": 913, "end": 915, "activity": "walking"}
+  | t915 needs_changed {"pc": 1, "thirst": 76, "hunger": 915, "fatigue": 4}
+  | t915 wounds_changed {"pc": 1, "wounds": 104}
+  | t915 pc_moved {"pc": 1, "origin": 4, "destination": 1, "direction": "south", "place_name": "the vat bay"}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t916 time_passed {"start": 915, "end": 916, "activity": "drinking"}
+  | t916 needs_changed {"pc": 1, "thirst": 0, "hunger": 916, "fatigue": 5}
+  | t916 wounds_changed {"pc": 1, "wounds": 103}
+> n
+You head north to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
+  | t918 time_passed {"start": 916, "end": 918, "activity": "walking"}
+  | t918 needs_changed {"pc": 1, "thirst": 2, "hunger": 918, "fatigue": 7}
+  | t918 wounds_changed {"pc": 1, "wounds": 101}
+  | t918 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+> n
+You head north to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 13, south to the bulkhead (twenty minutes), east to the machine shop.
+  | t920 time_passed {"start": 918, "end": 920, "activity": "walking"}
+  | t920 needs_changed {"pc": 1, "thirst": 4, "hunger": 920, "fatigue": 9}
+  | t920 wounds_changed {"pc": 1, "wounds": 99}
+  | t920 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+> rest 30 days
+You rest about nine hours.
 It is now night.
-Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
-You stop waiting.
-  | t972 time_passed {"start": 902, "end": 972, "activity": "waiting"}
-  | t972 needs_changed {"pc": 1, "thirst": 972, "hunger": 972, "fatigue": 972}
-  | t972 wounds_changed {"pc": 1, "wounds": 146}
-  | t972 clock_advanced {"clock": "air", "stage": 3, "at": 922, "daily": 0.4, "forced": false}
-  | t972 sign_left {"clock": "air", "stage": 3, "place": 1, "at": 922}
-> wait 30 days
-You wait six hours.
-It is now day 8, morning.
-You're starving.
-You stop waiting.
-  | t1008 time_passed {"start": 972, "end": 1008, "activity": "waiting"}
-  | t1008 needs_changed {"pc": 1, "thirst": 1008, "hunger": 1008, "fatigue": 1008}
-  | t1008 wounds_changed {"pc": 1, "wounds": 110}
-> wait 30 days
-You wait 18 hours.
-It is now night.
-Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
-You stop waiting.
-  | t1116 time_passed {"start": 1008, "end": 1116, "activity": "waiting"}
-  | t1116 needs_changed {"pc": 1, "thirst": 1116, "hunger": 1116, "fatigue": 1116}
-  | t1116 wounds_changed {"pc": 1, "wounds": 2}
-> wait 30 days
-You wait about two hours.
+You feel rested.
 Your wounds have healed.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop resting.
+  | t972 time_passed {"start": 920, "end": 972, "activity": "resting"}
+  | t972 needs_changed {"pc": 1, "thirst": 56, "hunger": 972, "fatigue": 0}
+  | t972 wounds_changed {"pc": 1, "wounds": 0}
+  | t972 clock_advanced {"clock": "air", "stage": 3, "at": 943, "daily": 0.4, "forced": false}
+  | t972 sign_left {"clock": "air", "stage": 3, "place": 1, "at": 943}
+> rest 30 days
+You rest about three hours.
+You're getting thirsty.
+You stop resting.
+  | t988 time_passed {"start": 972, "end": 988, "activity": "resting"}
+  | t988 needs_changed {"pc": 1, "thirst": 72, "hunger": 988, "fatigue": 0}
+> s
+You head south to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
+  | t990 time_passed {"start": 988, "end": 990, "activity": "walking"}
+  | t990 needs_changed {"pc": 1, "thirst": 74, "hunger": 990, "fatigue": 2}
+  | t990 pc_moved {"pc": 1, "origin": 5, "destination": 4, "direction": "south", "place_name": "the bulkhead"}
+> s
+You head south to the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Now and then the hum behind the walls stutters, like a missed breath.
+The air in here tastes stale and close.
+A red warning light pulses above the door.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+  | t992 time_passed {"start": 990, "end": 992, "activity": "walking"}
+  | t992 needs_changed {"pc": 1, "thirst": 76, "hunger": 992, "fatigue": 4}
+  | t992 pc_moved {"pc": 1, "origin": 4, "destination": 1, "direction": "south", "place_name": "the vat bay"}
+  | t992 sign_seen {"run": 1, "clock": "air", "stage": 3}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t993 time_passed {"start": 992, "end": 993, "activity": "drinking"}
+  | t993 needs_changed {"pc": 1, "thirst": 0, "hunger": 993, "fatigue": 5}
+> n
+You head north to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
+  | t995 time_passed {"start": 993, "end": 995, "activity": "walking"}
+  | t995 needs_changed {"pc": 1, "thirst": 2, "hunger": 995, "fatigue": 7}
+  | t995 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+> n
+You head north to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 13, south to the bulkhead (twenty minutes), east to the machine shop.
+  | t997 time_passed {"start": 995, "end": 997, "activity": "walking"}
+  | t997 needs_changed {"pc": 1, "thirst": 4, "hunger": 997, "fatigue": 9}
+  | t997 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+> rest 30 days
+You rest about two hours.
+It is now day 8, morning.
+You feel rested.
+You're starving.
+You stop resting.
+  | t1008 time_passed {"start": 997, "end": 1008, "activity": "resting"}
+  | t1008 needs_changed {"pc": 1, "thirst": 15, "hunger": 1008, "fatigue": 0}
+> rest 30 days
+You rest six and a half hours.
+It is now afternoon.
 Something huge comes at you out of the dark, all teeth and hooked claws: the predator!
-  | t1130 time_passed {"start": 1116, "end": 1130, "activity": "waiting"}
-  | t1130 needs_changed {"pc": 1, "thirst": 1130, "hunger": 1130, "fatigue": 1130}
-  | t1130 wounds_changed {"pc": 1, "wounds": 0}
-  | t1130 clock_advanced {"clock": "predator", "stage": 4, "at": 1128, "daily": 0.8, "forced": false}
-  | t1130 predator_attacked {"place": 5, "at": 1130, "odds": {"base": 0.4, "modifiers": [{"reason": "at night", "delta": 0.2}]}}
-  | t1130 sign_seen {"run": 1, "clock": "predator", "stage": 4}
-> wait 30 days
-The predator is on you. Fight, or flee!
-> fight
-Fight it? 15% (base 35%, exhausted -20%) to drive it off; if not, 50% (base 70%, exhausted -20%) to live through it, wounded. (yes or no)
+  | t1047 time_passed {"start": 1008, "end": 1047, "activity": "resting"}
+  | t1047 needs_changed {"pc": 1, "thirst": 54, "hunger": 1047, "fatigue": 0}
+  | t1047 clock_advanced {"clock": "predator", "stage": 4, "at": 1031, "daily": 0.8, "forced": false}
+  | t1047 predator_attacked {"place": 5, "at": 1047, "odds": {"base": 0.4, "modifiers": []}}
+  | t1047 sign_seen {"run": 1, "clock": "predator", "stage": 4}
+> flee
+Run for it? 50% to get away; if not, 70% to live through it, wounded. (yes or no)
 > yes
-Fight 15% (base 35%, exhausted -20%): failure.
-Survive 50% (base 70%, exhausted -20%): failure.
+Flee 50%: failure.
+Survive 70%: failure.
 It drags you down. You are dead.
-  | t1131 time_passed {"start": 1130, "end": 1131, "activity": "fighting"}
-  | t1131 needs_changed {"pc": 1, "thirst": 1131, "hunger": 1131, "fatigue": 1131}
-  | t1131 rolled {"purpose": "fight", "key": [5], "odds": {"base": 0.35, "modifiers": [{"reason": "exhausted", "delta": -0.2}]}, "chance": 0.15, "value": 0.6192957400612402, "success": false}
-  | t1131 rolled {"purpose": "survive", "key": [5], "odds": {"base": 0.7, "modifiers": [{"reason": "exhausted", "delta": -0.2}]}, "chance": 0.5, "value": 0.634181890190308, "success": false}
-  | t1131 pc_died {"pc": 1, "cause": "the predator", "place": 5}
-> status
-You are dead. Type quit to stop.
+  | t1047 rolled {"purpose": "flee", "key": [5], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.9110291875889874, "success": false}
+  | t1048 time_passed {"start": 1047, "end": 1048, "activity": "fighting"}
+  | t1048 needs_changed {"pc": 1, "thirst": 55, "hunger": 1048, "fatigue": 1}
+  | t1048 rolled {"purpose": "survive", "key": [5], "odds": {"base": 0.7, "modifiers": []}, "chance": 0.7, "value": 0.9630834008558372, "success": false}
+  | t1048 pc_died {"pc": 1, "cause": "the predator", "place": 5}

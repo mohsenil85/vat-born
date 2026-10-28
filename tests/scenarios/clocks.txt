@@ -19,81 +19,185 @@ You're getting thirsty.
 You stop waiting.
   | t72 time_passed {"start": 0, "end": 72, "activity": "waiting"}
   | t72 needs_changed {"pc": 1, "thirst": 72, "hunger": 72, "fatigue": 72}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t73 time_passed {"start": 72, "end": 73, "activity": "drinking"}
+  | t73 needs_changed {"pc": 1, "thirst": 0, "hunger": 73, "fatigue": 73}
 > wait 30 days
-You wait four hours.
+You wait about four hours.
 It is now night.
 You're getting tired.
 You stop waiting.
-  | t96 time_passed {"start": 72, "end": 96, "activity": "waiting"}
-  | t96 needs_changed {"pc": 1, "thirst": 96, "hunger": 96, "fatigue": 96}
+  | t96 time_passed {"start": 73, "end": 96, "activity": "waiting"}
+  | t96 needs_changed {"pc": 1, "thirst": 23, "hunger": 96, "fatigue": 96}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t97 time_passed {"start": 96, "end": 97, "activity": "drinking"}
+  | t97 needs_changed {"pc": 1, "thirst": 0, "hunger": 97, "fatigue": 97}
 > wait 30 days
-You wait eight hours.
+You wait about eight hours.
 It is now day 2, morning.
-You're very thirsty now.
 You're getting hungry.
 You're very tired now.
 You stop waiting.
-  | t144 time_passed {"start": 96, "end": 144, "activity": "waiting"}
-  | t144 needs_changed {"pc": 1, "thirst": 144, "hunger": 144, "fatigue": 144}
+  | t144 time_passed {"start": 97, "end": 144, "activity": "waiting"}
+  | t144 needs_changed {"pc": 1, "thirst": 47, "hunger": 144, "fatigue": 144}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t145 time_passed {"start": 144, "end": 145, "activity": "drinking"}
+  | t145 needs_changed {"pc": 1, "thirst": 0, "hunger": 145, "fatigue": 145}
 > wait 30 days
-You wait 12 hours.
+You wait about 12 hours.
 It is now evening.
 You're exhausted.
 You stop waiting.
-  | t216 time_passed {"start": 144, "end": 216, "activity": "waiting"}
-  | t216 needs_changed {"pc": 1, "thirst": 216, "hunger": 216, "fatigue": 216}
+  | t216 time_passed {"start": 145, "end": 216, "activity": "waiting"}
+  | t216 needs_changed {"pc": 1, "thirst": 71, "hunger": 216, "fatigue": 216}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t217 time_passed {"start": 216, "end": 217, "activity": "drinking"}
+  | t217 needs_changed {"pc": 1, "thirst": 0, "hunger": 217, "fatigue": 217}
 > wait 30 days
 You wait 12 hours.
 It is now day 3, morning.
-You're dying of thirst.
+You're getting thirsty.
 You stop waiting.
-  | t288 time_passed {"start": 216, "end": 288, "activity": "waiting"}
-  | t288 needs_changed {"pc": 1, "thirst": 288, "hunger": 288, "fatigue": 288}
-  | t288 clock_advanced {"clock": "predator", "stage": 1, "at": 226, "daily": 0.4, "forced": false}
-  | t288 sign_left {"clock": "predator", "stage": 1, "place": 5, "at": 226}
+  | t289 time_passed {"start": 217, "end": 289, "activity": "waiting"}
+  | t289 needs_changed {"pc": 1, "thirst": 72, "hunger": 289, "fatigue": 289}
+  | t289 clock_advanced {"clock": "predator", "stage": 1, "at": 226, "daily": 0.4, "forced": false}
+  | t289 sign_left {"clock": "predator", "stage": 1, "place": 5, "at": 226}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t290 time_passed {"start": 289, "end": 290, "activity": "drinking"}
+  | t290 needs_changed {"pc": 1, "thirst": 0, "hunger": 290, "fatigue": 290}
 > wait 30 days
-You wait a day.
+You wait 12 hours.
+It is now evening.
+You're getting thirsty.
+You stop waiting.
+  | t362 time_passed {"start": 290, "end": 362, "activity": "waiting"}
+  | t362 needs_changed {"pc": 1, "thirst": 72, "hunger": 362, "fatigue": 362}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t363 time_passed {"start": 362, "end": 363, "activity": "drinking"}
+  | t363 needs_changed {"pc": 1, "thirst": 0, "hunger": 363, "fatigue": 363}
+> wait 30 days
+You wait 11 and a half hours.
 It is now day 4, morning.
 You're very hungry now.
 Now and then the hum behind the walls stutters, like a missed breath.
 You stop waiting.
-  | t432 time_passed {"start": 288, "end": 432, "activity": "waiting"}
-  | t432 needs_changed {"pc": 1, "thirst": 432, "hunger": 432, "fatigue": 432}
+  | t432 time_passed {"start": 363, "end": 432, "activity": "waiting"}
+  | t432 needs_changed {"pc": 1, "thirst": 69, "hunger": 432, "fatigue": 432}
   | t432 clock_advanced {"clock": "predator", "stage": 2, "at": 416, "daily": 0.5, "forced": false}
   | t432 sign_left {"clock": "predator", "stage": 2, "place": 14, "at": 416}
   | t432 clock_advanced {"clock": "air", "stage": 1, "at": 432, "daily": 0.25, "forced": true}
   | t432 sign_left {"clock": "air", "stage": 1, "place": 1, "at": 432}
   | t432 sign_seen {"run": 1, "clock": "air", "stage": 1}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t433 time_passed {"start": 432, "end": 433, "activity": "drinking"}
+  | t433 needs_changed {"pc": 1, "thirst": 0, "hunger": 433, "fatigue": 433}
 > wait 30 days
-You wait about two days.
-It is now day 5, night.
-Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You wait 12 hours.
+It is now evening.
+You're getting thirsty.
 You stop waiting.
-  | t684 time_passed {"start": 432, "end": 684, "activity": "waiting"}
-  | t684 needs_changed {"pc": 1, "thirst": 684, "hunger": 684, "fatigue": 684}
-  | t684 clock_advanced {"clock": "predator", "stage": 3, "at": 622, "daily": 0.7, "forced": false}
-  | t684 sign_left {"clock": "predator", "stage": 3, "place": null, "at": 622}
-  | t684 sign_seen {"run": 1, "clock": "predator", "stage": 3}
+  | t505 time_passed {"start": 433, "end": 505, "activity": "waiting"}
+  | t505 needs_changed {"pc": 1, "thirst": 72, "hunger": 505, "fatigue": 505}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t506 time_passed {"start": 505, "end": 506, "activity": "drinking"}
+  | t506 needs_changed {"pc": 1, "thirst": 0, "hunger": 506, "fatigue": 506}
 > wait 30 days
-You wait six hours.
-It is now day 6, morning.
-The air in here tastes stale and close.
+You wait 12 hours.
+It is now day 5, morning.
+You're getting thirsty.
 You stop waiting.
-  | t720 time_passed {"start": 684, "end": 720, "activity": "waiting"}
-  | t720 needs_changed {"pc": 1, "thirst": 720, "hunger": 720, "fatigue": 720}
-  | t720 clock_advanced {"clock": "air", "stage": 2, "at": 720, "daily": 0.35, "forced": true}
-  | t720 sign_left {"clock": "air", "stage": 2, "place": 1, "at": 720}
-  | t720 sign_seen {"run": 1, "clock": "air", "stage": 2}
+  | t578 time_passed {"start": 506, "end": 578, "activity": "waiting"}
+  | t578 needs_changed {"pc": 1, "thirst": 72, "hunger": 578, "fatigue": 578}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t579 time_passed {"start": 578, "end": 579, "activity": "drinking"}
+  | t579 needs_changed {"pc": 1, "thirst": 0, "hunger": 579, "fatigue": 579}
 > wait 30 days
-You wait 18 hours.
+You wait 12 hours.
+It is now evening.
+You're getting thirsty.
+You stop waiting.
+  | t651 time_passed {"start": 579, "end": 651, "activity": "waiting"}
+  | t651 needs_changed {"pc": 1, "thirst": 72, "hunger": 651, "fatigue": 651}
+  | t651 clock_advanced {"clock": "predator", "stage": 3, "at": 622, "daily": 0.7, "forced": false}
+  | t651 sign_left {"clock": "predator", "stage": 3, "place": null, "at": 622}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t652 time_passed {"start": 651, "end": 652, "activity": "drinking"}
+  | t652 needs_changed {"pc": 1, "thirst": 0, "hunger": 652, "fatigue": 652}
+> wait 30 days
+You wait about five hours.
 It is now night.
 Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
 You stop waiting.
-  | t828 time_passed {"start": 720, "end": 828, "activity": "waiting"}
-  | t828 needs_changed {"pc": 1, "thirst": 828, "hunger": 828, "fatigue": 828}
+  | t684 time_passed {"start": 652, "end": 684, "activity": "waiting"}
+  | t684 needs_changed {"pc": 1, "thirst": 32, "hunger": 684, "fatigue": 684}
+  | t684 sign_seen {"run": 1, "clock": "predator", "stage": 3}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t685 time_passed {"start": 684, "end": 685, "activity": "drinking"}
+  | t685 needs_changed {"pc": 1, "thirst": 0, "hunger": 685, "fatigue": 685}
+> wait 30 days
+You wait about six hours.
+It is now day 6, morning.
+The air in here tastes stale and close.
+You stop waiting.
+  | t720 time_passed {"start": 685, "end": 720, "activity": "waiting"}
+  | t720 needs_changed {"pc": 1, "thirst": 35, "hunger": 720, "fatigue": 720}
+  | t720 clock_advanced {"clock": "air", "stage": 2, "at": 720, "daily": 0.35, "forced": true}
+  | t720 sign_left {"clock": "air", "stage": 2, "place": 1, "at": 720}
+  | t720 sign_seen {"run": 1, "clock": "air", "stage": 2}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t721 time_passed {"start": 720, "end": 721, "activity": "drinking"}
+  | t721 needs_changed {"pc": 1, "thirst": 0, "hunger": 721, "fatigue": 721}
+> wait 30 days
+You wait 12 hours.
+It is now evening.
+You're getting thirsty.
+You stop waiting.
+  | t793 time_passed {"start": 721, "end": 793, "activity": "waiting"}
+  | t793 needs_changed {"pc": 1, "thirst": 72, "hunger": 793, "fatigue": 793}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t794 time_passed {"start": 793, "end": 794, "activity": "drinking"}
+  | t794 needs_changed {"pc": 1, "thirst": 0, "hunger": 794, "fatigue": 794}
+> wait 30 days
+You wait about six hours.
+It is now night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t828 time_passed {"start": 794, "end": 828, "activity": "waiting"}
+  | t828 needs_changed {"pc": 1, "thirst": 34, "hunger": 828, "fatigue": 828}
+> drink
+You drink your fill.
+Your thirst is gone.
+  | t829 time_passed {"start": 828, "end": 829, "activity": "drinking"}
+  | t829 needs_changed {"pc": 1, "thirst": 0, "hunger": 829, "fatigue": 829}
 > status
 Day 6, night. You are clone 1.
-You're dying of thirst, very hungry, and exhausted.
+You're very hungry and exhausted.
 Something cries on the decks at night. It grows worse at 80% a day.
 The air at home is going stale. It grows worse at 35% a day.
 > look
@@ -107,77 +211,77 @@ You head north to the bulkhead.
 The bulkhead
 A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
 Paths: north to the corridor at frame 10, south to the vat bay (twenty minutes).
-  | t830 time_passed {"start": 828, "end": 830, "activity": "walking"}
-  | t830 needs_changed {"pc": 1, "thirst": 830, "hunger": 830, "fatigue": 830}
-  | t830 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
-  | t830 place_visited {"place": 4}
+  | t831 time_passed {"start": 829, "end": 831, "activity": "walking"}
+  | t831 needs_changed {"pc": 1, "thirst": 2, "hunger": 831, "fatigue": 831}
+  | t831 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+  | t831 place_visited {"place": 4}
 > n
 You head north to the corridor at frame 10.
 The corridor at frame 10
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Tracks cross the dust here: long, raking marks, too far apart for anything that walks on two legs.
 Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
-  | t831 time_passed {"start": 830, "end": 831, "activity": "walking"}
-  | t831 needs_changed {"pc": 1, "thirst": 831, "hunger": 831, "fatigue": 831}
-  | t831 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
-  | t831 place_visited {"place": 5}
-  | t831 sign_seen {"run": 1, "clock": "predator", "stage": 1}
+  | t832 time_passed {"start": 831, "end": 832, "activity": "walking"}
+  | t832 needs_changed {"pc": 1, "thirst": 3, "hunger": 832, "fatigue": 832}
+  | t832 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+  | t832 place_visited {"place": 5}
+  | t832 sign_seen {"run": 1, "clock": "predator", "stage": 1}
 > n
 You head north to the corridor at frame 14.
 The corridor at frame 14
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 16 (half an hour), south to the corridor at frame 10 (twenty minutes), west to the med bay.
-  | t833 time_passed {"start": 831, "end": 833, "activity": "walking"}
-  | t833 needs_changed {"pc": 1, "thirst": 833, "hunger": 833, "fatigue": 833}
-  | t833 pc_moved {"pc": 1, "origin": 5, "destination": 6, "direction": "north", "place_name": "the corridor at frame 14"}
-  | t833 place_visited {"place": 6}
+  | t834 time_passed {"start": 832, "end": 834, "activity": "walking"}
+  | t834 needs_changed {"pc": 1, "thirst": 5, "hunger": 834, "fatigue": 834}
+  | t834 pc_moved {"pc": 1, "origin": 5, "destination": 6, "direction": "north", "place_name": "the corridor at frame 14"}
+  | t834 place_visited {"place": 6}
 > n
 You head north to the corridor at frame 16.
 The corridor at frame 16
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 19, south to the corridor at frame 14 (half an hour), west to the laundry.
-  | t836 time_passed {"start": 833, "end": 836, "activity": "walking"}
-  | t836 needs_changed {"pc": 1, "thirst": 836, "hunger": 836, "fatigue": 836}
-  | t836 pc_moved {"pc": 1, "origin": 6, "destination": 7, "direction": "north", "place_name": "the corridor at frame 16"}
-  | t836 place_visited {"place": 7}
+  | t837 time_passed {"start": 834, "end": 837, "activity": "walking"}
+  | t837 needs_changed {"pc": 1, "thirst": 8, "hunger": 837, "fatigue": 837}
+  | t837 pc_moved {"pc": 1, "origin": 6, "destination": 7, "direction": "north", "place_name": "the corridor at frame 16"}
+  | t837 place_visited {"place": 7}
 > n
 You head north to the corridor at frame 19.
 The corridor at frame 19
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 21 (twenty minutes), south to the corridor at frame 16, west to the cargo hold, down to the pump room.
-  | t837 time_passed {"start": 836, "end": 837, "activity": "walking"}
-  | t837 needs_changed {"pc": 1, "thirst": 837, "hunger": 837, "fatigue": 837}
-  | t837 pc_moved {"pc": 1, "origin": 7, "destination": 8, "direction": "north", "place_name": "the corridor at frame 19"}
-  | t837 place_visited {"place": 8}
+  | t838 time_passed {"start": 837, "end": 838, "activity": "walking"}
+  | t838 needs_changed {"pc": 1, "thirst": 9, "hunger": 838, "fatigue": 838}
+  | t838 pc_moved {"pc": 1, "origin": 7, "destination": 8, "direction": "north", "place_name": "the corridor at frame 19"}
+  | t838 place_visited {"place": 8}
 > n
 You head north to the corridor at frame 21.
 The corridor at frame 21
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 24, south to the corridor at frame 19 (twenty minutes), east to the gymnasium, west to the galley.
-  | t839 time_passed {"start": 837, "end": 839, "activity": "walking"}
-  | t839 needs_changed {"pc": 1, "thirst": 839, "hunger": 839, "fatigue": 839}
-  | t839 pc_moved {"pc": 1, "origin": 8, "destination": 9, "direction": "north", "place_name": "the corridor at frame 21"}
-  | t839 place_visited {"place": 9}
+  | t840 time_passed {"start": 838, "end": 840, "activity": "walking"}
+  | t840 needs_changed {"pc": 1, "thirst": 11, "hunger": 840, "fatigue": 840}
+  | t840 pc_moved {"pc": 1, "origin": 8, "destination": 9, "direction": "north", "place_name": "the corridor at frame 21"}
+  | t840 place_visited {"place": 9}
 > n
 You head north to the corridor at frame 24.
 The corridor at frame 24
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 28 (half an hour), south to the corridor at frame 21, east to the armory, west to the schoolroom.
-  | t840 time_passed {"start": 839, "end": 840, "activity": "walking"}
-  | t840 needs_changed {"pc": 1, "thirst": 840, "hunger": 840, "fatigue": 840}
-  | t840 pc_moved {"pc": 1, "origin": 9, "destination": 10, "direction": "north", "place_name": "the corridor at frame 24"}
-  | t840 place_visited {"place": 10}
+  | t841 time_passed {"start": 840, "end": 841, "activity": "walking"}
+  | t841 needs_changed {"pc": 1, "thirst": 12, "hunger": 841, "fatigue": 841}
+  | t841 pc_moved {"pc": 1, "origin": 9, "destination": 10, "direction": "north", "place_name": "the corridor at frame 24"}
+  | t841 place_visited {"place": 10}
 > n
 You head north to the corridor at frame 28.
 The corridor at frame 28
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: south to the corridor at frame 24 (half an hour), west to the records office.
-  | t843 time_passed {"start": 840, "end": 843, "activity": "walking"}
-  | t843 needs_changed {"pc": 1, "thirst": 843, "hunger": 843, "fatigue": 843}
-  | t843 pc_moved {"pc": 1, "origin": 10, "destination": 11, "direction": "north", "place_name": "the corridor at frame 28"}
-  | t843 place_visited {"place": 11}
+  | t844 time_passed {"start": 841, "end": 844, "activity": "walking"}
+  | t844 needs_changed {"pc": 1, "thirst": 15, "hunger": 844, "fatigue": 844}
+  | t844 pc_moved {"pc": 1, "origin": 10, "destination": 11, "direction": "north", "place_name": "the corridor at frame 28"}
+  | t844 place_visited {"place": 11}
 > status
 Day 6, night. You are clone 1.
-You're dying of thirst, very hungry, and exhausted.
+You're very hungry and exhausted.
 Something cries on the decks at night. It grows worse at 80% a day.
 The air at home is going stale. It grows worse at 35% a day.
