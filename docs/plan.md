@@ -129,7 +129,10 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
   - the transcript harness and the first scenarios, replacing the placeholder `tests/test_cli.py`, with the suite
     added to the pre-commit hook.
 - **M1 World:** worldgen for the decks layer (region graph, vat-bay spawn), timed movement, `look`, `map`, and
-  `where`, with exits in a fixed order ("Paths: north to …").
+  `where`, with exits in a fixed order ("Paths: north to …"). Directions are compass words: north, south, east,
+  west, up, and down (n, s, e, w, u, d). *Proposed:* the home section is fixed content, the same on every seed: the
+  vat bay with the workshop, the store, and the bulkhead around it, the rooms M6 turns into the base. Worldgen builds
+  the decks beyond the bulkhead.
 - **M2 Time and needs:** the scheduler, interruptible long actions, the PC's needs, and the actions that answer them
   (eat, drink, rest).
 - **M3 Search and items:** hidden pools, `search`, items and inventory, and explicit odds with their breakdown.
@@ -145,8 +148,8 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
 - Then the success test (§14) again, on the whole slice with the narrator: is a death-and-respawn loop on one seed
   fun as text alone?
 
-Status: M0 done (2026-10-27): a world can be made or resumed, and `status`, `where`, and `wait` work. Next: M1,
-starting with the calibration tasks.
+Status: M0 done (2026-10-27). M1 in progress: `look` is done. Next come paths and movement in the home section, then
+worldgen beyond the bulkhead, then what the PC knows, `map`, and the route home.
 
 ## Running the work
 
@@ -160,5 +163,6 @@ starting with the calibration tasks.
   two failed rounds, escalate to a stronger model or do the task directly.
 - **Merging:** squash into `main` with a message naming the task and the worker run, and push after each chunk of
   work.
-- **Budget:** the Z.ai Silver plan allows 12K credits per 5 hours and 60K per week. Credits per task get measured
-  during calibration. `or-glm` (OpenRouter, pay per token) is the overflow.
+- **Budget:** the Z.ai Silver plan allows 12K credits per 5 hours and 60K per week. Calibration task 1 (`look`: 3
+  minutes, 23 turns) used about 55 credits, so the limits are far off at this pace. `or-glm` (OpenRouter, pay per
+  token) is the overflow.
