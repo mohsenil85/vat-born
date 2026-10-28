@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Lands a reviewed worker branch: squash-merges pi/NAME into main with the commit message read from stdin (the
+# pre-commit hook checks and tests the result), pushes, and removes the worktree and branch. It refuses to push if
+# main holds commits by anyone else. A merge conflict stops it with the merge left in place to resolve by hand;
+# commit, push, and clean up after that yourself.
+# Usage: scripts/land NAME < MESSAGE
+set -euo pipefail
+[ $# -eq 1 ] || { echo "usage: scripts/land NAME < MESSAGE" >&2; exit 2; }
+name=$1
+cd "$(git rev-parse --show-toplevel)"
+[ "$(git branch --show-current)" = main ] || { echo "land: not on main" >&2; exit 1; }
+[ -z "$(git status --porcelain --untracked-files=no)" ] || { echo "land: main has uncommitted changes" >&2; exit 1; }
+git merge --squash -q "pi/$name"
+git commit -q -F -
+me=$(git config user.email)
+if git log --format='%ae' origin/main..HEAD | grep -qvxF "$me"; then
+    echo "land: main has commits by someone else; not pushing:" >&2
+    git log --format='%h %ae %s' origin/main..HEAD >&2
+    exit 1
+fi
+git log --oneline origin/main..HEAD
+git push -q origin main
+git worktree remove ".worktrees/$name"
+git branch -D -q "pi/$name"
+echo "landed pi/$name"

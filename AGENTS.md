@@ -38,8 +38,10 @@ All in `src/vat_born/`:
 - `store.py`: the SQLite schema and all the SQL: `View`, `Txn`, and how each fact is applied.
 - `dice.py`: keyed random streams and `Odds`.
 - `clock.py`: ticks, days, and phases.
+- `worldgen.py`: the decks beyond the home section, laid out from the seed as facts for the engine to record.
 - `render.py`: events to the text a player reads.
-- `content/`: the TOML content and its loader.
+- `content/`: the TOML content (`places.toml`, the fixed `home.toml` section, worldgen's `decks.toml` tables) and
+  the loader that checks it.
 
 ## Adding an action
 
@@ -48,7 +50,8 @@ All in `src/vat_born/`:
 3. Resolve it in `engine.py`:
    - a free action reads the `View` and returns reports;
    - a timed action records facts on the `Txn`. Each new fact needs a dataclass in `events.py`, a case in
-     `store.py`'s `_apply` (bump `SCHEMA_VERSION` if the schema changes), and a case in `render.py`.
+     `store.py`'s `_apply` (bump `SCHEMA_VERSION` if the schema changes), and a case in `render.py`. A timed action
+     that can't be done records nothing and returns a report saying why; no time passes.
 4. basedpyright fails until every `match` covers the new types, which is how you find the places left to change.
 5. Your task names the scenarios that show the action. Regenerate them and read every line.
 
@@ -84,6 +87,17 @@ terminal, pipe the commands in:
   few world-file tests. Don't add, delete, or hand-edit any of them unless your task says to. To try something out,
   run the game or a throwaway script outside the repo.
 - `docs/design.md` and `README.md` still match the code.
+
+## Workers
+
+If an orchestrator gave you a task, these hold unless the task says otherwise:
+
+- Do what the task asks and no more. Don't touch `AGENTS.md`, `docs/`, `pyproject.toml`, `.githooks/`, `scripts/`,
+  or `uv.lock`, and in `tests/` only the files your task names.
+- Don't commit; the orchestrator commits your work through the pre-commit hook.
+- Your report lists every file you changed, each transcript included, with the reason it changed.
+- If the task contradicts itself or the code, make the smallest change that resolves it, and flag it under
+  Questions.
 
 ## Python and tooling
 

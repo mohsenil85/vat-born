@@ -163,14 +163,15 @@ route home.
 
 - **Orchestrator** (Claude Code): plans, writes task specs and their scenarios, owns the architecture, integration,
   and tests, reviews and merges, and keeps this file current.
-- **Workers:** GLM 5.3 through `pi-worker -b glm`, one task per worktree (`.worktrees/<task>`, branch `pi/<task>`),
-  committed through the pre-commit hook. The first two or three tasks run one at a time to calibrate; after that, two
-  or three run in parallel on independent units.
+- **Workers:** GLM 5.3, started with `scripts/worker <task> <spec>`: one task per worktree (`.worktrees/<task>`,
+  branch `pi/<task>`), committed through the pre-commit hook. Calibration is done, so two or three run in parallel on
+  tasks that touch different files. A spec gives the change and its acceptance transcripts exactly, and code only
+  where an invariant is tricky; AGENTS.md's Workers section covers the standing rules.
 - **Review before merge:** rerun the check and the tests, read the diff (new suppressions, `cast(`, edits to config
   or `tests/`) and every changed transcript, and play the change through zmx. At most three rounds of fixes; after
   two failed rounds, escalate to a stronger model or do the task directly.
-- **Merging:** squash into `main` with a message naming the task and the worker run, and push after each chunk of
-  work.
+- **Merging:** `scripts/land <task> < message` squash-merges into `main` with a message naming the task and the
+  worker run, pushes, and removes the worktree. The run ID finds the spec and the session in pi-worker's run log.
 - **Budget:** the Z.ai Silver plan allows 12K credits per 5 hours and 60K per week. Calibration measured about 55
   credits for a small task (`look`: 3 minutes, 23 turns) and 290 for a medium one (paths and walking: 13 minutes, 52
   turns), roughly 40 medium tasks per 5 hours, so the limits are far off. Both tasks came back right from precise
