@@ -152,7 +152,22 @@ The orchestrator is also the integration tester (decided 2026-10-27). There are 
     hazard clocks in M4, allies in M7) takes its turn each tick in a fixed order. A need getting worse stops a
     long wait or rest. A priority queue can replace the loop if sparse events ever need one.
 - **M3 Search and items:** hidden pools, `search`, items and inventory, eating what you find, and explicit odds with
-  their breakdown.
+  their breakdown. Decided 2026-10-27:
+  - items are content: a ration bar and a tin of stew (a meal each, answering a day's hunger), a handful of pale
+    shoots (a snack, half a day's), a canteen (two drinks, filled at water), and a hand lamp (+15% to searches while
+    carried). Salvage waits for building (M6);
+  - each kind of place can hide a few things, drawn per place at worldgen from a table for that kind: food in the
+    galley and hydroponics, a canteen in the crew quarters and the pump room, a lamp in the machine shop. The
+    storeroom at home always hides one ration bar;
+  - `search` takes an hour and rolls to turn up the next hidden thing: 50%, −10% very tired, −20% exhausted, +15%
+    with a lamp, shown with the roll. An interrupted search finds nothing. Searching a place with nothing left says
+    so, and then the clone knows: searching there again is refused at no cost. That knowledge is the clone's, not
+    the world's, so a new clone must search again;
+  - found things lie where they were found until taken, and `look` lists them. `take`, `take all`, and `drop` take
+    ten minutes; `inventory` is free. No carrying limit yet;
+  - `eat` eats food you carry, in ten minutes. `fill` fills your canteens at water, and `drink` away from water
+    drinks from a canteen;
+  - items answer to any of their words: "take bar", "eat stew".
 - **M4 Danger:** both hazard clocks with their telegraphs, odds in `status`, confirmations, `fight`, and injuries.
 - **M5 Death:** permadeath, bones, the respawn gap and its report, and clone knowledge.
 - **Playtest:** the designer plays the death-and-respawn loop on one seed, with template text. This is the §14
