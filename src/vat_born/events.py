@@ -9,13 +9,14 @@ from enum import StrEnum
 
 from vat_born.clock import GameTime, Tick
 from vat_born.dice import Key, Odds
-from vat_born.world import CharacterId, Layer, NodeId, PlaceKind
+from vat_born.world import CharacterId, Direction, Exit, Layer, NodeId, PlaceKind
 
 
 class Activity(StrEnum):
     """What the PC was doing while time passed."""
 
     WAITING = "waiting"
+    WALKING = "walking"
 
 
 # Facts
@@ -44,6 +45,25 @@ class CloneWoke:
 
 
 @dataclass(frozen=True, slots=True)
+class PathAdded:
+    """A path between two places. It runs both ways: applying it adds the way back as well."""
+
+    place: NodeId
+    to: NodeId
+    direction: Direction
+    ticks: int
+
+
+@dataclass(frozen=True, slots=True)
+class PcMoved:
+    pc: CharacterId
+    origin: NodeId
+    destination: NodeId
+    direction: Direction
+    place_name: str
+
+
+@dataclass(frozen=True, slots=True)
 class TimePassed:
     start: Tick
     end: Tick
@@ -60,7 +80,7 @@ class Rolled:
     success: bool
 
 
-type Fact = WorldCreated | PlaceAdded | CloneWoke | TimePassed | Rolled
+type Fact = WorldCreated | PlaceAdded | CloneWoke | PathAdded | PcMoved | TimePassed | Rolled
 
 
 # Reports
@@ -89,6 +109,14 @@ class PlaceReport:
 class LookReport:
     place_name: str
     description: str
+    exits: tuple[Exit, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class NoPath:
+    """There is no path out of here in that direction."""
+
+    direction: Direction
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,6 +125,6 @@ class PhaseChanged:
     after: GameTime
 
 
-type Report = Resumed | StatusReport | PlaceReport | LookReport | PhaseChanged
+type Report = Resumed | StatusReport | PlaceReport | LookReport | NoPath | PhaseChanged
 
 type Event = Fact | Report

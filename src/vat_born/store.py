@@ -14,12 +14,15 @@ from typing import Self, assert_never, cast, final
 
 from vat_born.clock import Tick
 from vat_born.dice import Dice, Key, Odds, Stream
-from vat_born.events import CloneWoke, Fact, PlaceAdded, Rolled, TimePassed, WorldCreated
-from vat_born.world import NodeId, Place
+from vat_born.events import CloneWoke, Fact, PathAdded, PcMoved, PlaceAdded, Rolled, TimePassed, WorldCreated
+from vat_born.world import CharacterId, Direction, Exit, NodeId, Place
+
+# SQL would sort the direction words alphabetically, so the order of a place's paths is set in Python instead.
+_DIRECTION_ORDER = {way: n for n, way in enumerate(Direction)}
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -41,6 +44,14 @@ CREATE TABLE characters (
     id INTEGER PRIMARY KEY,
     kind TEXT NOT NULL,
     node INTEGER NOT NULL REFERENCES nodes (id)
+) STRICT;
+
+CREATE TABLE edges (
+    from_node INTEGER NOT NULL REFERENCES nodes (id),
+    to_node INTEGER NOT NULL REFERENCES nodes (id),
+    direction TEXT NOT NULL,
+    ticks INTEGER NOT NULL CHECK (ticks > 0),
+    PRIMARY KEY (from_node, direction)
 ) STRICT;
 
 -- One row per clone: the run counter (design §4).
@@ -114,6 +125,32 @@ class View:
         )
         assert row is not None, "no clone has woken"
         return Place(NodeId(row[0]), row[1], row[2])
+
+    def pc(self) -> CharacterId:
+        """The current clone's character."""
+        row = cast(
+            "tuple[int] | None",
+            self._conn.execute("SELECT runs.pc FROM runs ORDER BY runs.n DESC LIMIT 1").fetchone(),
+        )
+        assert row is not None, "no clone has woken"
+        return CharacterId(row[0])
+
+    def exits(self, place: NodeId) -> tuple[Exit, ...]:
+        """The paths out of PLACE, in `Direction` order."""
+        rows = cast(
+            "list[tuple[str, int, int, str]]",
+            self._conn.execute(
+                "SELECT edges.direction, edges.to_node, edges.ticks, nodes.name FROM edges"
+                " JOIN nodes ON nodes.id = edges.to_node WHERE edges.from_node = ?",
+                (place,),
+            ).fetchall(),
+        )
+        return tuple(
+            sorted(
+                (Exit(Direction(row[0]), NodeId(row[1]), row[3], row[2]) for row in rows),
+                key=lambda way: _DIRECTION_ORDER[way.direction],
+            )
+        )
 
 
 @final
@@ -246,6 +283,18 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
         case CloneWoke(run=run, pc=pc, place=place):
             conn.execute("INSERT INTO characters (id, kind, node) VALUES (?, 'pc', ?)", (pc, place))
             conn.execute("INSERT INTO runs (n, pc, started_tick) SELECT ?, ?, tick FROM world", (run, pc))
+        case PathAdded(place=place, to=to, direction=direction, ticks=ticks):
+            conn.execute(
+                "INSERT INTO edges (from_node, to_node, direction, ticks) VALUES (?, ?, ?, ?)",
+                (place, to, direction, ticks),
+            )
+            conn.execute(
+                "INSERT INTO edges (from_node, to_node, direction, ticks) VALUES (?, ?, ?, ?)",
+                (to, place, direction.opposite, ticks),
+            )
+        case PcMoved(pc=pc, origin=origin, destination=destination):
+            moved = conn.execute("UPDATE characters SET node = ? WHERE id = ? AND node = ?", (destination, pc, origin))
+            assert moved.rowcount == 1, f"character {pc} was not at {origin}"
         case TimePassed(start=start, end=end):
             assert end > start, "time only moves forward"
             moved = conn.execute("UPDATE world SET tick = ? WHERE tick = ?", (end, start))

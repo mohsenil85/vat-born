@@ -7,7 +7,26 @@ import pytest
 
 from tests.harness import play
 
-COMMANDS = ("status", "where", "wait", "wait 3 hours", "status", "wait 2 days", "where", "wait 90 minutes", "status")
+COMMANDS = (
+    "status",
+    "where",
+    "look",
+    "north",
+    "south",
+    "east",
+    "west",
+    "west",
+    "east",
+    "up",
+    "go",
+    "wait",
+    "wait 3 hours",
+    "status",
+    "wait 2 days",
+    "where",
+    "wait 90 minutes",
+    "status",
+)
 
 
 @pytest.mark.parametrize("seed", range(20))

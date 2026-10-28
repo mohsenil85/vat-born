@@ -1,0 +1,23 @@
+# The section every clone wakes in: the vat bay and the rooms around it, the same on every seed. Each path runs
+# both ways; `minutes` is the walk either way, in ten-minute steps.
+
+start = "vat_bay"
+places = ["vat_bay", "workshop", "store", "bulkhead"]
+
+[[paths]]
+from = "vat_bay"
+to = "workshop"
+direction = "east"
+minutes = 10
+
+[[paths]]
+from = "vat_bay"
+to = "store"
+direction = "west"
+minutes = 10
+
+[[paths]]
+from = "vat_bay"
+to = "bulkhead"
+direction = "north"
+minutes = 20

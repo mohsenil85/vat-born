@@ -1,7 +1,7 @@
 # Vat-Born
 
 A text-first survival/base-building roguelike aboard a colony ship. The engine is a skeleton so far: you can start a
-world, look around, check the time and where you are, and let time pass.
+world, look around, walk between the rooms around the vat bay, check the time and where you are, and let time pass.
 
 The Python engine owns world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
 player intent and narrate resolved events, but may not change the rules or state directly.

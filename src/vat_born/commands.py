@@ -5,7 +5,8 @@ import re
 from dataclasses import dataclass
 
 from vat_born.clock import MINUTES_PER_TICK
-from vat_born.intents import Intent, Look, Status, Wait, Where
+from vat_born.intents import Intent, Look, Move, Status, Wait, Where
+from vat_born.world import Direction
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,12 +37,14 @@ HELP = (
     Usage("status", "the day, the time of day, and how you are; takes no time"),
     Usage("where", "where you are; takes no time"),
     Usage("look", "describe where you are; takes no time"),
+    Usage("go <way>", "walk to the next place: north, south, east, west, up, down (n, s, e, w, u, d)"),
     Usage("wait [time]", 'let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait a day"'),
     Usage("help", "this list"),
     Usage("quit", "stop playing; the world keeps your place"),
 )
 
 _WAIT_HELP = 'Wait how long? Try "wait", "wait 30 minutes", or "wait 2 hours".'
+_GO_HELP = 'Go where? Try "go north", or just "n".'
 # A longer wait is almost surely a typo, and a big enough one would overflow SQLite's integers.
 _MAX_WAIT_DAYS = 30
 
@@ -50,6 +53,9 @@ _UNIT_MINUTES = {
     **dict.fromkeys(("h", "hr", "hrs", "hour", "hours"), 60),
     **dict.fromkeys(("d", "day", "days"), 24 * 60),
 }
+
+# Every direction word and its first letter: "north" and "n" both mean north.
+_WAYS = {word: way for way in Direction for word in (way.value, way.value[:1])}
 
 
 def parse(line: str) -> Command:
@@ -66,10 +72,14 @@ def parse(line: str) -> Command:
             return Look()
         case "wait":
             return _wait(rest)
+        case "go":
+            return _go(rest)
         case "help" | "?":
             return Help()
         case "quit" | "exit":
             return Quit()
+        case way if way in _WAYS:  # extra words are ignored, as for "where am I"
+            return Move(_WAYS[way])
         case _:
             return Rejected(f'I don\'t know "{verb}". Type "help" for the commands.')
 
@@ -83,6 +93,12 @@ def _wait(words: list[str]) -> Command:
     if minutes > _MAX_WAIT_DAYS * _UNIT_MINUTES["day"]:
         return Rejected(f"That's too long to wait in one go: {_MAX_WAIT_DAYS} days at most.")
     return Wait((minutes + MINUTES_PER_TICK - 1) // MINUTES_PER_TICK)  # round up to whole ticks
+
+
+def _go(words: list[str]) -> Command:
+    if words and words[0] in _WAYS:
+        return Move(_WAYS[words[0]])
+    return Rejected(_GO_HELP)
 
 
 def _minutes(words: list[str]) -> int | None:

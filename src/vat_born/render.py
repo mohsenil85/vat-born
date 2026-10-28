@@ -10,6 +10,9 @@ from vat_born.events import (
     CloneWoke,
     Event,
     LookReport,
+    NoPath,
+    PathAdded,
+    PcMoved,
     PhaseChanged,
     PlaceAdded,
     PlaceReport,
@@ -19,6 +22,7 @@ from vat_born.events import (
     TimePassed,
     WorldCreated,
 )
+from vat_born.world import Exit
 
 _NUMBERS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
 _MINUTES = ("ten minutes", "twenty minutes", "half an hour", "forty minutes", "fifty minutes")
@@ -29,12 +33,14 @@ def render(event: Event) -> list[str]:
     match event:
         case WorldCreated(seed=seed):
             return [f"A new world, seed {seed}."]
-        case PlaceAdded():
+        case PlaceAdded() | PathAdded():
             return []
         case CloneWoke(place_name=place):
             return [f"You wake in a clone vat in {place}."]
+        case PcMoved(direction=direction, place_name=place):
+            return [f"You head {direction} to {place}."]
         case TimePassed():
-            return [_time_passed(event)]
+            return _time_passed(event)
         case Rolled(odds=odds, success=success):
             return [f"{describe_odds(odds)}: {'success' if success else 'failure'}."]
         case Resumed(seed=seed, run=run, time=time, place_name=place):
@@ -43,8 +49,10 @@ def render(event: Event) -> list[str]:
             return [f"{describe_time(time)}. You are clone {run}."]
         case PlaceReport(place_name=place):
             return [f"You are in {place}."]
-        case LookReport(place_name=place, description=description):
-            return [place[:1].upper() + place[1:], description]
+        case NoPath(direction=direction):
+            return [f"You can't go {direction} from here."]
+        case LookReport(place_name=place, description=description, exits=exits):
+            return [place[:1].upper() + place[1:], description, _paths(exits)]
         case PhaseChanged(before=before, after=after):
             if after.day == before.day:
                 return [f"It is now {after.phase}."]
@@ -84,13 +92,25 @@ def describe_odds(odds: Odds) -> str:
     return f"{_percent(odds.chance)} ({', '.join(parts)})"
 
 
-def _time_passed(event: TimePassed) -> str:
-    duration = describe_duration(event.end - event.start)
+def _time_passed(event: TimePassed) -> list[str]:
     match event.activity:
+        case Activity.WALKING:
+            return []  # the move itself says where the walk went
         case Activity.WAITING:
-            return f"You wait {duration}."
+            return [f"You wait {describe_duration(event.end - event.start)}."]
         case _:
             assert_never(event.activity)
+
+
+def _paths(exits: tuple[Exit, ...]) -> str:
+    """The exits as one line, in `Direction` order; only a walk longer than ten minutes says how long it is."""
+    if not exits:
+        return "Paths: none."
+    ways = ", ".join(
+        f"{out.direction} to {out.place_name}" + (f" ({describe_duration(out.ticks)})" if out.ticks > 1 else "")
+        for out in exits
+    )
+    return f"Paths: {ways}."
 
 
 def _count(n: int, unit: str) -> str:

@@ -4,6 +4,8 @@ Free intents only read the world and take no time; timed intents change it and t
 
 from dataclasses import dataclass
 
+from vat_born.world import Direction
+
 
 @dataclass(frozen=True, slots=True)
 class Status:
@@ -30,6 +32,13 @@ class Wait:
         assert self.ticks > 0, "a wait takes at least one tick"
 
 
+@dataclass(frozen=True, slots=True)
+class Move:
+    """Walk the path in that direction, if there is one."""
+
+    direction: Direction
+
+
 type FreeIntent = Status | Where | Look
-type TimedIntent = Wait
+type TimedIntent = Wait | Move
 type Intent = FreeIntent | TimedIntent

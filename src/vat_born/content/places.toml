@@ -4,3 +4,15 @@
 [vat_bay]
 name = "the vat bay"
 description = "It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath."
+
+[workshop]
+name = "the workshop"
+description = "Workbenches stand under drifts of grit, their vises rusted open. A dead fabricator fills one corner, its screen cracked into a web. Whoever stripped this place left in a hurry."
+
+[store]
+name = "the storeroom"
+description = "Empty shelves run floor to ceiling. Scrape marks on the deck show where crates were dragged out, and a cold draft stirs the dust."
+
+[bulkhead]
+name = "the bulkhead"
+description = "A pressure door twice your height closes this section off from the rest of the ship. Something on the far side has scored its paint in long, parallel lines."
