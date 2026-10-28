@@ -12,8 +12,12 @@ from vat_born.clock import TICKS_PER_HOUR, GameTime, Phase, Tick, game_time, tic
 from vat_born.content import Content
 from vat_born.dice import Dice, Modifier, Odds
 from vat_born.events import (
+    AirRepaired,
     Ate,
     Attacked,
+    BreathBack,
+    BreathChanged,
+    BreathWorsened,
     ClockAdvanced,
     ClockStarted,
     CloneWoke,
@@ -52,6 +56,7 @@ from vat_born.events import (
     NothingToFight,
     NothingToFill,
     NothingToFlee,
+    NothingToRepair,
     NotTired,
     NoWater,
     NowhereLeft,
@@ -68,6 +73,9 @@ from vat_born.events import (
     PredatorAttacked,
     PredatorDrivenOff,
     PredatorRetreated,
+    RepairDone,
+    RepairLeft,
+    RepairWorked,
     Report,
     Resumed,
     Route,
@@ -83,7 +91,19 @@ from vat_born.events import (
     WoundsChanged,
     WoundsHealed,
 )
-from vat_born.hazards import Clock, attack_odds, daily_chance, due, is_midnight, may_move, tick_chance
+from vat_born.hazards import (
+    BREATH_DEADLY,
+    REPAIR_PER_STAGE,
+    Clock,
+    attack_odds,
+    breath_level,
+    breathe,
+    daily_chance,
+    due,
+    is_midnight,
+    may_move,
+    tick_chance,
+)
 from vat_born.intents import (
     Drink,
     Drop,
@@ -98,6 +118,7 @@ from vat_born.intents import (
     Look,
     Map,
     Move,
+    Repair,
     Rest,
     RestUntil,
     Search,
@@ -197,6 +218,7 @@ class Game:
                 | Drink()
                 | Fill()
                 | Search()
+                | Repair()
                 | Rest()
                 | RestUntil()
                 | Take()
@@ -239,6 +261,9 @@ class Game:
         with self._store.transaction(self._dice) as txn:
             start = txn.tick()
             reports = _resolve_timed(intent, txn, self._content)
+            if not txn.dead() and txn.breath() >= BREATH_DEADLY:
+                # the bad air has the clone: the body gives out once the action is done (M5 adds thirst and hunger)
+                txn.record(PcDied(txn.pc(), _BAD_AIR, txn.pc_place().id))
             end = txn.tick()
         if not txn.facts:  # refused: nothing changed and no time passed
             assert reports, f"{intent} did nothing and said nothing"
@@ -260,10 +285,16 @@ def _resolve_free(intent: FreeIntent, view: View, content: Content) -> tuple[Eve
                 worst = max((sign.stage for sign in view.signs_seen() if sign.clock is clock), default=None)
                 if worst is None:
                     continue
-                # A predator the clone has seen hunting is a danger of striking where the PC is, not of growing worse
+                # A predator the clone has seen hunting is a danger of striking where the PC is, not of growing
+                # worse; the air's failure can't grow worse either, so neither carries today's odds.
                 striking = _attack_odds(view, content, now) if clock is Clock.PREDATOR and worst == 4 else None
-                dangers.append(Danger(clock, worst, daily_chance(clock, now.day), striking))
-            return (StatusReport(now, view.run(), levels, wound_level(view.wounds()), tuple(dangers)),)
+                daily = None if worst == 4 else daily_chance(clock, now.day)
+                dangers.append(Danger(clock, worst, daily, striking))
+            return (
+                StatusReport(
+                    now, view.run(), levels, wound_level(view.wounds()), breath_level(view.breath()), tuple(dangers)
+                ),
+            )
         case Where():
             return (PlaceReport(view.pc_place().name, _route_home(view)),)
         case Look():
@@ -300,6 +331,8 @@ def _resolve_timed(intent: TimedIntent, txn: Txn, content: Content) -> tuple[Rep
             return _fill(txn, content)
         case Search():
             return _search(txn, content)
+        case Repair():
+            return _repair(txn, content)
         case Take(words=words):
             place = txn.pc_place()
             match _meant(words, txn.items_at(place.id), content):
@@ -365,10 +398,11 @@ _BADLY_WOUNDED = Modifier("badly wounded", -0.20)
 
 # What the PC can be doing for the hunting predator to catch it lingering: anything but walking, drinking,
 # handling things, and eating — and fighting, which is its own gamble.
-_LINGERING = frozenset((Activity.WAITING, Activity.RESTING, Activity.SEARCHING))
+_LINGERING = frozenset((Activity.WAITING, Activity.RESTING, Activity.SEARCHING, Activity.REPAIRING))
 
-# The predator as a cause of death, as the log names it.
+# The predator and the bad air, as the log names the causes of death.
 _THE_PREDATOR = "the predator"
+_BAD_AIR = "bad air"
 
 
 def _search(txn: Txn, content: Content) -> tuple[Report, ...]:
@@ -388,6 +422,28 @@ def _search(txn: Txn, content: Content) -> tuple[Report, ...]:
     elif txn.roll(_search_odds(txn, content), "search", place.id):
         txn.record(ItemFound(hidden.id, place.id, content.item(hidden.kind).name))
     return reports
+
+
+def _repair(txn: Txn, content: Content) -> tuple[Report, ...]:
+    """Work on the air recycler (M4): only in the vat bay, only once the current clone has come across one of its
+    clock's signs, so it knows what's wrong. The work is two hours a stage the clock has reached, taken as the
+    stint begins and kept between stints on the clock itself — a clock that fails further between stints needs
+    more, and the next stint picks that up. Done, the clock starts over; stopped short, the stint says what's
+    left."""
+    vat_bay = next(entry.place for entry in txn.places() if entry.kind == content.home.start)
+    air = {state.clock: state for state in txn.clocks()}[Clock.AIR]
+    if txn.pc_place().id != vat_bay or air.stage < 1 or not any(sign.clock is Clock.AIR for sign in txn.signs_seen()):
+        return (NothingToRepair(),)
+    left = REPAIR_PER_STAGE * air.stage - air.progress
+    assert left > 0, "the repair work done can never reach the work needed while the clock stands faltering"
+    start = txn.tick()
+    reports = _pass(txn, left, content, Activity.REPAIRING, interruptible=True)
+    worked = txn.tick() - start  # every tick of the stint counts, however it ended
+    if worked == left:
+        txn.record(AirRepaired())
+        return (*reports, RepairDone())
+    txn.record(RepairWorked(air.progress + worked))
+    return (*reports, RepairLeft(left - worked))
 
 
 def _search_odds(txn: Txn, content: Content) -> Odds:
@@ -474,9 +530,10 @@ class _Hazards:
                 certain = due(clock, state.stage + 1, at)
                 if certain or self.txn.stream("clock", clock, at).random() < tick_chance(daily):
                     stage = state.stage + 1
-                    standing = ClockState(clock, stage, at)
+                    standing = ClockState(clock, stage, at, state.progress)
                     self.facts.append(ClockAdvanced(clock, stage, at, daily, certain))
-                    if stage < 4:  # the threat (stage 4) leaves no sign
+                    if stage < 4 or clock is Clock.AIR:
+                        # every stage leaves a sign but the hunt, which the attack itself announces
                         place = _sign_place(self.txn, self.content, clock, stage, at)
                         self.facts.append(SignLeft(clock, stage, place, at))
                         sign = Sign(clock, stage)
@@ -518,30 +575,33 @@ class _Hazards:
 
 def _pass(txn: Txn, ticks: int, content: Content, activity: Activity, *, interruptible: bool) -> tuple[Report, ...]:
     """Let TICKS ticks pass for ACTIVITY, one at a time. This is the scheduler (design §6): every time-driven system
-    takes its turn each tick, in a fixed order: the needs, then the wounds' healing, then the hazard clocks
-    (design §7.2), then the predator's
-    hunt. A need getting worse, or a sign coming to the clone's notice, is reported as it happens and stops an
-    interruptible action with ticks left, so the player can react; a need coming back down to 0 is reported too,
-    but only getting worse and the clocks stop anything. An attack stops the action at that tick even on its last
-    one. The clocks' facts are recorded after the needs', in the order they happened: each advance, then the sign
-    it left, then the clone coming across it."""
+    takes its turn each tick, in a fixed order: the needs, then the wounds' healing, then the breath (M4), then the
+    hazard clocks (design §7.2), then the predator's hunt. A need getting worse, the breath going bad, or a sign
+    coming to the clone's notice is reported as it happens and stops an interruptible action with ticks left, so
+    the player can react; a need coming back down to 0 is reported too, but only getting worse and the clocks stop
+    anything. An attack stops the action at that tick even on its last one. The clocks' facts are recorded after
+    the needs', in the order they happened: each advance, then the sign it left, then the clone coming across
+    it."""
     assert ticks > 0, "an action takes at least one tick"
     start = txn.tick()
     pc = txn.pc()
     needs = txn.needs()
     place = txn.pc_place()
+    at_home = _at_home(txn.places(), place.id, content)
     hazards = _Hazards(
         txn,
         content,
         txn.run(),
         place.id,
-        _at_home(txn.places(), place.id, content),
+        at_home,
         {state.clock: state for state in txn.clocks()},
         set(txn.signs_seen()),
         [],
     )
     wounds_at_start = txn.wounds()
     wounds = wounds_at_start
+    breath_at_start = txn.breath()
+    breath = breath_at_start
     reports: list[Report] = []
     passed = 0
     for _ in range(ticks):
@@ -553,11 +613,12 @@ def _pass(txn: Txn, ticks: int, content: Content, activity: Activity, *, interru
         if wound_level(healing) < wound_level(wounds):
             reports.append(WoundsHealed(wound_level(healing)))
         wounds = healing
+        breath, suffocating = _breath_turn(breath, at_home=at_home, clocks=hazards.clocks, reports=reports)
         noticed = hazards.turn(at, activity, reports)  # every clock takes its turn every tick, whatever the needs did
         needs = stepped
         if hazards.struck:  # the predator has the PC: the action stops, even on its last tick, attack or nothing
             break
-        stopped = worsened or noticed
+        stopped = worsened or suffocating or noticed
         if stopped and interruptible and passed < ticks:
             reports.append(Interrupted(activity))
             break
@@ -565,6 +626,8 @@ def _pass(txn: Txn, ticks: int, content: Content, activity: Activity, *, interru
     txn.record(NeedsChanged(pc, needs.thirst, needs.hunger, needs.fatigue))
     if wounds != wounds_at_start:  # nothing heals and nothing is recorded while the clone is unhurt
         txn.record(WoundsChanged(pc, wounds))
+    if breath != breath_at_start:  # nothing is recorded while the clone breathes easily and keeps doing so
+        txn.record(BreathChanged(pc, breath))
     for fact in hazards.facts:
         txn.record(fact)
     return tuple(reports)
@@ -645,13 +708,31 @@ def _needs_turn(needs: Needs, stepped: Needs, reports: list[Report]) -> bool:
     return worsened
 
 
+def _breath_turn(
+    breath: int, *, at_home: bool, clocks: dict[Clock, ClockState], reports: list[Report]
+) -> tuple[int, bool]:
+    """The breath's turn in one tick (M4): the air is bad in the home section while the air clock stands failed, so
+    the count climbs there and eases by three anywhere else. A worse level is reported as it happens, and reaching
+    the deadly count needs no report of its own: the death that follows says it. Returns the count after the tick
+    and whether the tick's breath stops an interruptible action."""
+    bad_air = at_home and clocks[Clock.AIR].stage >= 4
+    after = breathe(breath, bad_air=bad_air)
+    stopped = False
+    if breath_level(after) > breath_level(breath):
+        reports.append(BreathWorsened(breath_level(after)))
+        stopped = True
+    if breath > 0 and after == 0:
+        reports.append(BreathBack())
+    return after, stopped or after >= BREATH_DEADLY
+
+
 def _sign_place(txn: Txn, content: Content, clock: Clock, stage: int, at: Tick) -> NodeId | None:
     """Where a clock's stage leaves its sign: the predator's tracks in a corridor and its kill in a room beyond the
     home section, drawn where there's a choice; the air recycler's signs all at the vat bay, where it hums. The
     cries (predator 3) are heard, not placed, so they are nowhere."""
     places = txn.places()
     match clock, stage:
-        case Clock.AIR, 1 | 2 | 3:
+        case Clock.AIR, 1 | 2 | 3 | 4:
             return next(entry.place for entry in places if entry.kind == content.home.start)
         case Clock.PREDATOR, 1:
             corridors = tuple(e.place for e in places if e.kind == content.decks.corridor.kind)

@@ -7,9 +7,11 @@ misses, so these draws don't go through `Txn.roll`: they come from a stream keye
 only a clock that moves records a fact, carrying the chance it moved at. This is the one exception to "every roll
 is logged".
 
-The threats the clocks climb toward are the hunt and the failing air. The hunt is built: once the predator's
- clock reaches its last stage it attacks a clone that lingers, at the odds in `attack_odds`. The air's failure is a
-later milestone; here its clock only runs and leaves its signs.
+The threats the clocks climb toward are the hunt and the failing air. The hunt is built: once the predator's clock
+reaches its last stage it attacks a clone that lingers, at the odds in `attack_odds`. The air's failure is built
+too: stage 4 leaves its sign like the rest, the home section's air goes bad, and a clone breathing it counts its
+breath away (`breath_level`, `breathe`) until it dies — unless the recycler is repaired, which takes
+`REPAIR_PER_STAGE` of work a stage.
 """
 
 from dataclasses import dataclass
@@ -74,6 +76,35 @@ def due(clock: Clock, stage: int, at: Tick) -> bool:
 def is_midnight(at: Tick) -> bool:
     """Whether AT is the tick at 00:00, the moment the night's cries carry, if there are any."""
     return at % TICKS_PER_DAY == _MIDNIGHT
+
+
+# Breath (M4): while the air clock stands failed, the home section's air is bad, and a clone there counts the ticks
+# it has spent in it — a tick of good air, anywhere, takes three off the count. The counts at which it reads as each
+# level, and the one it dies at.
+_BREATH_SHORT = TICKS_PER_HOUR
+_BREATH_GASPING = 3 * TICKS_PER_HOUR
+_BREATH_SUFFOCATING = 5 * TICKS_PER_HOUR
+BREATH_DEADLY = 6 * TICKS_PER_HOUR
+_BREATH_RECOVERY = 3
+
+# The work of repairing the recycler: two hours for each stage its clock has reached.
+REPAIR_PER_STAGE = 2 * TICKS_PER_HOUR
+
+
+def breath_level(breath: int) -> int:
+    """How bad the clone's breath is after BREATH ticks of bad air: 0 easily, 1 short of breath, 2 gasping,
+    3 suffocating. Worse than suffocating is death, at `BREATH_DEADLY`."""
+    if breath >= _BREATH_SUFFOCATING:
+        return 3
+    if breath >= _BREATH_GASPING:
+        return 2
+    return 1 if breath >= _BREATH_SHORT else 0
+
+
+def breathe(breath: int, *, bad_air: bool) -> int:
+    """The breath count after one tick: bad air adds one to it, good air takes three off, and it never goes below
+    0, so breathing easily stays easy."""
+    return breath + 1 if bad_air else max(breath - _BREATH_RECOVERY, 0)
 
 
 # The hunting predator's daily odds of attacking a clone that lingers: base by where the clone is, and worse at

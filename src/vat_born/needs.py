@@ -25,6 +25,7 @@ class Activity(StrEnum):
     RESTING = "resting"
     DRINKING = "drinking"
     SEARCHING = "searching"
+    REPAIRING = "repairing"
     HANDLING = "handling"
     EATING = "eating"
     FIGHTING = "fighting"

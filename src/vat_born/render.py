@@ -6,8 +6,12 @@ from typing import assert_never
 from vat_born.clock import TICKS_PER_DAY, TICKS_PER_HOUR, GameTime
 from vat_born.dice import Odds
 from vat_born.events import (
+    AirRepaired,
     Ate,
     Attacked,
+    BreathBack,
+    BreathChanged,
+    BreathWorsened,
     ClockAdvanced,
     ClockStarted,
     CloneWoke,
@@ -45,6 +49,7 @@ from vat_born.events import (
     NothingToFight,
     NothingToFill,
     NothingToFlee,
+    NothingToRepair,
     NotTired,
     NoWater,
     NowhereLeft,
@@ -61,6 +66,9 @@ from vat_born.events import (
     PredatorAttacked,
     PredatorDrivenOff,
     PredatorRetreated,
+    RepairDone,
+    RepairLeft,
+    RepairWorked,
     Resumed,
     Rolled,
     Route,
@@ -94,6 +102,8 @@ _NAMED = {
     Need.FATIGUE: ("tired", "very tired", "exhausted"),
 }
 _WOUNDS = ("wounded", "badly wounded")  # how `status` names each wound level
+_BREATHING = ("You're short of breath.", "You're gasping for air.", "You're suffocating.")
+_BREATH = ("short of breath", "gasping", "suffocating")  # how `status` names each level of it
 _MET = {
     Need.THIRST: "Your thirst is gone.",
     Need.HUNGER: "You're no longer hungry.",
@@ -109,6 +119,7 @@ _SIGNS = {
     (Clock.AIR, 1): "Now and then the hum behind the walls stutters, like a missed breath.",
     (Clock.AIR, 2): "The air in here tastes stale and close.",
     (Clock.AIR, 3): "A red warning light pulses above the door.",
+    (Clock.AIR, 4): "The hum behind the walls has stopped. The air is thick and still.",
 }
 _DANGERS = {
     (Clock.PREDATOR, 1): "Something big walks the decks.",
@@ -118,6 +129,13 @@ _DANGERS = {
     (Clock.AIR, 1): "The air recycler is faltering.",
     (Clock.AIR, 2): "The air at home is going stale.",
     (Clock.AIR, 3): "The air recycler's warning light is on.",
+    (Clock.AIR, 4): "The air recycler has failed. The air at home is going bad.",
+}
+
+# What each cause of death says. The words are the last thing a run hears.
+_DEATHS = {
+    "the predator": "It drags you down. You are dead.",
+    "bad air": "You can't get your breath. You are dead.",
 }
 
 
@@ -133,6 +151,9 @@ def render(event: Event) -> list[str]:
             | ItemHidden()
             | NeedsChanged()
             | WoundsChanged()
+            | BreathChanged()
+            | AirRepaired()
+            | RepairWorked()
             | ClockStarted()
             | ClockAdvanced()
             | SignLeft()
@@ -150,10 +171,10 @@ def render(event: Event) -> list[str]:
             return [f"{what_for} {describe_odds(odds)}: {'success' if success else 'failure'}."]
         case Resumed(seed=seed, run=run, time=time, place_name=place):
             return [f"Seed {seed}, clone {run}. {describe_time(time)}.", f"You are in {place}."]
-        case StatusReport(time=time, run=run, levels=levels, wounds=wounds, dangers=dangers):
+        case StatusReport(time=time, run=run, levels=levels, wounds=wounds, breath=breath, dangers=dangers):
             return [
                 f"{describe_time(time)}. You are clone {run}.",
-                _how_you_are(levels, wounds),
+                _how_you_are(levels, wounds, breath),
                 *(_danger(danger) for danger in dangers),
             ]
         case PlaceReport(place_name=place, route=route):
@@ -184,12 +205,12 @@ def render(event: Event) -> list[str]:
             return [_WORSENING[need][level - 1]]
         case NeedMet(need=need):
             return [_MET[need]]
+        case BreathWorsened() | BreathBack() | RepairDone() | RepairLeft() | NothingToRepair():
+            return _air(event)
         case NeedEased(need=need, before=before, after=after):
             return _eased(need, before, after)
         case Interrupted(activity=activity):
             return [_stopped(activity)]
-        case NoWater():
-            return ["There's no water here."]
         case NotTired():
             return ["You aren't tired."]
         case ItemFound(name=name):
@@ -198,7 +219,7 @@ def render(event: Event) -> list[str]:
             return [f"You take {_a(name)}."]
         case ItemDropped(name=name):
             return [f"You drop {_a(name)}."]
-        case Ate() | ItemFilled() | DrankFrom() | NotFood() | NothingToFill() | NothingToDrink():
+        case Ate() | ItemFilled() | DrankFrom() | NotFood() | NothingToFill() | NothingToDrink() | NoWater():
             return _consumed(event)
         case InventoryReport(items=items):
             if not items:
@@ -326,15 +347,35 @@ def _hunt(
             return ["It slinks off into the dark, sated for now."]
         case PcEscaped():
             return ["You tear free and run."]
-        case PcDied():
-            return ["It drags you down. You are dead."]
+        case PcDied(cause=cause):
+            return [_DEATHS[cause]]
         case Dead():
             return ["You are dead. Type quit to stop."]
         case _:
             assert_never(event)
 
 
-def _consumed(event: Ate | ItemFilled | DrankFrom | NotFood | NothingToFill | NothingToDrink) -> list[str]:
+def _air(event: BreathWorsened | BreathBack | RepairDone | RepairLeft | NothingToRepair) -> list[str]:
+    """The words for the failing air (M4): the breath as it goes bad in the home section and comes back out of
+    it, and the repair's end, what's left of it, and its refusals."""
+    match event:
+        case BreathWorsened(level=level):
+            return [_BREATHING[level - 1]]
+        case BreathBack():
+            return ["You can breathe easily again."]
+        case RepairDone():
+            return ["The recycler shudders, and the hum behind the walls steadies. The air will clear."]
+        case RepairLeft(ticks=ticks):
+            return [_first_upper(f"{describe_duration(ticks)} of work is left.")]
+        case NothingToRepair():
+            return ["There's nothing here you know how to repair."]
+        case _:
+            assert_never(event)
+
+
+def _consumed(
+    event: Ate | ItemFilled | DrankFrom | NotFood | NothingToFill | NothingToDrink | NoWater,
+) -> list[str]:
     """The words for eating and drinking what you carry, and the refusals when there's nothing to eat or fill or
     drink from."""
     match event:
@@ -353,6 +394,8 @@ def _consumed(event: Ate | ItemFilled | DrankFrom | NotFood | NothingToFill | No
             return ["You have nothing that needs filling."]
         case NothingToDrink(name=name):
             return [f"There's no water here, and your {name} is empty."]
+        case NoWater():
+            return ["There's no water here."]
         case _:
             assert_never(event)
 
@@ -369,6 +412,8 @@ def _time_passed(event: TimePassed) -> list[str]:
             return ["You drink your fill."]
         case Activity.SEARCHING:
             return [f"You search for {describe_duration(event.end - event.start)}."]
+        case Activity.REPAIRING:
+            return [f"You work on the recycler for {describe_duration(event.end - event.start)}."]
         case Activity.HANDLING:
             return []  # the item facts say what happened
         case Activity.EATING:
@@ -392,6 +437,8 @@ def _stopped(activity: Activity) -> str:
             return "You stop drinking."
         case Activity.SEARCHING:
             return "You stop searching."
+        case Activity.REPAIRING:
+            return "You stop working."
         case Activity.HANDLING:
             return "You stop what you're doing."  # can't happen: handling is never interruptible
         case Activity.EATING:
@@ -402,19 +449,25 @@ def _stopped(activity: Activity) -> str:
             assert_never(activity)
 
 
-def _how_you_are(levels: tuple[NeedLevel, ...], wounds: int) -> str:
-    """The second line of `status`: each need above level 0, then each wound, named by its level, in `Need` order."""
+def _how_you_are(levels: tuple[NeedLevel, ...], wounds: int, breath: int) -> str:
+    """The second line of `status`: each need above level 0, then each wound and the breath, named by its level,
+    in `Need` order and then some."""
     words = [_NAMED[entry.need][entry.level - 1] for entry in levels if entry.level > 0]
     if wounds:
         words.append(_WOUNDS[wounds - 1])
+    if breath:
+        words.append(_BREATH[breath - 1])
     return f"You're {_listed(words)}." if words else "You feel fine."
 
 
 def _danger(danger: Danger) -> str:
     """A danger line of `status`: the words for its worst sign, with today's chance it grows worse — a hunting
-    predator is named by the odds of it striking where the PC is instead."""
+    predator is named by the odds of it striking where the PC is instead, and the air's failure has no odds, since
+    it can get no worse."""
     if danger.attack is not None:
         return f"{_DANGERS[danger.clock, danger.stage]} An attack where you are: {describe_odds(danger.attack)} a day."
+    if danger.daily is None:
+        return _DANGERS[danger.clock, danger.stage]
     return f"{_DANGERS[danger.clock, danger.stage]} It grows worse at {_percent(danger.daily)} a day."
 
 
@@ -465,6 +518,11 @@ def _how_full(stack: ItemStack) -> str:
 def _a(name: str) -> str:
     """A name with its article: "a ration bar", "an item"."""
     return f"{'an' if name[:1].lower() in 'aeiou' else 'a'} {name}"
+
+
+def _first_upper(text: str) -> str:
+    """The same text with its first letter capitalized, as a sentence begins: "two hours" -> "Two hours"."""
+    return text[:1].upper() + text[1:]
 
 
 def _listed(words: list[str], conj: str = "and") -> str:

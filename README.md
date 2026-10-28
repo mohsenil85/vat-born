@@ -12,7 +12,11 @@ the decks, and the air recycler hums on. Each can show itself in signs — track
 light — which `status` names as dangers once you've come across them. When the thing that walks the decks has the
 hunt about it and catches you waiting, resting, or searching, it attacks, and nothing will do but fighting it off
 or fleeing back the way you came — each a gamble with the odds shown before you commit, and each wound it leaves
-heals only with time. A badly wounded clone doesn't survive a third; the run ends there, until the next clone wakes.
+heals only with time. When the air recycler fails, the air in the home section goes bad: a clone breathing it
+grows short of breath, then gasps, then suffocates — and dies — unless it steps out beyond the bulkhead, where the
+breath comes back. Repairing it is work in the vat bay, two hours a stage it has fallen, kept between stints, so
+the breath can drive you out to the corridors and back until the work is done. A badly wounded clone doesn't
+survive a third; the run ends there, until the next clone wakes.
 
 The Python engine owns world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
 player intent and narrate resolved events, but may not change the rules or state directly.

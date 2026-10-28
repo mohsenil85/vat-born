@@ -86,6 +86,10 @@ COMMANDS = (
     "fight",
     "yes",
     "status",
+    "repair",
+    "s",
+    "repair",
+    "status",
 )
 
 

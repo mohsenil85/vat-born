@@ -135,6 +135,7 @@ You stop waiting.
   | t1548 clock_advanced {"clock": "predator", "stage": 1, "at": 1252, "daily": 0.8, "forced": true}
   | t1548 sign_left {"clock": "predator", "stage": 1, "place": 11, "at": 1252}
   | t1548 clock_advanced {"clock": "air", "stage": 4, "at": 1296, "daily": 0.5, "forced": true}
+  | t1548 sign_left {"clock": "air", "stage": 4, "place": 1, "at": 1296}
   | t1548 clock_advanced {"clock": "predator", "stage": 2, "at": 1396, "daily": 0.8, "forced": true}
   | t1548 sign_left {"clock": "predator", "stage": 2, "place": 12, "at": 1396}
   | t1548 clock_advanced {"clock": "predator", "stage": 3, "at": 1540, "daily": 0.8, "forced": true}

@@ -207,6 +207,19 @@ class SignSeen:
 
 
 @dataclass(frozen=True, slots=True)
+class RepairWorked:
+    """Work done on the air recycler so far, in ticks, kept between stints (M4)."""
+
+    progress: int
+
+
+@dataclass(frozen=True, slots=True)
+class AirRepaired:
+    """The recycler was repaired. The air clock goes back to quiet since the current tick, its progress to 0,
+    and its signs and every clone's sightings of them are gone (M4)."""
+
+
+@dataclass(frozen=True, slots=True)
 class PredatorAttacked:
     """The predator, hunting, attacked the PC in PLACE at AT, at those daily odds. The attack has the PC cornered
     there until it fights or flees, and it is the clone's sight of the hunt (the clock's stage 4)."""
@@ -250,6 +263,14 @@ class WoundsChanged:
 
 
 @dataclass(frozen=True, slots=True)
+class BreathChanged:
+    """The PC's breath after time passed: ticks spent in bad air, eased by good air."""
+
+    pc: CharacterId
+    breath: int
+
+
+@dataclass(frozen=True, slots=True)
 class PcDied:
     """The PC died at the current tick, of CAUSE, in PLACE. The run is over; M5 builds what comes after."""
 
@@ -283,9 +304,12 @@ type Fact = (
     | PcEscaped
     | PcWounded
     | WoundsChanged
+    | BreathChanged
     | PcDied
     | TimePassed
     | NeedsChanged
+    | RepairWorked
+    | AirRepaired
     | Rolled
 )
 
@@ -315,6 +339,7 @@ class StatusReport:
     run: int
     levels: tuple[NeedLevel, ...]
     wounds: int  # the wound level, 0 to 2
+    breath: int  # the breath level, 0 to 3
     dangers: tuple[Danger, ...]  # the clocks the clone has seen a sign of, in `Clock` order
 
 
@@ -356,11 +381,12 @@ class Sign:
 @dataclass(frozen=True, slots=True)
 class Danger:
     """A clock the clone knows of, for `status`: the worst sign it has come across (STAGE), today's chance DAILY
-    that the clock grows worse, and for a hunting predator the odds ATTACK of it striking where the PC is."""
+    that the clock grows worse — None once its threat has come and it can get no worse — and for a hunting predator
+    the odds ATTACK of it striking where the PC is."""
 
     clock: Clock
     stage: int
-    daily: float
+    daily: float | None
     attack: Odds | None
 
 
@@ -416,6 +442,18 @@ class NeedMet:
 
 
 @dataclass(frozen=True, slots=True)
+class BreathWorsened:
+    """The clone's breath crossed into a worse level as time passed in bad air (M4)."""
+
+    level: int
+
+
+@dataclass(frozen=True, slots=True)
+class BreathBack:
+    """The clone's breath came back down to 0 as time passed in good air, so it breathes easily again (M4)."""
+
+
+@dataclass(frozen=True, slots=True)
 class Interrupted:
     """The action stopped early, so the player can react."""
 
@@ -435,6 +473,23 @@ class NotTired:
 @dataclass(frozen=True, slots=True)
 class NowhereLeft:
     """This place has been searched bare already, and the clone knows it."""
+
+
+@dataclass(frozen=True, slots=True)
+class NothingToRepair:
+    """There is nothing where the PC is that it knows how to repair (M4)."""
+
+
+@dataclass(frozen=True, slots=True)
+class RepairDone:
+    """The recycler is repaired: the air clock starts over and the air will clear (M4)."""
+
+
+@dataclass(frozen=True, slots=True)
+class RepairLeft:
+    """A stint on the recycler ended before the work was done; TICKS of work are left (M4)."""
+
+    ticks: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -609,6 +664,11 @@ type Report = (
     | FleeStakes
     | Wounded
     | WoundsHealed
+    | BreathWorsened
+    | BreathBack
+    | NothingToRepair
+    | RepairDone
+    | RepairLeft
     | Dead
 )
 

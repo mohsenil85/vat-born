@@ -15,7 +15,9 @@ from typing import Self, assert_never, cast, final
 from vat_born.clock import Tick
 from vat_born.dice import Dice, Key, Odds, Stream
 from vat_born.events import (
+    AirRepaired,
     Ate,
+    BreathChanged,
     ClockAdvanced,
     ClockStarted,
     CloneWoke,
@@ -38,6 +40,7 @@ from vat_born.events import (
     PredatorAttacked,
     PredatorDrivenOff,
     PredatorRetreated,
+    RepairWorked,
     Rolled,
     Sign,
     SignLeft,
@@ -65,7 +68,7 @@ def _signs(rows: list[tuple[str, int]]) -> tuple[Sign, ...]:
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 11
+SCHEMA_VERSION = 12
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -92,6 +95,7 @@ CREATE TABLE characters (
     hunger INTEGER NOT NULL,
     fatigue INTEGER NOT NULL,
     wounds INTEGER NOT NULL CHECK (wounds >= 0),
+    breath INTEGER NOT NULL CHECK (breath >= 0),
     came_from INTEGER REFERENCES nodes (id)
 ) STRICT;
 
@@ -143,11 +147,13 @@ CREATE TABLE searched_bare (
     PRIMARY KEY (run, node)
 ) STRICT;
 
--- Each hazard clock (design §7.2): its stage, and the tick of its last change.
+-- Each hazard clock (design §7.2): its stage, the tick of its last change, and, for a clock being repaired, the
+-- work done so far, in ticks.
 CREATE TABLE clocks (
     clock TEXT PRIMARY KEY,
     stage INTEGER NOT NULL CHECK (stage BETWEEN 0 AND 4),
-    since INTEGER NOT NULL
+    since INTEGER NOT NULL,
+    progress INTEGER NOT NULL CHECK (progress >= 0)
 ) STRICT;
 
 -- The signs the clocks have left, one per clock and stage. A sign is in a place, or is heard (node NULL).
@@ -206,11 +212,12 @@ class LogEntry:
 
 @dataclass(frozen=True, slots=True)
 class ClockState:
-    """One hazard clock as it stands: its stage, and the tick it last changed."""
+    """One hazard clock as it stands: its stage, the tick it last changed, and the repair work done on it."""
 
     clock: Clock
     stage: int
     since: Tick
+    progress: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -285,6 +292,19 @@ class View:
             "tuple[int] | None",
             self._conn.execute(
                 "SELECT characters.wounds FROM runs"
+                " JOIN characters ON characters.id = runs.pc"
+                " ORDER BY runs.n DESC LIMIT 1",
+            ).fetchone(),
+        )
+        assert row is not None, "no clone has woken"
+        return row[0]
+
+    def breath(self) -> int:
+        """The current clone's breath: ticks spent in bad air, eased by good air."""
+        row = cast(
+            "tuple[int] | None",
+            self._conn.execute(
+                "SELECT characters.breath FROM runs"
                 " JOIN characters ON characters.id = runs.pc"
                 " ORDER BY runs.n DESC LIMIT 1",
             ).fetchone(),
@@ -419,9 +439,10 @@ class View:
     def clocks(self) -> tuple[ClockState, ...]:
         """The hazard clocks as they stand, in `Clock` order."""
         rows = cast(
-            "list[tuple[str, int, int]]", self._conn.execute("SELECT clock, stage, since FROM clocks").fetchall()
+            "list[tuple[str, int, int, int]]",
+            self._conn.execute("SELECT clock, stage, since, progress FROM clocks").fetchall(),
         )
-        standing = {Clock(row[0]): ClockState(Clock(row[0]), row[1], Tick(row[2])) for row in rows}
+        standing = {Clock(row[0]): ClockState(Clock(row[0]), row[1], Tick(row[2]), row[3]) for row in rows}
         return tuple(standing[clock] for clock in Clock)
 
     def signs_at(self, place: NodeId) -> tuple[Sign, ...]:
@@ -570,8 +591,8 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             )
         case CloneWoke(run=run, pc=pc, place=place):
             conn.execute(
-                "INSERT INTO characters (id, kind, node, thirst, hunger, fatigue, wounds)"
-                " VALUES (?, 'pc', ?, 0, 0, 0, 0)",
+                "INSERT INTO characters (id, kind, node, thirst, hunger, fatigue, wounds, breath)"
+                " VALUES (?, 'pc', ?, 0, 0, 0, 0, 0)",
                 (pc, place),
             )
             conn.execute(
@@ -601,13 +622,16 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             _apply_carried(conn, fact)
         case PlaceSearchedBare(run=run, place=place):
             conn.execute("INSERT INTO searched_bare (run, node, tick) SELECT ?, ?, tick FROM world", (run, place))
-        case ClockStarted() | ClockAdvanced() | SignLeft() | SignSeen():
+        case ClockStarted() | ClockAdvanced() | SignLeft() | SignSeen() | RepairWorked() | AirRepaired():
             _apply_clocks(conn, fact)
         case PredatorAttacked() | PredatorDrivenOff() | PredatorRetreated() | PcEscaped():
             _apply_predator(conn, fact)
         case PcWounded(pc=pc, wounds=wounds) | WoundsChanged(pc=pc, wounds=wounds):
             set_wounds = conn.execute("UPDATE characters SET wounds = ? WHERE id = ?", (wounds, pc))
             assert set_wounds.rowcount == 1, f"no character {pc} to set the wounds of"
+        case BreathChanged(pc=pc, breath=breath):
+            set_breath = conn.execute("UPDATE characters SET breath = ? WHERE id = ?", (breath, pc))
+            assert set_breath.rowcount == 1, f"no character {pc} to grow breathless"
         case PcDied(pc=pc, cause=cause, place=place):
             died = conn.execute(
                 "UPDATE runs SET died = (SELECT tick FROM world), cause = ?, death_node = ?"
@@ -632,12 +656,18 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             assert_never(fact)
 
 
-def _apply_clocks(conn: sqlite3.Connection, fact: ClockStarted | ClockAdvanced | SignLeft | SignSeen) -> None:
+def _apply_clocks(
+    conn: sqlite3.Connection, fact: ClockStarted | ClockAdvanced | SignLeft | SignSeen | RepairWorked | AirRepaired
+) -> None:
     """Apply the hazard clocks' facts: a clock starts quiet, advances one stage at a time, leaves each stage's
-    sign, and is come across by a clone."""
+    sign, and is come across by a clone. A repair works its clock's progress along and, done, quiets it and
+    clears its signs and every clone's sightings of them."""
     match fact:
         case ClockStarted(clock=clock):
-            conn.execute("INSERT INTO clocks (clock, stage, since) VALUES (?, 0, (SELECT tick FROM world))", (clock,))
+            conn.execute(
+                "INSERT INTO clocks (clock, stage, since, progress) VALUES (?, 0, (SELECT tick FROM world), 0)",
+                (clock,),
+            )
         case ClockAdvanced(clock=clock, stage=stage, at=at):
             moved = conn.execute(
                 "UPDATE clocks SET stage = ?, since = ? WHERE clock = ? AND stage = ?",
@@ -651,6 +681,19 @@ def _apply_clocks(conn: sqlite3.Connection, fact: ClockStarted | ClockAdvanced |
                 "INSERT INTO signs_seen (run, clock, stage, tick) SELECT ?, ?, ?, tick FROM world",
                 (run, clock, stage),
             )
+        case RepairWorked(progress=progress):
+            worked = conn.execute(
+                "UPDATE clocks SET progress = ? WHERE clock = ? AND progress < ?", (progress, Clock.AIR, progress)
+            )
+            assert worked.rowcount == 1, f"the air clock's progress already stood at {progress}"
+        case AirRepaired():
+            fixed = conn.execute(
+                "UPDATE clocks SET stage = 0, since = (SELECT tick FROM world), progress = 0 WHERE clock = ?",
+                (Clock.AIR,),
+            )
+            assert fixed.rowcount == 1, "no air clock to repair"
+            conn.execute("DELETE FROM signs WHERE clock = ?", (Clock.AIR,))
+            conn.execute("DELETE FROM signs_seen WHERE clock = ?", (Clock.AIR,))
         case _:
             assert_never(fact)
 

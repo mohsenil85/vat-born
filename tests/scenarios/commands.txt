@@ -20,6 +20,7 @@ Commands:
   drink         drink your fill where there's water, or from your canteen
   fill          fill your canteen where there's water
   search        spend an hour searching where you are; each place hides only so much
+  repair        work on the air recycler in the vat bay, when it falters; the work keeps
   take <thing>  pick up what you see: "take ration bar", "take bar", "take all"
   drop <thing>  put down what you carry: "drop canteen", "drop all"
   eat <food>    eat something you carry: "eat ration bar", "eat stew"

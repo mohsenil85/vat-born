@@ -19,6 +19,7 @@ from vat_born.intents import (
     Look,
     Map,
     Move,
+    Repair,
     Rest,
     RestUntil,
     Search,
@@ -68,6 +69,7 @@ HELP = (
     Usage("drink", "drink your fill where there's water, or from your canteen"),
     Usage("fill", "fill your canteen where there's water"),
     Usage("search", "spend an hour searching where you are; each place hides only so much"),
+    Usage("repair", "work on the air recycler in the vat bay, when it falters; the work keeps"),
     Usage("take <thing>", 'pick up what you see: "take ration bar", "take bar", "take all"'),
     Usage("drop <thing>", 'put down what you carry: "drop canteen", "drop all"'),
     Usage("eat <food>", 'eat something you carry: "eat ration bar", "eat stew"'),
@@ -136,6 +138,8 @@ def parse(line: str) -> Command:
             return Fill()
         case "search":  # extra words are ignored, as in "search the room"
             return Search()
+        case "repair" | "fix":  # extra words are ignored, as in "repair the recycler"
+            return Repair()
         case "take" | "get":
             return _taking(rest)
         case "pick":

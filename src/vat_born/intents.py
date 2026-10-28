@@ -76,6 +76,11 @@ class Search:
 
 
 @dataclass(frozen=True, slots=True)
+class Repair:
+    """Work on the air recycler in the vat bay, when it falters. The work keeps between stints."""
+
+
+@dataclass(frozen=True, slots=True)
 class Take:
     """Pick up what the words mean, from the open where the PC stands."""
 
@@ -153,6 +158,7 @@ type TimedIntent = (
     | Drink
     | Fill
     | Search
+    | Repair
     | Take
     | TakeAll
     | Drop
