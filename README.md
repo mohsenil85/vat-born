@@ -16,7 +16,9 @@ heals only with time. When the air recycler fails, the air in the home section g
 grows short of breath, then gasps, then suffocates — and dies — unless it steps out beyond the bulkhead, where the
 breath comes back. Repairing it is work in the vat bay, two hours a stage it has fallen, kept between stints, so
 the breath can drive you out to the corridors and back until the work is done. A badly wounded clone doesn't
-survive a third; the run ends there, until the next clone wakes.
+survive a third. Death comes — of the predator, of bad air, of thirst, of hunger — and the body lies where it
+fell with everything it carried; the ship goes on without anyone for a day or three, and then the next clone
+wakes in the vat bay, knowing the map its predecessors walked and nothing else.
 
 The Python engine owns world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
 player intent and narrate resolved events, but may not change the rules or state directly.

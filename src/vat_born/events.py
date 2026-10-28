@@ -272,7 +272,8 @@ class BreathChanged:
 
 @dataclass(frozen=True, slots=True)
 class PcDied:
-    """The PC died at the current tick, of CAUSE, in PLACE. The run is over; M5 builds what comes after."""
+    """The PC died at the current tick, of CAUSE, in PLACE. Applying it drops everything the clone carried into
+    the open where it died, and the same turn goes on to the next clone (M5)."""
 
     pc: CharacterId
     cause: str
@@ -391,10 +392,19 @@ class Danger:
 
 
 @dataclass(frozen=True, slots=True)
+class Body:
+    """One clone that died in a place, for a look: which clone it was, and how long ago it died, in ticks."""
+
+    run: int
+    ticks: int
+
+
+@dataclass(frozen=True, slots=True)
 class LookReport:
     place_name: str
     description: str
     signs: tuple[Sign, ...]  # the signs at the place, one line each, in clock then stage order
+    bodies: tuple[Body, ...]  # the clones that died in the place, oldest first, one line each
     items: tuple[ItemStack, ...]  # the items lying in the open, one stack per kind, in items.toml order
     exits: tuple[Exit, ...]
 
@@ -625,11 +635,6 @@ class WoundsHealed:
     level: int
 
 
-@dataclass(frozen=True, slots=True)
-class Dead:
-    """The clone is dead, and until M5 builds what comes after, only quitting is left."""
-
-
 type Report = (
     Resumed
     | StatusReport
@@ -669,7 +674,6 @@ type Report = (
     | NothingToRepair
     | RepairDone
     | RepairLeft
-    | Dead
 )
 
 type Event = Fact | Report

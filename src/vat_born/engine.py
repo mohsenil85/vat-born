@@ -23,7 +23,6 @@ from vat_born.events import (
     CloneWoke,
     Cornered,
     Danger,
-    Dead,
     DrankFrom,
     Event,
     Fact,
@@ -130,7 +129,7 @@ from vat_born.intents import (
     WaitUntil,
     Where,
 )
-from vat_born.needs import Activity, Need, Needs, heal, level, take_wound, tick, wound_level
+from vat_born.needs import Activity, Need, Needs, deadly, heal, level, take_wound, tick, wound_level
 from vat_born.store import ClockState, LogEntry, PlaceWithKind, Store, Txn, View, WorldError
 from vat_born.world import CharacterId, Direction, Exit, Item, ItemId, ItemKind, Layer, NodeId
 
@@ -204,8 +203,7 @@ class Game:
 
     def act(self, intent: Intent) -> Turn:
         view = self._store.view()
-        if view.dead():  # M5 builds what comes after a death; until then, only quitting is left
-            return Turn((Dead(),))
+        assert not view.dead(), "a dead clone's turn goes on to the next clone in the same turn"
         match intent:
             case Status() | Where() | Look() | Map() | Inventory():
                 return Turn(_resolve_free(intent, view, self._content))
@@ -261,9 +259,12 @@ class Game:
         with self._store.transaction(self._dice) as txn:
             start = txn.tick()
             reports = _resolve_timed(intent, txn, self._content)
-            if not txn.dead() and txn.breath() >= BREATH_DEADLY:
-                # the bad air has the clone: the body gives out once the action is done (M5 adds thirst and hunger)
-                txn.record(PcDied(txn.pc(), _BAD_AIR, txn.pc_place().id))
+            if not txn.dead() and (cause := _death_of(txn)) is not None:
+                # the body gives out once the action is done, of the first of the causes that apply
+                txn.record(PcDied(txn.pc(), cause, txn.pc_place().id))
+            woke: tuple[Report, ...] = ()
+            if txn.dead():  # however it died, the same turn goes on: the gap, then the next clone
+                woke = _next_clone(txn, self._content)
             end = txn.tick()
         if not txn.facts:  # refused: nothing changed and no time passed
             assert reports, f"{intent} did nothing and said nothing"
@@ -271,7 +272,11 @@ class Game:
         assert end > start, f"{intent} took no time"
         before, after = game_time(start), game_time(end)
         notices = (PhaseChanged(before, after),) if after != before else ()
-        return Turn((*txn.facts, *notices, *reports), txn.logged)
+        if not woke:
+            return Turn((*txn.facts, *notices, *reports), txn.logged)
+        # A death splits the turn: the dead clone's news comes before its death, and the next clone's after it.
+        died = next(n for n, fact in enumerate(txn.facts) if isinstance(fact, PcDied))
+        return Turn((*txn.facts[:died], *reports, *txn.facts[died:], *notices, *woke), txn.logged)
 
 
 def _resolve_free(intent: FreeIntent, view: View, content: Content) -> tuple[Event, ...]:
@@ -400,9 +405,11 @@ _BADLY_WOUNDED = Modifier("badly wounded", -0.20)
 # handling things, and eating — and fighting, which is its own gamble.
 _LINGERING = frozenset((Activity.WAITING, Activity.RESTING, Activity.SEARCHING, Activity.REPAIRING))
 
-# The predator and the bad air, as the log names the causes of death.
+# The predator, the bad air, thirst, and hunger, as the log names the causes of death.
 _THE_PREDATOR = "the predator"
 _BAD_AIR = "bad air"
+_THIRST = "thirst"
+_HUNGER = "hunger"
 
 
 def _search(txn: Txn, content: Content) -> tuple[Report, ...]:
@@ -503,12 +510,14 @@ class _Hazards:
     """The hazard clocks' side of one action's ticks: each clock as the ticks find it, the signs this clone has come
     across, and the facts to record once the ticks are done. The rolls that decide a move come from the keyed
     streams, not logged rolls — the exception to every roll being logged (hazards.py). Here too belongs the
-    predator's hunt: once its clock stands at the hunt, it may attack a clone that lingers."""
+    predator's hunt: once its clock stands at the hunt, it may attack a clone that lingers. HERE None is the
+    respawn gap, with nobody aboard: RUN is then the dead clone's, nothing is noticed, no cries are heard, and
+    nobody is attacked."""
 
     txn: Txn
     content: Content
     run: int
-    here: NodeId
+    here: NodeId | None
     at_home: bool
     clocks: dict[Clock, ClockState]
     seen: set[Sign]
@@ -537,12 +546,12 @@ class _Hazards:
                         place = _sign_place(self.txn, self.content, clock, stage, at)
                         self.facts.append(SignLeft(clock, stage, place, at))
                         sign = Sign(clock, stage)
-                        if place == self.here and sign not in self.seen:
+                        if self.here is not None and place == self.here and sign not in self.seen:
                             self.facts.append(SignSeen(self.run, clock, stage))
                             self.seen.add(sign)
                             reports.append(SignNoticed(clock, stage))
                             stopped = True
-            if clock is Clock.PREDATOR and is_midnight(at) and standing.stage >= 3:
+            if clock is Clock.PREDATOR and self.here is not None and is_midnight(at) and standing.stage >= 3:
                 reports.append(HeardCries())
                 cries = Sign(Clock.PREDATOR, 3)
                 if cries not in self.seen:  # the first time a clone hears them is its coming across them
@@ -550,7 +559,7 @@ class _Hazards:
                     self.seen.add(cries)
                 stopped = True
             self.clocks[clock] = standing
-        if self._strikes(activity, at):
+        if self.here is not None and self._strikes(activity, at):
             self.struck = True
             reports.append(Attacked())
             odds = attack_odds(at_home=self.at_home, at_night=game_time(at).phase is Phase.NIGHT)
@@ -563,11 +572,11 @@ class _Hazards:
         return stopped
 
     def _strikes(self, activity: Activity, at: Tick) -> bool:
-        """Whether the predator attacks at tick AT. Only a clone that lingers is exposed, and only one attack is
-        under way at a time. Like the clocks' rolls, the draw comes from a keyed stream and is logged only when it
-        fires, in the fact it causes (hazards.py)."""
+        """Whether the predator attacks at tick AT. Only a clone that lingers is exposed, only one attack is
+        under way at a time, and with nobody aboard there is no one to attack. Like the clocks' rolls, the draw
+        comes from a keyed stream and is logged only when it fires, in the fact it causes (hazards.py)."""
         hunting = self.clocks[Clock.PREDATOR].stage >= 4
-        if not hunting or activity not in _LINGERING or self.txn.attack() is not None:
+        if self.here is None or not hunting or activity not in _LINGERING or self.txn.attack() is not None:
             return False
         odds = attack_odds(at_home=self.at_home, at_night=game_time(at).phase is Phase.NIGHT)
         return self.txn.stream("attack", at).random() < tick_chance(odds.chance)
@@ -578,10 +587,11 @@ def _pass(txn: Txn, ticks: int, content: Content, activity: Activity, *, interru
     takes its turn each tick, in a fixed order: the needs, then the wounds' healing, then the breath (M4), then the
     hazard clocks (design §7.2), then the predator's hunt. A need getting worse, the breath going bad, or a sign
     coming to the clone's notice is reported as it happens and stops an interruptible action with ticks left, so
-    the player can react; a need coming back down to 0 is reported too, but only getting worse and the clocks stop
-    anything. An attack stops the action at that tick even on its last one. The clocks' facts are recorded after
-    the needs', in the order they happened: each advance, then the sign it left, then the clone coming across
-    it."""
+    the player can react; so does a need reaching the count that kills, which no report of its own heralds — the
+    death that follows says it. A need coming back down to 0 is reported too, but only getting worse and the
+    clocks stop anything. An attack stops the action at that tick even on its last one. The clocks' facts are
+    recorded after the needs', in the order they happened: each advance, then the sign it left, then the clone
+    coming across it."""
     assert ticks > 0, "an action takes at least one tick"
     start = txn.tick()
     pc = txn.pc()
@@ -631,6 +641,59 @@ def _pass(txn: Txn, ticks: int, content: Content, activity: Activity, *, interru
     for fact in hazards.facts:
         txn.record(fact)
     return tuple(reports)
+
+
+def _death_of(txn: Txn) -> str | None:
+    """What the body dies of once the action is done, if anything: the bad air first, then thirst, then hunger —
+    the first that applies. The predator's kill is recorded in the fight itself."""
+    needs = txn.needs()
+    if txn.breath() >= BREATH_DEADLY:
+        return _BAD_AIR
+    if deadly(Need.THIRST, needs.thirst):
+        return _THIRST
+    if deadly(Need.HUNGER, needs.hunger):
+        return _HUNGER
+    return None
+
+
+def _gap(txn: Txn, ticks: int, content: Content) -> None:
+    """Let TICKS ticks pass with nobody aboard (the respawn gap): only the clocks take their turns, so they climb
+    and leave their signs but nothing is noticed, no cries are heard, and nobody is attacked. No needs, wounds,
+    or breath are stepped, so the gap records its time and the clocks' facts and nothing else."""
+    start = txn.tick()
+    hazards = _Hazards(
+        txn=txn,
+        content=content,
+        run=txn.run(),
+        here=None,
+        at_home=False,
+        clocks={state.clock: state for state in txn.clocks()},
+        seen=set(),
+        facts=[],
+    )
+    noticed: list[Report] = []
+    passed = 0
+    for _ in range(ticks):
+        passed += 1
+        hazards.turn(Tick(start + passed), Activity.DEAD, noticed)
+    assert not noticed, "with nobody aboard, nothing comes to anyone's notice"
+    txn.record(TimePassed(start, Tick(start + passed), Activity.DEAD))
+    for fact in hazards.facts:
+        txn.record(fact)
+
+
+def _next_clone(txn: Txn, content: Content) -> tuple[Report, ...]:
+    """What follows a death, still in the same turn and transaction (M5): the ship goes on without anyone for a
+    seeded gap of one to three days, then the next clone wakes in the vat bay, comes across the signs there, and
+    looks around. The map stays known — places visited belong to the world — while what was searched bare and
+    which signs were seen the new clone learns again, as any clone does."""
+    run = txn.run()
+    vat_bay = next(entry.place for entry in txn.places() if entry.kind == content.home.start)
+    _gap(txn, txn.stream("respawn", run).randint(144, 432), content)
+    txn.record(CloneWoke(run + 1, txn.next_pc(), vat_bay, content.place(content.home.start).name))
+    for sign in txn.signs_at(vat_bay):  # the waking comes across every sign there, a new clone having seen none
+        txn.record(SignSeen(run + 1, sign.clock, sign.stage))
+    return (_look(txn, content),)
 
 
 def _walk(txn: Txn, content: Content, way: Exit) -> tuple[Report, ...]:
@@ -697,13 +760,16 @@ def _mauled(txn: Txn, place: NodeId, reports: tuple[Report, ...]) -> tuple[Repor
 
 def _needs_turn(needs: Needs, stepped: Needs, reports: list[Report]) -> bool:
     """The needs' turn in one tick, on the counts after it (STEPPED) against the counts before (NEEDS): the needs that
-    got worse are reported first, then the needs met. Returns whether any got worse."""
+    got worse are reported first, then the needs met. Returns whether any got worse or reached the count that
+    kills, which stops an interruptible action the same way."""
     worsened = False
     for need in Need:
         now = level(need, stepped.count(need))
         if now > level(need, needs.count(need)):
             reports.append(NeedWorsened(need, now))
             worsened = True
+        if deadly(need, stepped.count(need)):
+            worsened = True  # no report heralds the count that kills; the death that follows says it
     reports.extend(NeedMet(need) for need in Need if needs.count(need) > 0 and stepped.count(need) == 0)
     return worsened
 
@@ -755,11 +821,18 @@ def _sign_choice(txn: Txn, clock: Clock, stage: int, at: Tick, candidates: tuple
 
 
 def _look(view: View, content: Content) -> LookReport:
-    """What a clone sees when it looks, arrives somewhere, or wakes: the place, the signs it carries, what lies in
-    the open there, and the paths out."""
+    """What a clone sees when it looks, arrives somewhere, or wakes: the place, the signs it carries, the clones
+    that died there, what lies in the open, and the paths out."""
     place = view.pc_place()
     stacks = _stacked(view.items_at(place.id), content)
-    return LookReport(place.name, place.description, view.signs_at(place.id), stacks, view.exits(place.id))
+    return LookReport(
+        place.name,
+        place.description,
+        view.signs_at(place.id),
+        view.bodies_at(place.id),
+        stacks,
+        view.exits(place.id),
+    )
 
 
 def _stacked(items: tuple[Item, ...], content: Content) -> tuple[ItemStack, ...]:

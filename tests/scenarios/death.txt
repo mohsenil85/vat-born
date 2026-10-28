@@ -1,0 +1,133 @@
+# Death and the next clone: a clone that never drinks dies of thirst on its third day, the ship goes on without
+# anyone for a while, and the next clone wakes in the vat bay knowing the map, and finds the body with its kit.
+# seed: 42
+
+A new world, seed 42.
+You wake in a clone vat in the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+Type "help" for the commands.
+> w
+You head west to the storeroom.
+The storeroom
+Empty shelves run floor to ceiling. Scrape marks on the deck show where crates were dragged out, and a cold draft stirs the dust.
+Paths: east to the vat bay.
+  | t1 time_passed {"start": 0, "end": 1, "activity": "walking"}
+  | t1 needs_changed {"pc": 1, "thirst": 1, "hunger": 1, "fatigue": 1}
+  | t1 pc_moved {"pc": 1, "origin": 1, "destination": 3, "direction": "west", "place_name": "the storeroom"}
+  | t1 place_visited {"place": 3}
+> search
+You search for an hour.
+Search 50%: success.
+You find a ration bar.
+  | t7 time_passed {"start": 1, "end": 7, "activity": "searching"}
+  | t7 needs_changed {"pc": 1, "thirst": 7, "hunger": 7, "fatigue": 7}
+  | t7 rolled {"purpose": "search", "key": [3], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.026209999053780297, "success": true}
+  | t7 item_found {"item": 1, "place": 3, "name": "ration bar"}
+> take bar
+You take a ration bar.
+  | t8 time_passed {"start": 7, "end": 8, "activity": "handling"}
+  | t8 needs_changed {"pc": 1, "thirst": 8, "hunger": 8, "fatigue": 8}
+  | t8 item_taken {"pc": 1, "item": 1, "place": 3, "name": "ration bar"}
+> wait 30 days
+You wait about 11 hours.
+It is now evening.
+You're getting thirsty.
+You stop waiting.
+  | t72 time_passed {"start": 8, "end": 72, "activity": "waiting"}
+  | t72 needs_changed {"pc": 1, "thirst": 72, "hunger": 72, "fatigue": 72}
+> wait 30 days
+You wait four hours.
+It is now night.
+You're getting tired.
+You stop waiting.
+  | t96 time_passed {"start": 72, "end": 96, "activity": "waiting"}
+  | t96 needs_changed {"pc": 1, "thirst": 96, "hunger": 96, "fatigue": 96}
+> wait 30 days
+You wait eight hours.
+It is now day 2, morning.
+You're very thirsty now.
+You're getting hungry.
+You're very tired now.
+You stop waiting.
+  | t144 time_passed {"start": 96, "end": 144, "activity": "waiting"}
+  | t144 needs_changed {"pc": 1, "thirst": 144, "hunger": 144, "fatigue": 144}
+> wait 30 days
+You wait 12 hours.
+It is now evening.
+You're exhausted.
+You stop waiting.
+  | t216 time_passed {"start": 144, "end": 216, "activity": "waiting"}
+  | t216 needs_changed {"pc": 1, "thirst": 216, "hunger": 216, "fatigue": 216}
+  | t216 clock_advanced {"clock": "predator", "stage": 1, "at": 158, "daily": 0.4, "forced": false}
+  | t216 sign_left {"clock": "predator", "stage": 1, "place": 8, "at": 158}
+> wait 30 days
+You wait 12 hours.
+It is now day 3, morning.
+You're dying of thirst.
+You stop waiting.
+  | t288 time_passed {"start": 216, "end": 288, "activity": "waiting"}
+  | t288 needs_changed {"pc": 1, "thirst": 288, "hunger": 288, "fatigue": 288}
+> wait 30 days
+You wait a day.
+You're very hungry now.
+You stop waiting.
+Your body gives out at last. You die of thirst.
+The ship goes on without you for about two days.
+You wake in a clone vat in the vat bay. You are clone 2.
+It is now day 5, evening.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Now and then the hum behind the walls stutters, like a missed breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+  | t432 time_passed {"start": 288, "end": 432, "activity": "waiting"}
+  | t432 needs_changed {"pc": 1, "thirst": 432, "hunger": 432, "fatigue": 432}
+  | t432 clock_advanced {"clock": "predator", "stage": 2, "at": 354, "daily": 0.5, "forced": false}
+  | t432 sign_left {"clock": "predator", "stage": 2, "place": 18, "at": 354}
+  | t432 clock_advanced {"clock": "air", "stage": 1, "at": 432, "daily": 0.25, "forced": true}
+  | t432 sign_left {"clock": "air", "stage": 1, "place": 1, "at": 432}
+  | t432 pc_died {"pc": 1, "cause": "thirst", "place": 3}
+  | t663 time_passed {"start": 432, "end": 663, "activity": "dead"}
+  | t663 clock_advanced {"clock": "predator", "stage": 3, "at": 609, "daily": 0.7, "forced": false}
+  | t663 sign_left {"clock": "predator", "stage": 3, "place": null, "at": 609}
+  | t663 clone_woke {"run": 2, "pc": 2, "place": 1, "place_name": "the vat bay"}
+  | t663 sign_seen {"run": 2, "clock": "air", "stage": 1}
+> status
+Day 5, evening. You are clone 2.
+You feel fine.
+The air recycler is faltering. It grows worse at 30% a day.
+> look
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Now and then the hum behind the walls stutters, like a missed breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+> map
+The vat bay (you are here): north to the bulkhead (twenty minutes, unexplored), east to the workshop (unexplored), west to the storeroom.
+The storeroom: east to the vat bay.
+> w
+You head west to the storeroom.
+The storeroom
+Empty shelves run floor to ceiling. Scrape marks on the deck show where crates were dragged out, and a cold draft stirs the dust.
+The body of clone 1 lies here.
+You see a ration bar here.
+Paths: east to the vat bay.
+  | t664 time_passed {"start": 663, "end": 664, "activity": "walking"}
+  | t664 needs_changed {"pc": 2, "thirst": 1, "hunger": 1, "fatigue": 1}
+  | t664 pc_moved {"pc": 2, "origin": 1, "destination": 3, "direction": "west", "place_name": "the storeroom"}
+> search
+You search for an hour.
+You find nothing, and there's nowhere left to look.
+  | t670 time_passed {"start": 664, "end": 670, "activity": "searching"}
+  | t670 needs_changed {"pc": 2, "thirst": 7, "hunger": 7, "fatigue": 7}
+  | t670 place_searched_bare {"run": 2, "place": 3}
+> take bar
+You take a ration bar.
+  | t671 time_passed {"start": 670, "end": 671, "activity": "handling"}
+  | t671 needs_changed {"pc": 2, "thirst": 8, "hunger": 8, "fatigue": 8}
+  | t671 item_taken {"pc": 2, "item": 1, "place": 3, "name": "ration bar"}
+> i
+You're carrying a ration bar.
+> where
+You are in the storeroom.
+The way home: east (ten minutes).

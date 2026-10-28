@@ -440,8 +440,26 @@ Run for it? 50% to get away; if not, 70% to live through it, wounded. (yes or no
 Flee 50%: failure.
 Survive 70%: failure.
 It drags you down. You are dead.
+The ship goes on without you for about three days.
+You wake in a clone vat in the vat bay. You are clone 2.
+It is now day 10, night.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Now and then the hum behind the walls stutters, like a missed breath.
+The air in here tastes stale and close.
+A red warning light pulses above the door.
+The hum behind the walls has stopped. The air is thick and still.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
   | t1047 rolled {"purpose": "flee", "key": [5], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.9110291875889874, "success": false}
   | t1048 time_passed {"start": 1047, "end": 1048, "activity": "fighting"}
   | t1048 needs_changed {"pc": 1, "thirst": 55, "hunger": 1048, "fatigue": 1}
   | t1048 rolled {"purpose": "survive", "key": [5], "odds": {"base": 0.7, "modifiers": []}, "chance": 0.7, "value": 0.9630834008558372, "success": false}
   | t1048 pc_died {"pc": 1, "cause": "the predator", "place": 5}
+  | t1410 time_passed {"start": 1048, "end": 1410, "activity": "dead"}
+  | t1410 clock_advanced {"clock": "air", "stage": 4, "at": 1196, "daily": 0.5, "forced": false}
+  | t1410 sign_left {"clock": "air", "stage": 4, "place": 1, "at": 1196}
+  | t1410 clone_woke {"run": 2, "pc": 2, "place": 1, "place_name": "the vat bay"}
+  | t1410 sign_seen {"run": 2, "clock": "air", "stage": 1}
+  | t1410 sign_seen {"run": 2, "clock": "air", "stage": 2}
+  | t1410 sign_seen {"run": 2, "clock": "air", "stage": 3}
+  | t1410 sign_seen {"run": 2, "clock": "air", "stage": 4}

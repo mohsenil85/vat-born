@@ -1,6 +1,6 @@
 """The PC's needs. Each counts the ticks since it was last answered, and the count reads as a level that says how
-the clone is doing; what comes after the last level is death, which waits for M5. Wounds count the other way:
-down, as they heal."""
+the clone is doing; past the last level, thirst and hunger kill at a count of their own (M5), while fatigue never
+kills. Wounds count the other way: down, as they heal."""
 
 from dataclasses import dataclass
 from enum import StrEnum
@@ -29,6 +29,7 @@ class Activity(StrEnum):
     HANDLING = "handling"
     EATING = "eating"
     FIGHTING = "fighting"
+    DEAD = "dead"  # the respawn gap: time passing with nobody aboard
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,6 +65,19 @@ _AT_LEVEL = {
 def level(need: Need, ticks: int) -> int:
     """How bad the need is after TICKS unanswered, from 0 (fine) to 3."""
     return sum(1 for at in _AT_LEVEL[need] if ticks >= at)
+
+
+# The counts at which the needs kill: thirst after three days without a drink, hunger after two weeks without
+# food. Fatigue never kills, so it has no count.
+_DEADLY = {
+    Need.THIRST: 3 * TICKS_PER_DAY,
+    Need.HUNGER: 14 * TICKS_PER_DAY,
+}
+
+
+def deadly(need: Need, ticks: int) -> bool:
+    """Whether TICKS unanswered of NEED has reached the count that kills."""
+    return need in _DEADLY and ticks >= _DEADLY[need]
 
 
 def tick(needs: Needs, activity: Activity) -> Needs:

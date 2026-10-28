@@ -9,6 +9,7 @@ from vat_born.events import (
     AirRepaired,
     Ate,
     Attacked,
+    Body,
     BreathBack,
     BreathChanged,
     BreathWorsened,
@@ -17,7 +18,6 @@ from vat_born.events import (
     CloneWoke,
     Cornered,
     Danger,
-    Dead,
     DrankFrom,
     Event,
     FightStakes,
@@ -136,6 +136,8 @@ _DANGERS = {
 _DEATHS = {
     "the predator": "It drags you down. You are dead.",
     "bad air": "You can't get your breath. You are dead.",
+    "thirst": "Your body gives out at last. You die of thirst.",
+    "hunger": "You grow too weak to stand, and then to wake. You starve to death.",
 }
 
 
@@ -160,8 +162,8 @@ def render(event: Event) -> list[str]:
             | SignSeen()
         ):
             return []  # the clocks only show through their signs, and the wounds through their words below
-        case CloneWoke(place_name=place):
-            return [f"You wake in a clone vat in {place}."]
+        case CloneWoke(run=run, place_name=place):
+            return _woke(run, place)
         case PcMoved(direction=direction, place_name=place):
             return [f"You head {direction} to {place}."]
         case TimePassed():
@@ -188,9 +190,15 @@ def render(event: Event) -> list[str]:
                     return [line, f"The way home: {_route(steps)} ({describe_duration(ticks)})."]
         case NoPath(direction=direction):
             return [f"You can't go {direction} from here."]
-        case LookReport(place_name=place, description=description, signs=signs, items=items, exits=exits):
-            lines = [place[:1].upper() + place[1:], description]
-            lines.extend(_SIGNS[sign.clock, sign.stage] for sign in signs)
+        case LookReport(
+            place_name=place, description=description, signs=signs, bodies=bodies, items=items, exits=exits
+        ):
+            lines = [
+                place[:1].upper() + place[1:],
+                description,
+                *(_SIGNS[sign.clock, sign.stage] for sign in signs),
+                *(_body(body) for body in bodies),
+            ]
             if items:
                 lines.append(_items_here(items))
             lines.append(_paths(exits))
@@ -257,7 +265,6 @@ def render(event: Event) -> list[str]:
             | PredatorRetreated()
             | PcEscaped()
             | PcDied()
-            | Dead()
         ):
             return _hunt(event)
         case _:
@@ -295,6 +302,13 @@ def describe_odds(odds: Odds) -> str:
     return f"{_percent(odds.chance)} ({', '.join(parts)})"
 
 
+def _woke(run: int, place: str) -> list[str]:
+    """The words for a clone waking in PLACE: the first says only that, and each one after adds which clone it
+    is."""
+    woke = f"You wake in a clone vat in {place}."
+    return [woke] if run == 1 else [f"{woke} You are clone {run}."]
+
+
 def _hunt(
     event: HeardCries
     | PredatorAttacked
@@ -310,8 +324,7 @@ def _hunt(
     | PredatorDrivenOff
     | PredatorRetreated
     | PcEscaped
-    | PcDied
-    | Dead,
+    | PcDied,
 ) -> list[str]:
     """The words for the hunt (M4): the cries, the attack, the gambles and their stakes, the wounds it leaves,
     and the clone's death at its jaws."""
@@ -349,8 +362,6 @@ def _hunt(
             return ["You tear free and run."]
         case PcDied(cause=cause):
             return [_DEATHS[cause]]
-        case Dead():
-            return ["You are dead. Type quit to stop."]
         case _:
             assert_never(event)
 
@@ -420,6 +431,8 @@ def _time_passed(event: TimePassed) -> list[str]:
             return []  # the meal says what happened
         case Activity.FIGHTING:
             return []  # the fight's facts say what happened
+        case Activity.DEAD:
+            return [f"The ship goes on without you for {describe_duration(event.end - event.start)}."]
         case _:
             assert_never(event.activity)
 
@@ -445,6 +458,8 @@ def _stopped(activity: Activity) -> str:
             return "You stop eating."  # can't happen: eating is never interruptible
         case Activity.FIGHTING:
             return "You stop fighting."  # can't happen: a fight is never interruptible
+        case Activity.DEAD:
+            return "You stop."  # can't happen: nobody is left to stop anything
         case _:
             assert_never(activity)
 
@@ -496,6 +511,14 @@ def _paths(exits: tuple[Exit, ...]) -> str:
 def _items_here(items: tuple[ItemStack, ...]) -> str:
     """What lies in the open: "You see two ration bars and a canteen here." """
     return f"You see {_listed([_stack(stack) for stack in items])} here."
+
+
+def _body(body: Body) -> str:
+    """A dead clone in a place, one line of a look: the body while it is under three days dead, then only bones,
+    picked clean."""
+    if body.ticks < 3 * TICKS_PER_DAY:
+        return f"The body of clone {body.run} lies here."
+    return f"The bones of clone {body.run} lie here, picked clean."
 
 
 def _stack(stack: ItemStack) -> str:

@@ -90,6 +90,13 @@ COMMANDS = (
     "s",
     "repair",
     "status",
+    "wait 30 days",
+    "wait 30 days",
+    "wait 30 days",
+    "wait 30 days",
+    "status",
+    "look",
+    "map",
 )
 
 

@@ -17,6 +17,7 @@ from vat_born.dice import Dice, Key, Odds, Stream
 from vat_born.events import (
     AirRepaired,
     Ate,
+    Body,
     BreathChanged,
     ClockAdvanced,
     ClockStarted,
@@ -273,6 +274,11 @@ class View:
         assert row is not None, "no clone has woken"
         return CharacterId(row[0])
 
+    def next_pc(self) -> CharacterId:
+        """The character ID the next clone wakes as: one more than the highest so far."""
+        row = cast("tuple[int | None]", self._conn.execute("SELECT max(id) FROM characters").fetchone())
+        return CharacterId((row[0] or 0) + 1)
+
     def needs(self) -> Needs:
         """The current clone's needs: ticks since each was last answered."""
         row = cast(
@@ -326,7 +332,7 @@ class View:
         return None if row[0] is None else NodeId(row[0])
 
     def dead(self) -> bool:
-        """Whether the current clone has died. M5 builds what comes after."""
+        """Whether the current clone has died."""
         row = cast(
             "tuple[int | None] | None",
             self._conn.execute("SELECT died FROM runs ORDER BY n DESC LIMIT 1").fetchone(),
@@ -460,6 +466,18 @@ class View:
             self._conn.execute("SELECT clock, stage FROM signs_seen WHERE run = (SELECT max(n) FROM runs)").fetchall(),
         )
         return _signs(rows)
+
+    def bodies_at(self, place: NodeId) -> tuple[Body, ...]:
+        """Every clone that died in PLACE, oldest first, with how long ago it died, in ticks."""
+        rows = cast(
+            "list[tuple[int, int]]",
+            self._conn.execute(
+                "SELECT n, (SELECT tick FROM world) - died FROM runs WHERE death_node = ? AND died IS NOT NULL"
+                " ORDER BY n",
+                (place,),
+            ).fetchall(),
+        )
+        return tuple(Body(run=row[0], ticks=row[1]) for row in rows)
 
 
 @final
@@ -640,6 +658,8 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             )
             assert died.rowcount == 1, f"character {pc} was not the current living clone"
             conn.execute("DELETE FROM attack")  # any attack under way dies with the clone
+            # the body stays where it fell, and everything it carried lies in the open around it
+            conn.execute("UPDATE items SET node = ?, holder = NULL WHERE holder = ?", (place, pc))
         case TimePassed(start=start, end=end):
             assert end > start, "time only moves forward"
             moved = conn.execute("UPDATE world SET tick = ? WHERE tick = ?", (end, start))
