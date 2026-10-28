@@ -29,6 +29,11 @@ class Map:
 
 
 @dataclass(frozen=True, slots=True)
+class Inventory:
+    """What the PC carries."""
+
+
+@dataclass(frozen=True, slots=True)
 class Wait:
     """Let time pass."""
 
@@ -66,6 +71,36 @@ class Search:
 
 
 @dataclass(frozen=True, slots=True)
+class Take:
+    """Pick up what the words mean, from the open where the PC stands."""
+
+    words: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        assert self.words, "taking needs words"
+
+
+@dataclass(frozen=True, slots=True)
+class TakeAll:
+    """Pick up everything lying in the open where the PC stands."""
+
+
+@dataclass(frozen=True, slots=True)
+class Drop:
+    """Put down what the words mean, from what the PC carries."""
+
+    words: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        assert self.words, "dropping needs words"
+
+
+@dataclass(frozen=True, slots=True)
+class DropAll:
+    """Put down everything the PC carries."""
+
+
+@dataclass(frozen=True, slots=True)
 class Rest:
     """Rest or sleep. Ticks None means until rested."""
 
@@ -85,6 +120,6 @@ class RestUntil:
         assert 0 <= self.minute_of_day < MINUTES_PER_DAY, f"{self.minute_of_day} is not a minute of the day"
 
 
-type FreeIntent = Status | Where | Look | Map
-type TimedIntent = Wait | WaitUntil | Move | Drink | Search | Rest | RestUntil
+type FreeIntent = Status | Where | Look | Map | Inventory
+type TimedIntent = Wait | WaitUntil | Move | Drink | Search | Take | TakeAll | Drop | DropAll | Rest | RestUntil
 type Intent = FreeIntent | TimedIntent

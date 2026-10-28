@@ -109,6 +109,26 @@ class ItemFound:
 
 
 @dataclass(frozen=True, slots=True)
+class ItemTaken:
+    """The item went from the open at PLACE into the PC's hands. NAME is its singular name."""
+
+    pc: CharacterId
+    item: ItemId
+    place: NodeId
+    name: str
+
+
+@dataclass(frozen=True, slots=True)
+class ItemDropped:
+    """The item went from the PC's hands into the open at PLACE. NAME is its singular name."""
+
+    pc: CharacterId
+    item: ItemId
+    place: NodeId
+    name: str
+
+
+@dataclass(frozen=True, slots=True)
 class PlaceSearchedBare:
     """The current clone has searched PLACE until nothing was left. The knowledge is the clone's, not the world's
     (design §4)."""
@@ -126,6 +146,8 @@ type Fact = (
     | PlaceVisited
     | ItemHidden
     | ItemFound
+    | ItemTaken
+    | ItemDropped
     | PlaceSearchedBare
     | TimePassed
     | NeedsChanged
@@ -254,6 +276,45 @@ class NowhereLeft:
     """This place has been searched bare already, and the clone knows it."""
 
 
+@dataclass(frozen=True, slots=True)
+class InventoryReport:
+    """What the PC carries, one stack per kind, in items.toml order."""
+
+    items: tuple[ItemStack, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class WhichOne:
+    """The words could mean more than one kind of thing, so the player must say which. NAMES holds each answering
+    kind's singular name, in items.toml order."""
+
+    names: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class NotHere:
+    """Nothing the words mean lies in the open where the PC is."""
+
+    words: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class NotCarried:
+    """The PC carries nothing the words mean."""
+
+    words: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class NothingHere:
+    """Nothing lies in the open where the PC is, so there is nothing to take."""
+
+
+@dataclass(frozen=True, slots=True)
+class NothingCarried:
+    """The PC carries nothing, so there is nothing to drop."""
+
+
 type Report = (
     Resumed
     | StatusReport
@@ -268,6 +329,12 @@ type Report = (
     | NoWater
     | NotTired
     | NowhereLeft
+    | InventoryReport
+    | WhichOne
+    | NotHere
+    | NotCarried
+    | NothingHere
+    | NothingCarried
 )
 
 type Event = Fact | Report

@@ -15,9 +15,12 @@ from vat_born.events import (
     CloneWoke,
     Event,
     Interrupted,
+    InventoryReport,
+    ItemDropped,
     ItemFound,
     ItemHidden,
     ItemStack,
+    ItemTaken,
     LookReport,
     MapEntry,
     MapReport,
@@ -26,6 +29,10 @@ from vat_born.events import (
     NeedsChanged,
     NeedWorsened,
     NoPath,
+    NotCarried,
+    NotHere,
+    NothingCarried,
+    NothingHere,
     NotTired,
     NoWater,
     NowhereLeft,
@@ -41,12 +48,16 @@ from vat_born.events import (
     Route,
     StatusReport,
     TimePassed,
+    WhichOne,
     WorldCreated,
 )
 from vat_born.intents import (
     Drink,
+    Drop,
+    DropAll,
     FreeIntent,
     Intent,
+    Inventory,
     Look,
     Map,
     Move,
@@ -54,6 +65,8 @@ from vat_born.intents import (
     RestUntil,
     Search,
     Status,
+    Take,
+    TakeAll,
     TimedIntent,
     Wait,
     WaitUntil,
@@ -61,7 +74,7 @@ from vat_born.intents import (
 )
 from vat_born.needs import Activity, Need, Needs, level, tick
 from vat_born.store import LogEntry, Store, Txn, View, WorldError
-from vat_born.world import CharacterId, Direction, ItemId, ItemKind, Layer, NodeId
+from vat_born.world import CharacterId, Direction, Item, ItemId, ItemKind, Layer, NodeId
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,9 +144,21 @@ class Game:
 
     def act(self, intent: Intent) -> Turn:
         match intent:
-            case Status() | Where() | Look() | Map():
+            case Status() | Where() | Look() | Map() | Inventory():
                 return Turn(_resolve_free(intent, self._store.view(), self._content))
-            case Wait() | WaitUntil() | Move() | Drink() | Search() | Rest() | RestUntil():
+            case (
+                Wait()
+                | WaitUntil()
+                | Move()
+                | Drink()
+                | Search()
+                | Rest()
+                | RestUntil()
+                | Take()
+                | TakeAll()
+                | Drop()
+                | DropAll()
+            ):
                 return self._timed(intent)
             case _:
                 assert_never(intent)
@@ -165,6 +190,8 @@ def _resolve_free(intent: FreeIntent, view: View, content: Content) -> tuple[Eve
             return (PlaceReport(view.pc_place().name, _route_home(view)),)
         case Look():
             return (_look(view, content),)
+        case Inventory():
+            return (InventoryReport(_stacked(view.carried(), content)),)
         case Map():
             here = view.pc_place().id
             entries = tuple(
@@ -200,6 +227,29 @@ def _resolve_timed(intent: TimedIntent, txn: Txn, content: Content) -> tuple[Rep
             return _pass(txn, 1, Activity.DRINKING, interruptible=False)
         case Search():
             return _search(txn, content)
+        case Take(words=words):
+            place = txn.pc_place()
+            match _meant(words, txn.items_at(place.id), content):
+                case None:
+                    return (NotHere(words),)
+                case WhichOne() as which:
+                    return (which,)
+                case items:
+                    return _handle(txn, content, items, taking=True)
+        case TakeAll():
+            items = txn.items_at(txn.pc_place().id)
+            return (NothingHere(),) if not items else _handle(txn, content, items, taking=True)
+        case Drop(words=words):
+            match _meant(words, txn.carried(), content):
+                case None:
+                    return (NotCarried(words),)
+                case WhichOne() as which:
+                    return (which,)
+                case items:
+                    return _handle(txn, content, items, taking=False)
+        case DropAll():
+            items = txn.carried()
+            return (NothingCarried(),) if not items else _handle(txn, content, items, taking=False)
         case Rest(ticks=ticks):
             if ticks is None:  # until rested
                 fatigue = txn.needs().fatigue
@@ -284,13 +334,53 @@ def _look(view: View, content: Content) -> LookReport:
     """What a clone sees when it looks, arrives somewhere, or wakes: the place, what lies in the open there, and
     the paths out."""
     place = view.pc_place()
-    counts: Counter[ItemKind] = Counter(item.kind for item in view.items_at(place.id))
+    stacks = _stacked(view.items_at(place.id), content)
+    return LookReport(place.name, place.description, stacks, view.exits(place.id))
+
+
+def _stacked(items: tuple[Item, ...], content: Content) -> tuple[ItemStack, ...]:
+    """Items counted into one stack per kind, in items.toml order: how `look` lists a place and `inventory` a
+    clone's hands."""
+    counts: Counter[ItemKind] = Counter(item.kind for item in items)
     order = {kind: n for n, kind in enumerate(content.items)}  # items.toml order, for stacking
-    stacks = tuple(
+    return tuple(
         ItemStack(content.item(kind).name, content.item(kind).plural, count)
         for kind, count in sorted(counts.items(), key=lambda pair: order[pair[0]])
     )
-    return LookReport(place.name, place.description, stacks, view.exits(place.id))
+
+
+def _meant(words: tuple[str, ...], pool: tuple[Item, ...], content: Content) -> tuple[Item, ...] | WhichOne | None:
+    """The items in POOL that WORDS mean. A kind answers when every word is a word of its name or of its plural.
+    One kind answering means its items — all of them when the words answer only to the plural ("take bars"),
+    otherwise just the one with the lowest ID — and more than one kind answering is a question for the player.
+    The words arrive lowercased, with any leading article already dropped by the parser."""
+    order = {kind: n for n, kind in enumerate(content.items)}  # items.toml order, for WhichOne
+    answering: list[tuple[ItemKind, bool]] = []
+    for kind in sorted({item.kind for item in pool}, key=order.__getitem__):
+        by_name = all(word in content.item(kind).name.split() for word in words)
+        by_plural = all(word in content.item(kind).plural.split() for word in words)
+        if by_name or by_plural:
+            answering.append((kind, by_name))
+    if not answering:
+        return None
+    if len(answering) > 1:
+        return WhichOne(tuple(content.item(kind).name for kind, _ in answering))
+    kind, by_name = answering[0]
+    of_kind = tuple(item for item in pool if item.kind == kind)  # the pool is in ID order
+    return of_kind[:1] if by_name else of_kind
+
+
+def _handle(txn: Txn, content: Content, items: tuple[Item, ...], *, taking: bool) -> tuple[Report, ...]:
+    """Move ITEMS between the open where the PC stands and its hands — taking them up, or with TAKING false
+    putting them down — as one tick of handling, each item in ID order."""
+    place = txn.pc_place().id
+    pc = txn.pc()
+    reports = _pass(txn, 1, Activity.HANDLING, interruptible=False)
+    for item in items:
+        name = content.item(item.kind).name
+        fact = ItemTaken(pc, item.id, place, name) if taking else ItemDropped(pc, item.id, place, name)
+        txn.record(fact)
+    return reports
 
 
 # Definition order is the order routes break ties in.

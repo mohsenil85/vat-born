@@ -8,7 +8,10 @@ from dataclasses import dataclass
 from vat_born.clock import MINUTES_PER_TICK
 from vat_born.intents import (
     Drink,
+    Drop,
+    DropAll,
     Intent,
+    Inventory,
     Look,
     Map,
     Move,
@@ -16,6 +19,8 @@ from vat_born.intents import (
     RestUntil,
     Search,
     Status,
+    Take,
+    TakeAll,
     Wait,
     WaitUntil,
     Where,
@@ -52,11 +57,14 @@ HELP = (
     Usage("where", "where you are and the way home; takes no time"),
     Usage("look", "describe where you are; takes no time"),
     Usage("map", "the places you know and the ways between them; takes no time"),
+    Usage("inventory", "what you're carrying; takes no time"),
     Usage("go <way>", "walk to the next place: north, south, east, west, up, down (n, s, e, w, u, d)"),
     Usage("wait [time]", 'let time pass: "wait", "wait 30 minutes", "wait 2 hours", "wait until noon"'),
     Usage("rest [time]", 'rest, or sleep, until rested or for a while: "rest", "rest 2 hours", "sleep until dawn"'),
     Usage("drink", "drink your fill where there's water, as at the tap in the vat bay"),
     Usage("search", "spend an hour searching where you are; each place hides only so much"),
+    Usage("take <thing>", 'pick up what you see: "take ration bar", "take bar", "take all"'),
+    Usage("drop <thing>", 'put down what you carry: "drop canteen", "drop all"'),
     Usage("help", "this list"),
     Usage("quit", "stop playing; the world keeps your place"),
 )
@@ -66,6 +74,10 @@ _WAIT_UNTIL_HELP = 'Wait until when? Try "wait until noon", "wait until dusk", o
 _REST_HELP = 'Rest how long? Try "rest", "rest 2 hours", or "sleep until dawn".'
 _REST_UNTIL_HELP = 'Rest until when? Try "sleep until dawn", "rest until noon", or "rest until dusk".'
 _GO_HELP = 'Go where? Try "go north", or just "n".'
+_TAKE_HELP = 'Take what? Try "take ration bar", or "take all".'
+_DROP_HELP = 'Drop what? Try "drop ration bar", or "drop all".'
+_PICK_UP_HELP = 'Pick up what? Try "pick up ration bar".'
+_ARTICLES = frozenset(("the", "a", "an", "some"))
 # A longer wait is almost surely a typo, and a big enough one would overflow SQLite's integers.
 _MAX_WAIT_DAYS = 30
 
@@ -103,6 +115,8 @@ def parse(line: str) -> Command:
             return Look()
         case "map" | "m":
             return Map()
+        case "inventory" | "inv" | "i":
+            return Inventory()
         case "wait":
             return _wait(rest)
         case "rest" | "sleep":
@@ -111,6 +125,16 @@ def parse(line: str) -> Command:
             return Drink()
         case "search":  # extra words are ignored, as in "search the room"
             return Search()
+        case "take" | "get":
+            return _taking(rest)
+        case "pick":
+            match rest:
+                case ["up", *what]:
+                    return _taking(what)
+                case _:
+                    return Rejected(_PICK_UP_HELP)
+        case "drop":
+            return _dropping(rest)
         case "go":
             return _go(rest)
         case "help" | "?":
@@ -180,6 +204,34 @@ def _go(words: list[str]) -> Command:
     if words and words[0] in _WAYS:
         return Move(_WAYS[words[0]])
     return Rejected(_GO_HELP)
+
+
+def _taking(words: list[str]) -> Command:
+    """The words after "take", "get", or "pick up": what to pick up."""
+    match _thing(words):
+        case []:
+            return Rejected(_TAKE_HELP)
+        case ["all" | "everything"]:
+            return TakeAll()
+        case what:
+            return Take(tuple(what))
+
+
+def _dropping(words: list[str]) -> Command:
+    """The words after "drop": what to put down."""
+    match _thing(words):
+        case []:
+            return Rejected(_DROP_HELP)
+        case ["all" | "everything"]:
+            return DropAll()
+        case what:
+            return Drop(tuple(what))
+
+
+def _thing(words: list[str]) -> list[str]:
+    """The words that name a thing, with a leading article dropped: "the lamp" and "some bars" are "lamp" and
+    "bars"."""
+    return words[1:] if words and words[0] in _ARTICLES else words
 
 
 def _minutes(words: list[str]) -> int | None:

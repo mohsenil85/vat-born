@@ -52,8 +52,8 @@ class Place:
 
 @dataclass(frozen=True, slots=True)
 class Item:
-    """A thing lying in a place. It starts hidden in the place's search pool and comes into the open when a search
-    turns it up."""
+    """A thing in the world. It starts hidden in a place's search pool, comes into the open when a search turns it
+    up, and can then be carried by a character."""
 
     id: ItemId
     kind: ItemKind

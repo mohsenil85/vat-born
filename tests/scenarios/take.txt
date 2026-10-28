@@ -1,0 +1,244 @@
+# Taking and dropping: found things lie where they were found until taken, then go where you go; they answer to their words.
+# seed: 1
+
+A new world, seed 1.
+You wake in a clone vat in the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+Type "help" for the commands.
+> i
+You aren't carrying anything.
+> take all
+There's nothing here to take.
+> drop all
+You aren't carrying anything.
+> take bar
+You don't see "bar" here.
+> n
+You head north to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10, south to the vat bay (twenty minutes).
+  | t2 time_passed {"start": 0, "end": 2, "activity": "walking"}
+  | t2 needs_changed {"pc": 1, "thirst": 2, "hunger": 2, "fatigue": 2}
+  | t2 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+  | t2 place_visited {"place": 4}
+> n
+You head north to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
+  | t3 time_passed {"start": 2, "end": 3, "activity": "walking"}
+  | t3 needs_changed {"pc": 1, "thirst": 3, "hunger": 3, "fatigue": 3}
+  | t3 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+  | t3 place_visited {"place": 5}
+> w
+You head west to the hydroponics bay.
+The hydroponics bay
+Racks of grow trays climb toward a ceiling of dead lamps. Most of the plants are brown husks, but a few pale shoots still reach for light that isn't coming.
+Paths: east to the corridor at frame 10.
+  | t4 time_passed {"start": 3, "end": 4, "activity": "walking"}
+  | t4 needs_changed {"pc": 1, "thirst": 4, "hunger": 4, "fatigue": 4}
+  | t4 pc_moved {"pc": 1, "origin": 5, "destination": 13, "direction": "west", "place_name": "the hydroponics bay"}
+  | t4 place_visited {"place": 13}
+> search
+You search for an hour.
+Search 50%: failure.
+  | t10 time_passed {"start": 4, "end": 10, "activity": "searching"}
+  | t10 needs_changed {"pc": 1, "thirst": 10, "hunger": 10, "fatigue": 10}
+  | t10 rolled {"purpose": "search", "key": [13], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.5785661293399296, "success": false}
+> search
+You search for an hour.
+Search 50%: success.
+You find a handful of pale shoots.
+  | t16 time_passed {"start": 10, "end": 16, "activity": "searching"}
+  | t16 needs_changed {"pc": 1, "thirst": 16, "hunger": 16, "fatigue": 16}
+  | t16 rolled {"purpose": "search", "key": [13], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.3062294000512592, "success": true}
+  | t16 item_found {"item": 3, "place": 13, "name": "handful of pale shoots"}
+> search
+You search for an hour.
+Search 50%: failure.
+  | t22 time_passed {"start": 16, "end": 22, "activity": "searching"}
+  | t22 needs_changed {"pc": 1, "thirst": 22, "hunger": 22, "fatigue": 22}
+  | t22 rolled {"purpose": "search", "key": [13], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.6533749533929902, "success": false}
+> search
+You search for an hour.
+Search 50%: success.
+You find a handful of pale shoots.
+  | t28 time_passed {"start": 22, "end": 28, "activity": "searching"}
+  | t28 needs_changed {"pc": 1, "thirst": 28, "hunger": 28, "fatigue": 28}
+  | t28 rolled {"purpose": "search", "key": [13], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.16379230118651555, "success": true}
+  | t28 item_found {"item": 4, "place": 13, "name": "handful of pale shoots"}
+> look
+The hydroponics bay
+Racks of grow trays climb toward a ceiling of dead lamps. Most of the plants are brown husks, but a few pale shoots still reach for light that isn't coming.
+You see two handfuls of pale shoots here.
+Paths: east to the corridor at frame 10.
+> take shoots
+You take a handful of pale shoots.
+  | t29 time_passed {"start": 28, "end": 29, "activity": "handling"}
+  | t29 needs_changed {"pc": 1, "thirst": 29, "hunger": 29, "fatigue": 29}
+  | t29 item_taken {"pc": 1, "item": 3, "place": 13, "name": "handful of pale shoots"}
+> look
+The hydroponics bay
+Racks of grow trays climb toward a ceiling of dead lamps. Most of the plants are brown husks, but a few pale shoots still reach for light that isn't coming.
+You see a handful of pale shoots here.
+Paths: east to the corridor at frame 10.
+> take handfuls
+You take a handful of pale shoots.
+  | t30 time_passed {"start": 29, "end": 30, "activity": "handling"}
+  | t30 needs_changed {"pc": 1, "thirst": 30, "hunger": 30, "fatigue": 30}
+  | t30 item_taken {"pc": 1, "item": 4, "place": 13, "name": "handful of pale shoots"}
+> i
+You're carrying two handfuls of pale shoots.
+> e
+You head east to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
+  | t31 time_passed {"start": 30, "end": 31, "activity": "walking"}
+  | t31 needs_changed {"pc": 1, "thirst": 31, "hunger": 31, "fatigue": 31}
+  | t31 pc_moved {"pc": 1, "origin": 13, "destination": 5, "direction": "east", "place_name": "the corridor at frame 10"}
+> e
+You head east to the machine shop.
+The machine shop
+Lathes and presses wait under tarps, and a parts cage fills the far wall, its lock shot through. The air tastes of metal.
+Paths: west to the corridor at frame 10.
+  | t32 time_passed {"start": 31, "end": 32, "activity": "walking"}
+  | t32 needs_changed {"pc": 1, "thirst": 32, "hunger": 32, "fatigue": 32}
+  | t32 pc_moved {"pc": 1, "origin": 5, "destination": 12, "direction": "east", "place_name": "the machine shop"}
+  | t32 place_visited {"place": 12}
+> search
+You search for an hour.
+Search 50%: success.
+You find a hand lamp.
+It is now afternoon.
+  | t38 time_passed {"start": 32, "end": 38, "activity": "searching"}
+  | t38 needs_changed {"pc": 1, "thirst": 38, "hunger": 38, "fatigue": 38}
+  | t38 rolled {"purpose": "search", "key": [12], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.14950875162356325, "success": true}
+  | t38 item_found {"item": 2, "place": 12, "name": "hand lamp"}
+> take lamp
+You take a hand lamp.
+  | t39 time_passed {"start": 38, "end": 39, "activity": "handling"}
+  | t39 needs_changed {"pc": 1, "thirst": 39, "hunger": 39, "fatigue": 39}
+  | t39 item_taken {"pc": 1, "item": 2, "place": 12, "name": "hand lamp"}
+> w
+You head west to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
+  | t40 time_passed {"start": 39, "end": 40, "activity": "walking"}
+  | t40 needs_changed {"pc": 1, "thirst": 40, "hunger": 40, "fatigue": 40}
+  | t40 pc_moved {"pc": 1, "origin": 12, "destination": 5, "direction": "west", "place_name": "the corridor at frame 10"}
+> n
+You head north to the corridor at frame 14.
+The corridor at frame 14
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 16 (half an hour), south to the corridor at frame 10 (twenty minutes), west to the med bay.
+  | t42 time_passed {"start": 40, "end": 42, "activity": "walking"}
+  | t42 needs_changed {"pc": 1, "thirst": 42, "hunger": 42, "fatigue": 42}
+  | t42 pc_moved {"pc": 1, "origin": 5, "destination": 6, "direction": "north", "place_name": "the corridor at frame 14"}
+  | t42 place_visited {"place": 6}
+> n
+You head north to the corridor at frame 16.
+The corridor at frame 16
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 19, south to the corridor at frame 14 (half an hour), west to the laundry.
+  | t45 time_passed {"start": 42, "end": 45, "activity": "walking"}
+  | t45 needs_changed {"pc": 1, "thirst": 45, "hunger": 45, "fatigue": 45}
+  | t45 pc_moved {"pc": 1, "origin": 6, "destination": 7, "direction": "north", "place_name": "the corridor at frame 16"}
+  | t45 place_visited {"place": 7}
+> n
+You head north to the corridor at frame 19.
+The corridor at frame 19
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 21 (twenty minutes), south to the corridor at frame 16, west to the cargo hold, down to the pump room.
+  | t46 time_passed {"start": 45, "end": 46, "activity": "walking"}
+  | t46 needs_changed {"pc": 1, "thirst": 46, "hunger": 46, "fatigue": 46}
+  | t46 pc_moved {"pc": 1, "origin": 7, "destination": 8, "direction": "north", "place_name": "the corridor at frame 19"}
+  | t46 place_visited {"place": 8}
+> w
+You head west to the cargo hold.
+The cargo hold
+Containers stand in rows under a gantry crane, their doors sealed with rusted clamps. Your footsteps ring out and come back changed.
+Paths: east to the corridor at frame 19.
+  | t47 time_passed {"start": 46, "end": 47, "activity": "walking"}
+  | t47 needs_changed {"pc": 1, "thirst": 47, "hunger": 47, "fatigue": 47}
+  | t47 pc_moved {"pc": 1, "origin": 8, "destination": 16, "direction": "west", "place_name": "the cargo hold"}
+  | t47 place_visited {"place": 16}
+> search
+You search for an hour.
+Search 50%: failure.
+  | t53 time_passed {"start": 47, "end": 53, "activity": "searching"}
+  | t53 needs_changed {"pc": 1, "thirst": 53, "hunger": 53, "fatigue": 53}
+  | t53 rolled {"purpose": "search", "key": [16], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.8962238737078358, "success": false}
+> search
+You search for an hour.
+Search 50%: failure.
+  | t59 time_passed {"start": 53, "end": 59, "activity": "searching"}
+  | t59 needs_changed {"pc": 1, "thirst": 59, "hunger": 59, "fatigue": 59}
+  | t59 rolled {"purpose": "search", "key": [16], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.848161505790044, "success": false}
+> search
+You search for an hour.
+Search 50%: success.
+You find a tin of stew.
+  | t65 time_passed {"start": 59, "end": 65, "activity": "searching"}
+  | t65 needs_changed {"pc": 1, "thirst": 65, "hunger": 65, "fatigue": 65}
+  | t65 rolled {"purpose": "search", "key": [16], "odds": {"base": 0.5, "modifiers": []}, "chance": 0.5, "value": 0.35421962057399203, "success": true}
+  | t65 item_found {"item": 5, "place": 16, "name": "tin of stew"}
+> take the stew
+You take a tin of stew.
+  | t66 time_passed {"start": 65, "end": 66, "activity": "handling"}
+  | t66 needs_changed {"pc": 1, "thirst": 66, "hunger": 66, "fatigue": 66}
+  | t66 item_taken {"pc": 1, "item": 5, "place": 16, "name": "tin of stew"}
+> i
+You're carrying a tin of stew, two handfuls of pale shoots, and a hand lamp.
+> drop of
+Which do you mean: the tin of stew or the handful of pale shoots?
+> drop pale shoots
+You drop a handful of pale shoots.
+  | t67 time_passed {"start": 66, "end": 67, "activity": "handling"}
+  | t67 needs_changed {"pc": 1, "thirst": 67, "hunger": 67, "fatigue": 67}
+  | t67 item_dropped {"pc": 1, "item": 3, "place": 16, "name": "handful of pale shoots"}
+> drop all
+You drop a hand lamp.
+You drop a handful of pale shoots.
+You drop a tin of stew.
+  | t68 time_passed {"start": 67, "end": 68, "activity": "handling"}
+  | t68 needs_changed {"pc": 1, "thirst": 68, "hunger": 68, "fatigue": 68}
+  | t68 item_dropped {"pc": 1, "item": 2, "place": 16, "name": "hand lamp"}
+  | t68 item_dropped {"pc": 1, "item": 4, "place": 16, "name": "handful of pale shoots"}
+  | t68 item_dropped {"pc": 1, "item": 5, "place": 16, "name": "tin of stew"}
+> look
+The cargo hold
+Containers stand in rows under a gantry crane, their doors sealed with rusted clamps. Your footsteps ring out and come back changed.
+You see a tin of stew, two handfuls of pale shoots, and a hand lamp here.
+Paths: east to the corridor at frame 19.
+> take everything
+You take a hand lamp.
+You take a handful of pale shoots.
+You take a handful of pale shoots.
+You take a tin of stew.
+  | t69 time_passed {"start": 68, "end": 69, "activity": "handling"}
+  | t69 needs_changed {"pc": 1, "thirst": 69, "hunger": 69, "fatigue": 69}
+  | t69 item_taken {"pc": 1, "item": 2, "place": 16, "name": "hand lamp"}
+  | t69 item_taken {"pc": 1, "item": 3, "place": 16, "name": "handful of pale shoots"}
+  | t69 item_taken {"pc": 1, "item": 4, "place": 16, "name": "handful of pale shoots"}
+  | t69 item_taken {"pc": 1, "item": 5, "place": 16, "name": "tin of stew"}
+> take
+Take what? Try "take ration bar", or "take all".
+> drop the
+Drop what? Try "drop ration bar", or "drop all".
+> pick lamp
+Pick up what? Try "pick up ration bar".
+> pick up the lamp
+You don't see "lamp" here.
+> get banana
+You don't see "banana" here.
+> drop banana
+You aren't carrying "banana".
+> take all
+There's nothing here to take.
+> i
+You're carrying a tin of stew, two handfuls of pale shoots, and a hand lamp.

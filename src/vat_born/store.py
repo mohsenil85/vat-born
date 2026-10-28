@@ -17,8 +17,10 @@ from vat_born.dice import Dice, Key, Odds, Stream
 from vat_born.events import (
     CloneWoke,
     Fact,
+    ItemDropped,
     ItemFound,
     ItemHidden,
+    ItemTaken,
     NeedsChanged,
     PathAdded,
     PcMoved,
@@ -37,7 +39,7 @@ _DIRECTION_ORDER = {way: n for n, way in enumerate(Direction)}
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -87,13 +89,16 @@ CREATE TABLE visited (
     tick INTEGER NOT NULL
 ) STRICT;
 
--- Every item in the world. Each lies in a place: hidden in the place's search pool until a search turns it up,
--- then in the open.
+-- Every item in the world. Each lies in a place, hidden in the place's search pool until a search turns it up and
+-- then in the open, or is carried by a character.
 CREATE TABLE items (
     id INTEGER PRIMARY KEY,
     kind TEXT NOT NULL,
-    node INTEGER NOT NULL REFERENCES nodes (id),
-    hidden INTEGER NOT NULL CHECK (hidden IN (0, 1))
+    node INTEGER REFERENCES nodes (id),
+    holder INTEGER REFERENCES characters (id),
+    hidden INTEGER NOT NULL CHECK (hidden IN (0, 1)),
+    CHECK ((node IS NULL) <> (holder IS NULL)),
+    CHECK (hidden = 0 OR node IS NOT NULL)
 ) STRICT;
 
 -- The places each clone has searched until nothing was left. The knowledge is the clone's, not the world's: a new
@@ -249,6 +254,16 @@ class View:
             "list[tuple[int, str]]",
             self._conn.execute(
                 "SELECT id, kind FROM items WHERE node = ? AND hidden = 0 ORDER BY id", (place,)
+            ).fetchall(),
+        )
+        return tuple(Item(ItemId(row[0]), ItemKind(row[1])) for row in rows)
+
+    def carried(self) -> tuple[Item, ...]:
+        """What the current clone carries, in ID order."""
+        rows = cast(
+            "list[tuple[int, str]]",
+            self._conn.execute(
+                "SELECT id, kind FROM items WHERE holder = (SELECT pc FROM runs ORDER BY n DESC LIMIT 1) ORDER BY id"
             ).fetchall(),
         )
         return tuple(Item(ItemId(row[0]), ItemKind(row[1])) for row in rows)
@@ -429,6 +444,16 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
         case ItemFound(item=item, place=place):
             found = conn.execute("UPDATE items SET hidden = 0 WHERE id = ? AND node = ? AND hidden = 1", (item, place))
             assert found.rowcount == 1, f"item {item} was not hidden at {place}"
+        case ItemTaken(pc=pc, item=item, place=place):
+            took = conn.execute(
+                "UPDATE items SET node = NULL, holder = ? WHERE id = ? AND node = ? AND hidden = 0", (pc, item, place)
+            )
+            assert took.rowcount == 1, f"item {item} was not lying in the open at {place}"
+        case ItemDropped(pc=pc, item=item, place=place):
+            dropped = conn.execute(
+                "UPDATE items SET node = ?, holder = NULL WHERE id = ? AND holder = ?", (place, item, pc)
+            )
+            assert dropped.rowcount == 1, f"character {pc} was not carrying item {item}"
         case PlaceSearchedBare(run=run, place=place):
             conn.execute("INSERT INTO searched_bare (run, node, tick) SELECT ?, ?, tick FROM world", (run, place))
         case TimePassed(start=start, end=end):

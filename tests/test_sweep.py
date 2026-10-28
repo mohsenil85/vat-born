@@ -13,6 +13,11 @@ COMMANDS = (
     "search",
     "search",
     "look",
+    "take all",
+    "i",
+    "drop all",
+    "take all",
+    "i",
     "east",
     "drink",
     "rest",
@@ -61,6 +66,9 @@ COMMANDS = (
     "search",
     "look",
     "search",
+    "take all",
+    "drop bar",
+    "i",
 )
 
 

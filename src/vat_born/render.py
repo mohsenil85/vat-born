@@ -9,9 +9,12 @@ from vat_born.events import (
     CloneWoke,
     Event,
     Interrupted,
+    InventoryReport,
+    ItemDropped,
     ItemFound,
     ItemHidden,
     ItemStack,
+    ItemTaken,
     LookReport,
     MapEntry,
     MapReport,
@@ -20,6 +23,10 @@ from vat_born.events import (
     NeedsChanged,
     NeedWorsened,
     NoPath,
+    NotCarried,
+    NotHere,
+    NothingCarried,
+    NothingHere,
     NotTired,
     NoWater,
     NowhereLeft,
@@ -35,6 +42,7 @@ from vat_born.events import (
     Route,
     StatusReport,
     TimePassed,
+    WhichOne,
     WorldCreated,
 )
 from vat_born.needs import Activity, Need
@@ -116,6 +124,24 @@ def render(event: Event) -> list[str]:
             return ["You aren't tired."]
         case ItemFound(name=name):
             return [f"You find {_a(name)}."]
+        case ItemTaken(name=name):
+            return [f"You take {_a(name)}."]
+        case ItemDropped(name=name):
+            return [f"You drop {_a(name)}."]
+        case InventoryReport(items=items):
+            if not items:
+                return ["You aren't carrying anything."]
+            return [f"You're carrying {_listed([_stack(stack) for stack in items])}."]
+        case WhichOne(names=names):
+            return [f"Which do you mean: {_listed([f'the {name}' for name in names], conj='or')}?"]
+        case NotHere(words=words):
+            return [f'You don\'t see "{" ".join(words)}" here.']
+        case NotCarried(words=words):
+            return [f'You aren\'t carrying "{" ".join(words)}".']
+        case NothingHere():
+            return ["There's nothing here to take."]
+        case NothingCarried():
+            return ["You aren't carrying anything."]
         case PlaceSearchedBare():
             return ["You find nothing, and there's nowhere left to look."]
         case NowhereLeft():
@@ -167,6 +193,8 @@ def _time_passed(event: TimePassed) -> list[str]:
             return ["You drink your fill."]
         case Activity.SEARCHING:
             return [f"You search for {describe_duration(event.end - event.start)}."]
+        case Activity.HANDLING:
+            return []  # the item facts say what happened
         case _:
             assert_never(event.activity)
 
@@ -184,6 +212,8 @@ def _stopped(activity: Activity) -> str:
             return "You stop drinking."
         case Activity.SEARCHING:
             return "You stop searching."
+        case Activity.HANDLING:
+            return "You stop what you're doing."  # can't happen: handling is never interruptible
         case _:
             assert_never(activity)
 
@@ -214,12 +244,12 @@ def _a(name: str) -> str:
     return f"{'an' if name[:1].lower() in 'aeiou' else 'a'} {name}"
 
 
-def _listed(words: list[str]) -> str:
-    """Words joined as a list in a sentence: "a", "a and b", "a, b, and c"."""
+def _listed(words: list[str], conj: str = "and") -> str:
+    """Words joined as a list in a sentence: "a", "a and b", "a, b, and c"; with CONJ "or", "a or b", "a, b, or c"."""
     assert words, "an empty list reads as nothing"
     if len(words) <= 2:
-        return " and ".join(words)
-    return f"{', '.join(words[:-1])}, and {words[-1]}"
+        return f" {conj} ".join(words)
+    return f"{', '.join(words[:-1])}, {conj} {words[-1]}"
 
 
 def _exits(exits: tuple[Exit, ...], *, unknown: bool = False) -> str:

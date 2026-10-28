@@ -4,7 +4,8 @@ A text-first survival/base-building roguelike aboard a colony ship. The engine i
 world, look around, walk between the rooms around the vat bay and out through the bulkhead onto the decks beyond it
 — a corridor, side rooms, and a ladder down, laid out by the world's seed — check the time, ask where you are and
 the shortest known way home to the vat bay, read the map of the places you've been, search the places you find
-for the things they hide, until each has given up everything it had, and let time pass, which wears on the clone:
+for the things they hide, until each has given up everything it had, pick up what you find and carry it with you
+from place to place, putting it down where you choose, and let time pass, which wears on the clone:
 thirst, hunger, and fatigue build and show in `status`.
 
 The Python engine owns world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
