@@ -39,10 +39,11 @@ All in `src/vat_born/`:
 - `dice.py`: keyed random streams and `Odds`.
 - `clock.py`: ticks, days, and phases.
 - `needs.py`: thirst, hunger, and fatigue: how they count up each tick and the levels they read as.
-- `worldgen.py`: the decks beyond the home section, laid out from the seed as facts for the engine to record.
+- `worldgen.py`: the decks beyond the home section, and what each place hides, drawn from the seed as facts for the
+  engine to record.
 - `render.py`: events to the text a player reads.
-- `content/`: the TOML content (`places.toml`, the fixed `home.toml` section, worldgen's `decks.toml` tables) and
-  the loader that checks it.
+- `content/`: the TOML content (`places.toml`, `items.toml`, the fixed `home.toml` section, and worldgen's tables:
+  `decks.toml` for the map, `finds.toml` for what each kind of place hides) and the loader that checks it.
 
 ## Adding an action
 
