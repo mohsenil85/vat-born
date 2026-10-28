@@ -7,7 +7,9 @@ the shortest known way home to the vat bay, read the map of the places you've be
 for the things they hide, until each has given up everything it had, pick up what you find and carry it with you
 from place to place, putting it down where you choose, eat the food you find, when hunger builds, and carry water
 in a canteen, filled where there's water and drunk from anywhere, and let time pass, which wears on the clone:
-thirst, hunger, and fatigue build and show in `status`.
+thirst, hunger, and fatigue build and show in `status`. Dangers gather in the background, unseen: something walks
+the decks, and the air recycler hums on. Each can show itself in signs — tracks, a kill, a faltering hum, a warning
+light — which `status` names as dangers once you've come across them.
 
 The Python engine owns world state, time, probabilities, rolls, and outcomes. A future LLM integration may parse
 player intent and narrate resolved events, but may not change the rules or state directly.

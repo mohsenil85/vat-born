@@ -62,6 +62,8 @@ You wait 11 hours.
 It is now night.
   | t282 time_passed {"start": 216, "end": 282, "activity": "waiting"}
   | t282 needs_changed {"pc": 1, "thirst": 282, "hunger": 282, "fatigue": 282}
+  | t282 clock_advanced {"clock": "predator", "stage": 1, "at": 217, "daily": 0.4, "forced": false}
+  | t282 sign_left {"clock": "predator", "stage": 1, "place": 10, "at": 217}
 > n
 You head north to the bulkhead.
 The bulkhead

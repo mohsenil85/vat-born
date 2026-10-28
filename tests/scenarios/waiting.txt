@@ -102,6 +102,8 @@ You're dying of thirst.
 You stop waiting.
   | t288 time_passed {"start": 216, "end": 288, "activity": "waiting"}
   | t288 needs_changed {"pc": 1, "thirst": 288, "hunger": 288, "fatigue": 288}
+  | t288 clock_advanced {"clock": "predator", "stage": 1, "at": 288, "daily": 0.5, "forced": true}
+  | t288 sign_left {"clock": "predator", "stage": 1, "place": 5, "at": 288}
 > wait till dusk
 You wait 12 hours.
 It is now evening.
@@ -123,11 +125,16 @@ You're dying of thirst, hungry, and exhausted.
 You wait six hours.
 It is now day 4, morning.
 You're very hungry now.
+Now and then the hum behind the walls stutters, like a missed breath.
   | t432 time_passed {"start": 396, "end": 432, "activity": "waiting"}
   | t432 needs_changed {"pc": 1, "thirst": 432, "hunger": 432, "fatigue": 432}
+  | t432 clock_advanced {"clock": "air", "stage": 1, "at": 432, "daily": 0.25, "forced": true}
+  | t432 sign_left {"clock": "air", "stage": 1, "place": 1, "at": 432}
+  | t432 sign_seen {"run": 1, "clock": "air", "stage": 1}
 > status
 Day 4, morning. You are clone 1.
 You're dying of thirst, very hungry, and exhausted.
+The air recycler is faltering. It grows worse at 25% a day.
 > wait until the evening
 You wait 12 hours.
 It is now evening.
@@ -142,6 +149,8 @@ You wait 16 hours.
 It is now day 5, afternoon.
   | t612 time_passed {"start": 516, "end": 612, "activity": "waiting"}
   | t612 needs_changed {"pc": 1, "thirst": 612, "hunger": 612, "fatigue": 612}
+  | t612 clock_advanced {"clock": "predator", "stage": 2, "at": 523, "daily": 0.6, "forced": false}
+  | t612 sign_left {"clock": "predator", "stage": 2, "place": 11, "at": 523}
 > wait until lunch
 Wait until when? Try "wait until noon", "wait until dusk", or "wait until dawn".
 > wait for nothing

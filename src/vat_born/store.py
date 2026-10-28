@@ -16,6 +16,8 @@ from vat_born.clock import Tick
 from vat_born.dice import Dice, Key, Odds, Stream
 from vat_born.events import (
     Ate,
+    ClockAdvanced,
+    ClockStarted,
     CloneWoke,
     DrankFrom,
     Fact,
@@ -31,18 +33,32 @@ from vat_born.events import (
     PlaceSearchedBare,
     PlaceVisited,
     Rolled,
+    Sign,
+    SignLeft,
+    SignSeen,
     TimePassed,
     WorldCreated,
 )
+from vat_born.hazards import Clock
 from vat_born.needs import Needs
-from vat_born.world import CharacterId, Direction, Exit, Item, ItemId, ItemKind, NodeId, Place
+from vat_born.world import CharacterId, Direction, Exit, Item, ItemId, ItemKind, NodeId, Place, PlaceKind
 
 # SQL would sort the direction words alphabetically, so the order of a place's paths is set in Python instead.
 _DIRECTION_ORDER = {way: n for n, way in enumerate(Direction)}
 
+# The same goes for the clocks, whose names sort neither in `Clock` order nor usefully by stage.
+_CLOCK_ORDER = {clock: n for n, clock in enumerate(Clock)}
+
+
+def _signs(rows: list[tuple[str, int]]) -> tuple[Sign, ...]:
+    """Sign rows (clock, stage), sorted into clock then stage order."""
+    signs = (Sign(Clock(row[0]), row[1]) for row in rows)
+    return tuple(sorted(signs, key=lambda sign: (_CLOCK_ORDER[sign.clock], sign.stage)))
+
+
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 10
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -114,6 +130,31 @@ CREATE TABLE searched_bare (
     PRIMARY KEY (run, node)
 ) STRICT;
 
+-- Each hazard clock (design §7.2): its stage, and the tick of its last change.
+CREATE TABLE clocks (
+    clock TEXT PRIMARY KEY,
+    stage INTEGER NOT NULL CHECK (stage BETWEEN 0 AND 4),
+    since INTEGER NOT NULL
+) STRICT;
+
+-- The signs the clocks have left, one per clock and stage. A sign is in a place, or is heard (node NULL).
+CREATE TABLE signs (
+    clock TEXT NOT NULL REFERENCES clocks (clock),
+    stage INTEGER NOT NULL,
+    node INTEGER REFERENCES nodes (id),
+    tick INTEGER NOT NULL,
+    PRIMARY KEY (clock, stage)
+) STRICT;
+
+-- The signs each clone has come across. Like a place searched bare, the knowledge is the clone's.
+CREATE TABLE signs_seen (
+    run INTEGER NOT NULL REFERENCES runs (n),
+    clock TEXT NOT NULL,
+    stage INTEGER NOT NULL,
+    tick INTEGER NOT NULL,
+    PRIMARY KEY (run, clock, stage)
+) STRICT;
+
 -- Every fact, in order.
 CREATE TABLE log (
     seq INTEGER PRIMARY KEY,
@@ -141,6 +182,23 @@ class LogEntry:
     tick: Tick
     kind: str
     payload: str
+
+
+@dataclass(frozen=True, slots=True)
+class ClockState:
+    """One hazard clock as it stands: its stage, and the tick it last changed."""
+
+    clock: Clock
+    stage: int
+    since: Tick
+
+
+@dataclass(frozen=True, slots=True)
+class PlaceWithKind:
+    """A place and its kind, as worldgen's tables and the clocks' signs pick places by."""
+
+    place: NodeId
+    kind: PlaceKind
 
 
 class View:
@@ -292,6 +350,35 @@ class View:
             ).fetchone(),
         )
         return row is not None
+
+    def places(self) -> tuple[PlaceWithKind, ...]:
+        """Every place with its kind, in node ID order."""
+        rows = cast("list[tuple[int, str]]", self._conn.execute("SELECT id, kind FROM nodes ORDER BY id").fetchall())
+        return tuple(PlaceWithKind(NodeId(row[0]), PlaceKind(row[1])) for row in rows)
+
+    def clocks(self) -> tuple[ClockState, ...]:
+        """The hazard clocks as they stand, in `Clock` order."""
+        rows = cast(
+            "list[tuple[str, int, int]]", self._conn.execute("SELECT clock, stage, since FROM clocks").fetchall()
+        )
+        standing = {Clock(row[0]): ClockState(Clock(row[0]), row[1], Tick(row[2])) for row in rows}
+        return tuple(standing[clock] for clock in Clock)
+
+    def signs_at(self, place: NodeId) -> tuple[Sign, ...]:
+        """The signs in PLACE, in clock then stage order."""
+        rows = cast(
+            "list[tuple[str, int]]",
+            self._conn.execute("SELECT clock, stage FROM signs WHERE node = ?", (place,)).fetchall(),
+        )
+        return _signs(rows)
+
+    def signs_seen(self) -> tuple[Sign, ...]:
+        """The signs the current clone has come across, in clock then stage order."""
+        rows = cast(
+            "list[tuple[str, int]]",
+            self._conn.execute("SELECT clock, stage FROM signs_seen WHERE run = (SELECT max(n) FROM runs)").fetchall(),
+        )
+        return _signs(rows)
 
 
 @final
@@ -465,6 +552,8 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             _apply_carried(conn, fact)
         case PlaceSearchedBare(run=run, place=place):
             conn.execute("INSERT INTO searched_bare (run, node, tick) SELECT ?, ?, tick FROM world", (run, place))
+        case ClockStarted() | ClockAdvanced() | SignLeft() | SignSeen():
+            _apply_clocks(conn, fact)
         case TimePassed(start=start, end=end):
             assert end > start, "time only moves forward"
             moved = conn.execute("UPDATE world SET tick = ? WHERE tick = ?", (end, start))
@@ -477,6 +566,29 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             assert moved.rowcount == 1, f"no character {pc} to grow needs in"
         case Rolled():
             pass  # a roll changes nothing by itself; what follows from it is a fact of its own
+        case _:
+            assert_never(fact)
+
+
+def _apply_clocks(conn: sqlite3.Connection, fact: ClockStarted | ClockAdvanced | SignLeft | SignSeen) -> None:
+    """Apply the hazard clocks' facts: a clock starts quiet, advances one stage at a time, leaves each stage's
+    sign, and is come across by a clone."""
+    match fact:
+        case ClockStarted(clock=clock):
+            conn.execute("INSERT INTO clocks (clock, stage, since) VALUES (?, 0, (SELECT tick FROM world))", (clock,))
+        case ClockAdvanced(clock=clock, stage=stage, at=at):
+            moved = conn.execute(
+                "UPDATE clocks SET stage = ?, since = ? WHERE clock = ? AND stage = ?",
+                (stage, at, clock, stage - 1),
+            )
+            assert moved.rowcount == 1, f"clock {clock} was not one stage below {stage}"
+        case SignLeft(clock=clock, stage=stage, place=place, at=at):
+            conn.execute("INSERT INTO signs (clock, stage, node, tick) VALUES (?, ?, ?, ?)", (clock, stage, place, at))
+        case SignSeen(run=run, clock=clock, stage=stage):
+            conn.execute(
+                "INSERT INTO signs_seen (run, clock, stage, tick) SELECT ?, ?, ?, tick FROM world",
+                (run, clock, stage),
+            )
         case _:
             assert_never(fact)
 

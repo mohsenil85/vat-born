@@ -75,6 +75,11 @@ COMMANDS = (
     "eat shoots",
     "eat stew",
     "i",
+    "wait 30 days",
+    "status",
+    "wait 30 days",
+    "status",
+    "look",
 )
 
 

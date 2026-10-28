@@ -86,6 +86,8 @@ You're very thirsty now.
 You stop resting.
   | t218 time_passed {"start": 146, "end": 218, "activity": "resting"}
   | t218 needs_changed {"pc": 1, "thirst": 144, "hunger": 218, "fatigue": 0}
+  | t218 clock_advanced {"clock": "predator", "stage": 1, "at": 217, "daily": 0.4, "forced": false}
+  | t218 sign_left {"clock": "predator", "stage": 1, "place": 10, "at": 217}
 > status
 Day 2, evening. You are clone 1.
 You're very thirsty and hungry.

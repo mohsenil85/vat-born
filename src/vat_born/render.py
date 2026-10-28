@@ -7,9 +7,13 @@ from vat_born.clock import TICKS_PER_DAY, TICKS_PER_HOUR, GameTime
 from vat_born.dice import Odds
 from vat_born.events import (
     Ate,
+    ClockAdvanced,
+    ClockStarted,
     CloneWoke,
+    Danger,
     DrankFrom,
     Event,
+    HeardCries,
     Interrupted,
     InventoryReport,
     ItemDropped,
@@ -47,11 +51,15 @@ from vat_born.events import (
     Resumed,
     Rolled,
     Route,
+    SignLeft,
+    SignNoticed,
+    SignSeen,
     StatusReport,
     TimePassed,
     WhichOne,
     WorldCreated,
 )
+from vat_born.hazards import Clock
 from vat_born.needs import Activity, Need
 from vat_born.world import Direction, Exit
 
@@ -75,14 +83,43 @@ _MET = {
     Need.FATIGUE: "You feel rested.",
 }
 
+# What each sign says when the clone comes across it, and what `status` calls the danger by its worst sign.
+_SIGNS = {
+    (Clock.PREDATOR, 1): "Tracks cross the dust here: long, raking marks, too far apart for anything that walks on"
+    " two legs.",
+    (Clock.PREDATOR, 2): "Something was killed here and eaten where it fell. The bones are cracked open for the"
+    " marrow.",
+    (Clock.AIR, 1): "Now and then the hum behind the walls stutters, like a missed breath.",
+    (Clock.AIR, 2): "The air in here tastes stale and close.",
+    (Clock.AIR, 3): "A red warning light pulses above the door.",
+}
+_DANGERS = {
+    (Clock.PREDATOR, 1): "Something big walks the decks.",
+    (Clock.PREDATOR, 2): "Something is killing out on the decks.",
+    (Clock.PREDATOR, 3): "Something cries on the decks at night.",
+    (Clock.AIR, 1): "The air recycler is faltering.",
+    (Clock.AIR, 2): "The air at home is going stale.",
+    (Clock.AIR, 3): "The air recycler's warning light is on.",
+}
+
 
 def render(event: Event) -> list[str]:
     """The lines to show for EVENT: none for a fact the player doesn't notice."""
     match event:
         case WorldCreated(seed=seed):
             return [f"A new world, seed {seed}."]
-        case PlaceAdded() | PathAdded() | PlaceVisited() | ItemHidden() | NeedsChanged():
-            return []
+        case (
+            PlaceAdded()
+            | PathAdded()
+            | PlaceVisited()
+            | ItemHidden()
+            | NeedsChanged()
+            | ClockStarted()
+            | ClockAdvanced()
+            | SignLeft()
+            | SignSeen()
+        ):
+            return []  # the clocks only show through their signs
         case CloneWoke(place_name=place):
             return [f"You wake in a clone vat in {place}."]
         case PcMoved(direction=direction, place_name=place):
@@ -94,8 +131,12 @@ def render(event: Event) -> list[str]:
             return [f"{what_for} {describe_odds(odds)}: {'success' if success else 'failure'}."]
         case Resumed(seed=seed, run=run, time=time, place_name=place):
             return [f"Seed {seed}, clone {run}. {describe_time(time)}.", f"You are in {place}."]
-        case StatusReport(time=time, run=run, levels=levels):
-            return [f"{describe_time(time)}. You are clone {run}.", _how_you_are(levels)]
+        case StatusReport(time=time, run=run, levels=levels, dangers=dangers):
+            return [
+                f"{describe_time(time)}. You are clone {run}.",
+                _how_you_are(levels),
+                *(_danger(danger) for danger in dangers),
+            ]
         case PlaceReport(place_name=place, route=route):
             line = f"You are in {place}."
             match route:
@@ -107,8 +148,9 @@ def render(event: Event) -> list[str]:
                     return [line, f"The way home: {_route(steps)} ({describe_duration(ticks)})."]
         case NoPath(direction=direction):
             return [f"You can't go {direction} from here."]
-        case LookReport(place_name=place, description=description, items=items, exits=exits):
+        case LookReport(place_name=place, description=description, signs=signs, items=items, exits=exits):
             lines = [place[:1].upper() + place[1:], description]
+            lines.extend(_SIGNS[sign.clock, sign.stage] for sign in signs)
             if items:
                 lines.append(_items_here(items))
             lines.append(_paths(exits))
@@ -157,6 +199,10 @@ def render(event: Event) -> list[str]:
             return ["You find nothing, and there's nowhere left to look."]
         case NowhereLeft():
             return ["You've searched here already, and there's nowhere left to look."]
+        case SignNoticed(clock=clock, stage=stage):
+            return [_SIGNS[clock, stage]]
+        case HeardCries():
+            return ["Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly."]
         case _:
             assert_never(event)
 
@@ -260,6 +306,11 @@ def _how_you_are(levels: tuple[NeedLevel, ...]) -> str:
     """The second line of `status`: each need above level 0, named by its level, in `Need` order."""
     words = [_NAMED[entry.need][entry.level - 1] for entry in levels if entry.level > 0]
     return f"You're {_listed(words)}." if words else "You feel fine."
+
+
+def _danger(danger: Danger) -> str:
+    """A danger line of `status`: the words for its worst sign, with today's chance it grows worse."""
+    return f"{_DANGERS[danger.clock, danger.stage]} It grows worse at {_percent(danger.daily)} a day."
 
 
 def _eased(need: Need, before: int, after: int) -> list[str]:

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from vat_born.clock import GameTime, Tick
 from vat_born.dice import Key, Odds
+from vat_born.hazards import Clock
 from vat_born.needs import Activity, Need
 from vat_born.world import CharacterId, Direction, Exit, ItemId, ItemKind, Layer, NodeId, PlaceKind
 
@@ -166,6 +167,45 @@ class PlaceSearchedBare:
     place: NodeId
 
 
+@dataclass(frozen=True, slots=True)
+class ClockStarted:
+    """A hazard clock begins quiet, timed from the current tick."""
+
+    clock: Clock
+
+
+@dataclass(frozen=True, slots=True)
+class ClockAdvanced:
+    """A clock reached STAGE at tick AT, at that day's chance DAILY of moving. FORCED says the stage came because
+    its day had come, not by the roll. A clock's roll every tick isn't logged; only its moving is (hazards.py)."""
+
+    clock: Clock
+    stage: int
+    at: Tick
+    daily: float
+    forced: bool
+
+
+@dataclass(frozen=True, slots=True)
+class SignLeft:
+    """A clock's stage left its sign: in a PLACE, or PLACE None when it is heard rather than seen. AT is the tick
+    the clock reached the stage."""
+
+    clock: Clock
+    stage: int
+    place: NodeId | None
+    at: Tick
+
+
+@dataclass(frozen=True, slots=True)
+class SignSeen:
+    """The clone came across a sign, at the current tick. The knowledge is the clone's, not the world's."""
+
+    run: int
+    clock: Clock
+    stage: int
+
+
 type Fact = (
     WorldCreated
     | PlaceAdded
@@ -181,6 +221,10 @@ type Fact = (
     | ItemFilled
     | DrankFrom
     | PlaceSearchedBare
+    | ClockStarted
+    | ClockAdvanced
+    | SignLeft
+    | SignSeen
     | TimePassed
     | NeedsChanged
     | Rolled
@@ -211,6 +255,7 @@ class StatusReport:
     time: GameTime
     run: int
     levels: tuple[NeedLevel, ...]
+    dangers: tuple[Danger, ...]  # the clocks the clone has seen a sign of, in `Clock` order
 
 
 @dataclass(frozen=True, slots=True)
@@ -241,9 +286,28 @@ class ItemStack:
 
 
 @dataclass(frozen=True, slots=True)
+class Sign:
+    """One sign a clock has left: which clock left it, and the stage it announced."""
+
+    clock: Clock
+    stage: int
+
+
+@dataclass(frozen=True, slots=True)
+class Danger:
+    """A clock the clone knows of, for `status`: the worst sign it has come across (STAGE), and today's chance
+    DAILY that the clock grows worse."""
+
+    clock: Clock
+    stage: int
+    daily: float
+
+
+@dataclass(frozen=True, slots=True)
 class LookReport:
     place_name: str
     description: str
+    signs: tuple[Sign, ...]  # the signs at the place, one line each, in clock then stage order
     items: tuple[ItemStack, ...]  # the items lying in the open, one stack per kind, in items.toml order
     exits: tuple[Exit, ...]
 
@@ -372,6 +436,19 @@ class NothingToDrink:
 
 
 @dataclass(frozen=True, slots=True)
+class SignNoticed:
+    """A sign was left in the place the PC is in, and the PC saw it happen."""
+
+    clock: Clock
+    stage: int
+
+
+@dataclass(frozen=True, slots=True)
+class HeardCries:
+    """Midnight, and the predator is far enough along that something cries out on the decks."""
+
+
+@dataclass(frozen=True, slots=True)
 class NeedEased:
     """An action answered a need: how hungry or tired the PC was before (BEFORE) and is after (AFTER), as levels."""
 
@@ -404,6 +481,8 @@ type Report = (
     | NotFood
     | NothingToFill
     | NothingToDrink
+    | SignNoticed
+    | HeardCries
 )
 
 type Event = Fact | Report

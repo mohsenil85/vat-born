@@ -63,6 +63,8 @@ Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the
   | t0 item_hidden {"item": 6, "kind": "tin_of_stew", "place": 18}
   | t0 item_hidden {"item": 7, "kind": "canteen", "place": 22}
   | t0 item_hidden {"item": 8, "kind": "hand_lamp", "place": 24}
+  | t0 clock_started {"clock": "predator"}
+  | t0 clock_started {"clock": "air"}
   | t0 clone_woke {"run": 1, "pc": 1, "place": 1, "place_name": "the vat bay"}
   | t0 place_visited {"place": 1}
 Type "help" for the commands.

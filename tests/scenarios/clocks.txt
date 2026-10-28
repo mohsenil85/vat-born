@@ -1,0 +1,223 @@
+# The hazard clocks run in the background as time passes: the air recycler falters at home, and something walks
+# the decks. Waiting at the vat bay until the air's signs show themselves and stop the wait, `status` naming the
+# dangers and their odds; then a walk out to the corridors where the predator left its tracks.
+# seed: 1
+
+A new world, seed 1.
+You wake in a clone vat in the vat bay.
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+Type "help" for the commands.
+> status
+Day 1, morning. You are clone 1.
+You feel fine.
+> wait 30 days
+You wait 12 hours.
+It is now evening.
+You're getting thirsty.
+You stop waiting.
+  | t72 time_passed {"start": 0, "end": 72, "activity": "waiting"}
+  | t72 needs_changed {"pc": 1, "thirst": 72, "hunger": 72, "fatigue": 72}
+> wait 30 days
+You wait four hours.
+It is now night.
+You're getting tired.
+You stop waiting.
+  | t96 time_passed {"start": 72, "end": 96, "activity": "waiting"}
+  | t96 needs_changed {"pc": 1, "thirst": 96, "hunger": 96, "fatigue": 96}
+> wait 30 days
+You wait eight hours.
+It is now day 2, morning.
+You're very thirsty now.
+You're getting hungry.
+You're very tired now.
+You stop waiting.
+  | t144 time_passed {"start": 96, "end": 144, "activity": "waiting"}
+  | t144 needs_changed {"pc": 1, "thirst": 144, "hunger": 144, "fatigue": 144}
+> wait 30 days
+You wait 12 hours.
+It is now evening.
+You're exhausted.
+You stop waiting.
+  | t216 time_passed {"start": 144, "end": 216, "activity": "waiting"}
+  | t216 needs_changed {"pc": 1, "thirst": 216, "hunger": 216, "fatigue": 216}
+> wait 30 days
+You wait 12 hours.
+It is now day 3, morning.
+You're dying of thirst.
+You stop waiting.
+  | t288 time_passed {"start": 216, "end": 288, "activity": "waiting"}
+  | t288 needs_changed {"pc": 1, "thirst": 288, "hunger": 288, "fatigue": 288}
+  | t288 clock_advanced {"clock": "predator", "stage": 1, "at": 226, "daily": 0.4, "forced": false}
+  | t288 sign_left {"clock": "predator", "stage": 1, "place": 5, "at": 226}
+> wait 30 days
+You wait a day.
+It is now day 4, morning.
+You're very hungry now.
+Now and then the hum behind the walls stutters, like a missed breath.
+You stop waiting.
+  | t432 time_passed {"start": 288, "end": 432, "activity": "waiting"}
+  | t432 needs_changed {"pc": 1, "thirst": 432, "hunger": 432, "fatigue": 432}
+  | t432 clock_advanced {"clock": "predator", "stage": 2, "at": 416, "daily": 0.5, "forced": false}
+  | t432 sign_left {"clock": "predator", "stage": 2, "place": 14, "at": 416}
+  | t432 clock_advanced {"clock": "air", "stage": 1, "at": 432, "daily": 0.25, "forced": true}
+  | t432 sign_left {"clock": "air", "stage": 1, "place": 1, "at": 432}
+  | t432 sign_seen {"run": 1, "clock": "air", "stage": 1}
+> wait 30 days
+You wait about two days.
+It is now day 5, night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t684 time_passed {"start": 432, "end": 684, "activity": "waiting"}
+  | t684 needs_changed {"pc": 1, "thirst": 684, "hunger": 684, "fatigue": 684}
+  | t684 clock_advanced {"clock": "predator", "stage": 3, "at": 622, "daily": 0.7, "forced": false}
+  | t684 sign_left {"clock": "predator", "stage": 3, "place": null, "at": 622}
+  | t684 sign_seen {"run": 1, "clock": "predator", "stage": 3}
+> wait 30 days
+You wait six hours.
+It is now day 6, morning.
+The air in here tastes stale and close.
+You stop waiting.
+  | t720 time_passed {"start": 684, "end": 720, "activity": "waiting"}
+  | t720 needs_changed {"pc": 1, "thirst": 720, "hunger": 720, "fatigue": 720}
+  | t720 clock_advanced {"clock": "air", "stage": 2, "at": 720, "daily": 0.35, "forced": true}
+  | t720 sign_left {"clock": "air", "stage": 2, "place": 1, "at": 720}
+  | t720 sign_seen {"run": 1, "clock": "air", "stage": 2}
+> wait 30 days
+You wait 18 hours.
+It is now night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t828 time_passed {"start": 720, "end": 828, "activity": "waiting"}
+  | t828 needs_changed {"pc": 1, "thirst": 828, "hunger": 828, "fatigue": 828}
+> wait 30 days
+You wait about 16 hours.
+It is now day 7, afternoon.
+A red warning light pulses above the door.
+You stop waiting.
+  | t925 time_passed {"start": 828, "end": 925, "activity": "waiting"}
+  | t925 needs_changed {"pc": 1, "thirst": 925, "hunger": 925, "fatigue": 925}
+  | t925 clock_advanced {"clock": "predator", "stage": 4, "at": 854, "daily": 0.8, "forced": false}
+  | t925 clock_advanced {"clock": "air", "stage": 3, "at": 925, "daily": 0.4, "forced": false}
+  | t925 sign_left {"clock": "air", "stage": 3, "place": 1, "at": 925}
+  | t925 sign_seen {"run": 1, "clock": "air", "stage": 3}
+> wait 30 days
+You wait about eight hours.
+It is now night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t972 time_passed {"start": 925, "end": 972, "activity": "waiting"}
+  | t972 needs_changed {"pc": 1, "thirst": 972, "hunger": 972, "fatigue": 972}
+> wait 30 days
+You wait six hours.
+It is now day 8, morning.
+You're starving.
+You stop waiting.
+  | t1008 time_passed {"start": 972, "end": 1008, "activity": "waiting"}
+  | t1008 needs_changed {"pc": 1, "thirst": 1008, "hunger": 1008, "fatigue": 1008}
+> wait 30 days
+You wait 18 hours.
+It is now night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t1116 time_passed {"start": 1008, "end": 1116, "activity": "waiting"}
+  | t1116 needs_changed {"pc": 1, "thirst": 1116, "hunger": 1116, "fatigue": 1116}
+> wait 30 days
+You wait a day.
+It is now day 9, night.
+Somewhere out on the decks, something screams: a long, rising cry that ends too suddenly.
+You stop waiting.
+  | t1260 time_passed {"start": 1116, "end": 1260, "activity": "waiting"}
+  | t1260 needs_changed {"pc": 1, "thirst": 1260, "hunger": 1260, "fatigue": 1260}
+> status
+Day 9, night. You are clone 1.
+You're dying of thirst, starving, and exhausted.
+Something cries on the decks at night. It grows worse at 80% a day.
+The air recycler's warning light is on. It grows worse at 50% a day.
+> look
+The vat bay
+It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. A water tap juts from the wall by the door, its handle worn bright. Somewhere behind the bulkheads, something big hums, steady as breath.
+Now and then the hum behind the walls stutters, like a missed breath.
+The air in here tastes stale and close.
+A red warning light pulses above the door.
+Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
+> n
+You head north to the bulkhead.
+The bulkhead
+A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
+Paths: north to the corridor at frame 10, south to the vat bay (twenty minutes).
+  | t1262 time_passed {"start": 1260, "end": 1262, "activity": "walking"}
+  | t1262 needs_changed {"pc": 1, "thirst": 1262, "hunger": 1262, "fatigue": 1262}
+  | t1262 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
+  | t1262 place_visited {"place": 4}
+> n
+You head north to the corridor at frame 10.
+The corridor at frame 10
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Tracks cross the dust here: long, raking marks, too far apart for anything that walks on two legs.
+Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
+  | t1263 time_passed {"start": 1262, "end": 1263, "activity": "walking"}
+  | t1263 needs_changed {"pc": 1, "thirst": 1263, "hunger": 1263, "fatigue": 1263}
+  | t1263 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
+  | t1263 place_visited {"place": 5}
+  | t1263 sign_seen {"run": 1, "clock": "predator", "stage": 1}
+> n
+You head north to the corridor at frame 14.
+The corridor at frame 14
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 16 (half an hour), south to the corridor at frame 10 (twenty minutes), west to the med bay.
+  | t1265 time_passed {"start": 1263, "end": 1265, "activity": "walking"}
+  | t1265 needs_changed {"pc": 1, "thirst": 1265, "hunger": 1265, "fatigue": 1265}
+  | t1265 pc_moved {"pc": 1, "origin": 5, "destination": 6, "direction": "north", "place_name": "the corridor at frame 14"}
+  | t1265 place_visited {"place": 6}
+> n
+You head north to the corridor at frame 16.
+The corridor at frame 16
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 19, south to the corridor at frame 14 (half an hour), west to the laundry.
+  | t1268 time_passed {"start": 1265, "end": 1268, "activity": "walking"}
+  | t1268 needs_changed {"pc": 1, "thirst": 1268, "hunger": 1268, "fatigue": 1268}
+  | t1268 pc_moved {"pc": 1, "origin": 6, "destination": 7, "direction": "north", "place_name": "the corridor at frame 16"}
+  | t1268 place_visited {"place": 7}
+> n
+You head north to the corridor at frame 19.
+The corridor at frame 19
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 21 (twenty minutes), south to the corridor at frame 16, west to the cargo hold, down to the pump room.
+  | t1269 time_passed {"start": 1268, "end": 1269, "activity": "walking"}
+  | t1269 needs_changed {"pc": 1, "thirst": 1269, "hunger": 1269, "fatigue": 1269}
+  | t1269 pc_moved {"pc": 1, "origin": 7, "destination": 8, "direction": "north", "place_name": "the corridor at frame 19"}
+  | t1269 place_visited {"place": 8}
+> n
+You head north to the corridor at frame 21.
+The corridor at frame 21
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 24, south to the corridor at frame 19 (twenty minutes), east to the gymnasium, west to the galley.
+  | t1271 time_passed {"start": 1269, "end": 1271, "activity": "walking"}
+  | t1271 needs_changed {"pc": 1, "thirst": 1271, "hunger": 1271, "fatigue": 1271}
+  | t1271 pc_moved {"pc": 1, "origin": 8, "destination": 9, "direction": "north", "place_name": "the corridor at frame 21"}
+  | t1271 place_visited {"place": 9}
+> n
+You head north to the corridor at frame 24.
+The corridor at frame 24
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: north to the corridor at frame 28 (half an hour), south to the corridor at frame 21, east to the armory, west to the schoolroom.
+  | t1272 time_passed {"start": 1271, "end": 1272, "activity": "walking"}
+  | t1272 needs_changed {"pc": 1, "thirst": 1272, "hunger": 1272, "fatigue": 1272}
+  | t1272 pc_moved {"pc": 1, "origin": 9, "destination": 10, "direction": "north", "place_name": "the corridor at frame 24"}
+  | t1272 place_visited {"place": 10}
+> n
+You head north to the corridor at frame 28.
+The corridor at frame 28
+A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
+Paths: south to the corridor at frame 24 (half an hour), west to the records office.
+  | t1275 time_passed {"start": 1272, "end": 1275, "activity": "walking"}
+  | t1275 needs_changed {"pc": 1, "thirst": 1275, "hunger": 1275, "fatigue": 1275}
+  | t1275 pc_moved {"pc": 1, "origin": 10, "destination": 11, "direction": "north", "place_name": "the corridor at frame 28"}
+  | t1275 place_visited {"place": 11}
+> status
+Day 9, night. You are clone 1.
+You're dying of thirst, starving, and exhausted.
+Something cries on the decks at night. It grows worse at 80% a day.
+The air recycler's warning light is on. It grows worse at 50% a day.
