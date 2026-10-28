@@ -17,6 +17,7 @@ from vat_born.dice import Dice, Key, Odds, Stream
 from vat_born.events import (
     CloneWoke,
     Fact,
+    NeedsChanged,
     PathAdded,
     PcMoved,
     PlaceAdded,
@@ -25,6 +26,7 @@ from vat_born.events import (
     TimePassed,
     WorldCreated,
 )
+from vat_born.needs import Needs
 from vat_born.world import CharacterId, Direction, Exit, NodeId, Place
 
 # SQL would sort the direction words alphabetically, so the order of a place's paths is set in Python instead.
@@ -32,7 +34,7 @@ _DIRECTION_ORDER = {way: n for n, way in enumerate(Direction)}
 
 # Bump this with any change to the schema. A world made under another version refuses to open: while worlds are
 # disposable there are no migrations.
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 _SCHEMA = """
 CREATE TABLE world (
@@ -53,7 +55,10 @@ CREATE TABLE nodes (
 CREATE TABLE characters (
     id INTEGER PRIMARY KEY,
     kind TEXT NOT NULL,
-    node INTEGER NOT NULL REFERENCES nodes (id)
+    node INTEGER NOT NULL REFERENCES nodes (id),
+    thirst INTEGER NOT NULL,
+    hunger INTEGER NOT NULL,
+    fatigue INTEGER NOT NULL
 ) STRICT;
 
 CREATE TABLE edges (
@@ -151,6 +156,19 @@ class View:
         )
         assert row is not None, "no clone has woken"
         return CharacterId(row[0])
+
+    def needs(self) -> Needs:
+        """The current clone's needs: ticks since each was last answered."""
+        row = cast(
+            "tuple[int, int, int] | None",
+            self._conn.execute(
+                "SELECT characters.thirst, characters.hunger, characters.fatigue FROM runs"
+                " JOIN characters ON characters.id = runs.pc"
+                " ORDER BY runs.n DESC LIMIT 1",
+            ).fetchone(),
+        )
+        assert row is not None, "no clone has woken"
+        return Needs(*row)
 
     def exits(self, place: NodeId) -> tuple[Exit, ...]:
         """The paths out of PLACE, in `Direction` order, each marked for whether its far end has been visited."""
@@ -332,7 +350,10 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
                 (place, layer, kind, name, description),
             )
         case CloneWoke(run=run, pc=pc, place=place):
-            conn.execute("INSERT INTO characters (id, kind, node) VALUES (?, 'pc', ?)", (pc, place))
+            conn.execute(
+                "INSERT INTO characters (id, kind, node, thirst, hunger, fatigue) VALUES (?, 'pc', ?, 0, 0, 0)",
+                (pc, place),
+            )
             conn.execute(
                 "INSERT INTO runs (n, pc, home, started_tick) SELECT ?, ?, ?, tick FROM world", (run, pc, place)
             )
@@ -355,6 +376,12 @@ def _apply(conn: sqlite3.Connection, fact: Fact) -> None:
             assert end > start, "time only moves forward"
             moved = conn.execute("UPDATE world SET tick = ? WHERE tick = ?", (end, start))
             assert moved.rowcount == 1, f"time passed from tick {start}, which isn't now"
+        case NeedsChanged(pc=pc, thirst=thirst, hunger=hunger, fatigue=fatigue):
+            moved = conn.execute(
+                "UPDATE characters SET thirst = ?, hunger = ?, fatigue = ? WHERE id = ?",
+                (thirst, hunger, fatigue, pc),
+            )
+            assert moved.rowcount == 1, f"no character {pc} to grow needs in"
         case Rolled():
             pass  # a roll changes nothing by itself; what follows from it is a fact of its own
         case _:

@@ -9,6 +9,7 @@ from enum import StrEnum
 
 from vat_born.clock import GameTime, Tick
 from vat_born.dice import Key, Odds
+from vat_born.needs import Need
 from vat_born.world import CharacterId, Direction, Exit, Layer, NodeId, PlaceKind
 
 
@@ -78,6 +79,16 @@ class TimePassed:
 
 
 @dataclass(frozen=True, slots=True)
+class NeedsChanged:
+    """The PC's needs after time passed: ticks since each was last answered."""
+
+    pc: CharacterId
+    thirst: int
+    hunger: int
+    fatigue: int
+
+
+@dataclass(frozen=True, slots=True)
 class Rolled:
     purpose: str
     key: tuple[Key, ...]
@@ -87,7 +98,9 @@ class Rolled:
     success: bool
 
 
-type Fact = WorldCreated | PlaceAdded | CloneWoke | PathAdded | PcMoved | PlaceVisited | TimePassed | Rolled
+type Fact = (
+    WorldCreated | PlaceAdded | CloneWoke | PathAdded | PcMoved | PlaceVisited | TimePassed | NeedsChanged | Rolled
+)
 
 
 # Reports
@@ -102,9 +115,18 @@ class Resumed:
 
 
 @dataclass(frozen=True, slots=True)
+class NeedLevel:
+    """Where one need stands, for `status`."""
+
+    need: Need
+    level: int
+
+
+@dataclass(frozen=True, slots=True)
 class StatusReport:
     time: GameTime
     run: int
+    levels: tuple[NeedLevel, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,6 +177,23 @@ class PhaseChanged:
     after: GameTime
 
 
-type Report = Resumed | StatusReport | PlaceReport | LookReport | MapReport | NoPath | PhaseChanged
+@dataclass(frozen=True, slots=True)
+class NeedWorsened:
+    """A need crossed into a worse level as time passed."""
+
+    need: Need
+    level: int
+
+
+@dataclass(frozen=True, slots=True)
+class Interrupted:
+    """The action stopped early, so the player can react."""
+
+    activity: Activity
+
+
+type Report = (
+    Resumed | StatusReport | PlaceReport | LookReport | MapReport | NoPath | PhaseChanged | NeedWorsened | Interrupted
+)
 
 type Event = Fact | Report

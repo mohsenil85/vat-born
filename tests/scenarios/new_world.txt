@@ -9,8 +9,10 @@ Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the
 Type "help" for the commands.
 > status
 Day 1, morning. You are clone 1.
+You feel fine.
 > where
 You are in the vat bay.
 You are home.
 > status
 Day 1, morning. You are clone 1.
+You feel fine.

@@ -35,6 +35,7 @@ That's too long to wait in one go: 30 days at most.
 That's too long to wait in one go: 30 days at most.
 > STATUS
 Day 1, morning. You are clone 1.
+You feel fine.
 > where am I
 You are in the vat bay.
 You are home.

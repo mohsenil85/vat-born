@@ -17,9 +17,11 @@ It smells of brine and hot dust. Rows of clone vats line the walls, most of them
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
 > status
 Day 1, morning. You are clone 1.
+You feel fine.
 > wait
 You wait ten minutes.
   | t1 time_passed {"start": 0, "end": 1, "activity": "waiting"}
+  | t1 needs_changed {"pc": 1, "thirst": 1, "hunger": 1, "fatigue": 1}
 > look
 The vat bay
 It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.

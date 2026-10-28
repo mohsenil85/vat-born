@@ -60,6 +60,7 @@ The bulkhead
 A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
 Paths: north to the corridor at frame 10 (twenty minutes), south to the vat bay (twenty minutes).
   | t2 time_passed {"start": 0, "end": 2, "activity": "walking"}
+  | t2 needs_changed {"pc": 1, "thirst": 2, "hunger": 2, "fatigue": 2}
   | t2 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
   | t2 place_visited {"place": 4}
 > n
@@ -68,6 +69,7 @@ The corridor at frame 10
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 14 (half an hour), south to the bulkhead (twenty minutes), west to the gymnasium.
   | t4 time_passed {"start": 2, "end": 4, "activity": "walking"}
+  | t4 needs_changed {"pc": 1, "thirst": 4, "hunger": 4, "fatigue": 4}
   | t4 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
   | t4 place_visited {"place": 5}
 > e
@@ -78,6 +80,7 @@ The gymnasium
 A running track circles a sunken court, its lane lines still bright. A climbing rope hangs from the ceiling, swaying, though nothing stirs the air.
 Paths: east to the corridor at frame 10.
   | t5 time_passed {"start": 4, "end": 5, "activity": "walking"}
+  | t5 needs_changed {"pc": 1, "thirst": 5, "hunger": 5, "fatigue": 5}
   | t5 pc_moved {"pc": 1, "origin": 5, "destination": 12, "direction": "west", "place_name": "the gymnasium"}
   | t5 place_visited {"place": 12}
 > w
@@ -88,6 +91,7 @@ The corridor at frame 10
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 14 (half an hour), south to the bulkhead (twenty minutes), west to the gymnasium.
   | t6 time_passed {"start": 5, "end": 6, "activity": "walking"}
+  | t6 needs_changed {"pc": 1, "thirst": 6, "hunger": 6, "fatigue": 6}
   | t6 pc_moved {"pc": 1, "origin": 12, "destination": 5, "direction": "east", "place_name": "the corridor at frame 10"}
 > n
 You head north to the corridor at frame 14.
@@ -95,6 +99,7 @@ The corridor at frame 14
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 16, south to the corridor at frame 10 (half an hour), east to the galley.
   | t9 time_passed {"start": 6, "end": 9, "activity": "walking"}
+  | t9 needs_changed {"pc": 1, "thirst": 9, "hunger": 9, "fatigue": 9}
   | t9 pc_moved {"pc": 1, "origin": 5, "destination": 6, "direction": "north", "place_name": "the corridor at frame 14"}
   | t9 place_visited {"place": 6}
 > look
@@ -109,6 +114,7 @@ The galley
 Long steel tables are bolted to the deck in rows, and the serving hatch hangs half torn from its runners. The ovens are cold. Someone has scratched tally marks into the nearest tabletop.
 Paths: west to the corridor at frame 14.
   | t10 time_passed {"start": 9, "end": 10, "activity": "walking"}
+  | t10 needs_changed {"pc": 1, "thirst": 10, "hunger": 10, "fatigue": 10}
   | t10 pc_moved {"pc": 1, "origin": 6, "destination": 13, "direction": "east", "place_name": "the galley"}
   | t10 place_visited {"place": 13}
 > u

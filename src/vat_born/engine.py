@@ -14,9 +14,13 @@ from vat_born.events import (
     Activity,
     CloneWoke,
     Event,
+    Interrupted,
     LookReport,
     MapEntry,
     MapReport,
+    NeedLevel,
+    NeedsChanged,
+    NeedWorsened,
     NoPath,
     PathAdded,
     PcMoved,
@@ -43,6 +47,7 @@ from vat_born.intents import (
     WaitUntil,
     Where,
 )
+from vat_born.needs import Need, level, tick
 from vat_born.store import LogEntry, Store, Txn, View, WorldError
 from vat_born.world import CharacterId, Direction, Layer, NodeId
 
@@ -133,7 +138,9 @@ class Game:
 def _resolve_free(intent: FreeIntent, view: View) -> tuple[Event, ...]:
     match intent:
         case Status():
-            return (StatusReport(game_time(view.tick()), view.run()),)
+            needs = view.needs()
+            levels = tuple(NeedLevel(need, level(need, needs.count(need))) for need in Need)
+            return (StatusReport(game_time(view.tick()), view.run(), levels),)
         case Where():
             return (PlaceReport(view.pc_place().name, _route_home(view)),)
         case Look():
@@ -154,26 +161,50 @@ def _resolve_timed(intent: TimedIntent, txn: Txn) -> tuple[Report, ...]:
     records nothing and returns the report that says why."""
     match intent:
         case Wait(ticks=ticks):
-            start = txn.tick()
-            txn.record(TimePassed(start, Tick(start + ticks), Activity.WAITING))
-            return ()
+            return _pass(txn, ticks, Activity.WAITING, interruptible=True)
         case WaitUntil(minute_of_day=minute):
-            start = txn.tick()
-            txn.record(TimePassed(start, Tick(start + ticks_until(start, minute)), Activity.WAITING))
-            return ()
+            return _pass(txn, ticks_until(txn.tick(), minute), Activity.WAITING, interruptible=True)
         case Move(direction=direction):
             place = txn.pc_place()
             way = next((out for out in txn.exits(place.id) if out.direction == direction), None)
             if way is None:
                 return (NoPath(direction),)
-            start = txn.tick()
-            txn.record(TimePassed(start, Tick(start + way.ticks), Activity.WALKING))
+            reports = _pass(txn, way.ticks, Activity.WALKING, interruptible=False)
             txn.record(PcMoved(txn.pc(), place.id, way.to, direction, way.place_name))
             if not txn.is_visited(way.to):
                 txn.record(PlaceVisited(way.to))
-            return (_look(txn),)
+            return (*reports, _look(txn))
         case _:
             assert_never(intent)
+
+
+def _pass(txn: Txn, ticks: int, activity: Activity, *, interruptible: bool) -> tuple[Report, ...]:
+    """Let TICKS ticks pass for ACTIVITY, one at a time. This is the scheduler (design §6): every time-driven system
+    takes its turn each tick, in a fixed order. Needs are the only system so far; the hazard clocks (M4) and the
+    allies (M7) take their turns in this loop too. A need getting worse is reported as it happens, and stops an
+    interruptible action with ticks left, so the player can react."""
+    assert ticks > 0, "an action takes at least one tick"
+    start = txn.tick()
+    pc = txn.pc()
+    needs = txn.needs()
+    reports: list[Report] = []
+    passed = 0
+    for _ in range(ticks):
+        stepped = tick(needs)
+        passed += 1
+        worsened = False
+        for need in Need:
+            now = level(need, stepped.count(need))
+            if now > level(need, needs.count(need)):
+                reports.append(NeedWorsened(need, now))
+                worsened = True
+        needs = stepped
+        if worsened and interruptible and passed < ticks:
+            reports.append(Interrupted(activity))
+            break
+    txn.record(TimePassed(start, Tick(start + passed), activity))
+    txn.record(NeedsChanged(pc, needs.thirst, needs.hunger, needs.fatigue))
+    return tuple(reports)
 
 
 def _look(view: View) -> LookReport:

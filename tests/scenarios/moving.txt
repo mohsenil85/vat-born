@@ -17,6 +17,7 @@ The storeroom
 Empty shelves run floor to ceiling. Scrape marks on the deck show where crates were dragged out, and a cold draft stirs the dust.
 Paths: east to the vat bay.
   | t1 time_passed {"start": 0, "end": 1, "activity": "walking"}
+  | t1 needs_changed {"pc": 1, "thirst": 1, "hunger": 1, "fatigue": 1}
   | t1 pc_moved {"pc": 1, "origin": 1, "destination": 3, "direction": "west", "place_name": "the storeroom"}
   | t1 place_visited {"place": 3}
 > go east
@@ -25,6 +26,7 @@ The vat bay
 It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
   | t2 time_passed {"start": 1, "end": 2, "activity": "walking"}
+  | t2 needs_changed {"pc": 1, "thirst": 2, "hunger": 2, "fatigue": 2}
   | t2 pc_moved {"pc": 1, "origin": 3, "destination": 1, "direction": "east", "place_name": "the vat bay"}
 > n
 You head north to the bulkhead.
@@ -32,10 +34,12 @@ The bulkhead
 A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
 Paths: north to the corridor at frame 10, south to the vat bay (twenty minutes).
   | t4 time_passed {"start": 2, "end": 4, "activity": "walking"}
+  | t4 needs_changed {"pc": 1, "thirst": 4, "hunger": 4, "fatigue": 4}
   | t4 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
   | t4 place_visited {"place": 4}
 > status
 Day 1, morning. You are clone 1.
+You feel fine.
 > look
 The bulkhead
 A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
@@ -52,6 +56,7 @@ The vat bay
 It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
   | t6 time_passed {"start": 4, "end": 6, "activity": "walking"}
+  | t6 needs_changed {"pc": 1, "thirst": 6, "hunger": 6, "fatigue": 6}
   | t6 pc_moved {"pc": 1, "origin": 4, "destination": 1, "direction": "south", "place_name": "the vat bay"}
 > e
 You head east to the workshop.
@@ -59,6 +64,7 @@ The workshop
 Workbenches stand under drifts of grit, their vises rusted open. A dead fabricator fills one corner, its screen cracked into a web. Whoever stripped this place left in a hurry.
 Paths: west to the vat bay.
   | t7 time_passed {"start": 6, "end": 7, "activity": "walking"}
+  | t7 needs_changed {"pc": 1, "thirst": 7, "hunger": 7, "fatigue": 7}
   | t7 pc_moved {"pc": 1, "origin": 1, "destination": 2, "direction": "east", "place_name": "the workshop"}
   | t7 place_visited {"place": 2}
 > where
@@ -66,12 +72,14 @@ You are in the workshop.
 The way home: west (ten minutes).
 > status
 Day 1, morning. You are clone 1.
+You feel fine.
 > west now
 You head west to the vat bay.
 The vat bay
 It smells of brine and hot dust. Rows of clone vats line the walls, most of them dark; yours stands open, still dripping. Somewhere behind the bulkheads, something big hums, steady as breath.
 Paths: north to the bulkhead (twenty minutes), east to the workshop, west to the storeroom.
   | t8 time_passed {"start": 7, "end": 8, "activity": "walking"}
+  | t8 needs_changed {"pc": 1, "thirst": 8, "hunger": 8, "fatigue": 8}
   | t8 pc_moved {"pc": 1, "origin": 2, "destination": 1, "direction": "west", "place_name": "the vat bay"}
 > go west quickly
 You head west to the storeroom.
@@ -79,4 +87,5 @@ The storeroom
 Empty shelves run floor to ceiling. Scrape marks on the deck show where crates were dragged out, and a cold draft stirs the dust.
 Paths: east to the vat bay.
   | t9 time_passed {"start": 8, "end": 9, "activity": "walking"}
+  | t9 needs_changed {"pc": 1, "thirst": 9, "hunger": 9, "fatigue": 9}
   | t9 pc_moved {"pc": 1, "origin": 1, "destination": 3, "direction": "west", "place_name": "the storeroom"}

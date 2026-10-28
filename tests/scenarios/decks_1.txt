@@ -64,6 +64,7 @@ The bulkhead
 A pressure door twice your height stands half open between this section and the rest of the ship. Something on the far side has scored its paint in long, parallel lines.
 Paths: north to the corridor at frame 10, south to the vat bay (twenty minutes).
   | t2 time_passed {"start": 0, "end": 2, "activity": "walking"}
+  | t2 needs_changed {"pc": 1, "thirst": 2, "hunger": 2, "fatigue": 2}
   | t2 pc_moved {"pc": 1, "origin": 1, "destination": 4, "direction": "north", "place_name": "the bulkhead"}
   | t2 place_visited {"place": 4}
 > n
@@ -72,6 +73,7 @@ The corridor at frame 10
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
   | t3 time_passed {"start": 2, "end": 3, "activity": "walking"}
+  | t3 needs_changed {"pc": 1, "thirst": 3, "hunger": 3, "fatigue": 3}
   | t3 pc_moved {"pc": 1, "origin": 4, "destination": 5, "direction": "north", "place_name": "the corridor at frame 10"}
   | t3 place_visited {"place": 5}
 > e
@@ -80,6 +82,7 @@ The machine shop
 Lathes and presses wait under tarps, and a parts cage fills the far wall, its lock shot through. The air tastes of metal.
 Paths: west to the corridor at frame 10.
   | t4 time_passed {"start": 3, "end": 4, "activity": "walking"}
+  | t4 needs_changed {"pc": 1, "thirst": 4, "hunger": 4, "fatigue": 4}
   | t4 pc_moved {"pc": 1, "origin": 5, "destination": 12, "direction": "east", "place_name": "the machine shop"}
   | t4 place_visited {"place": 12}
 > w
@@ -88,6 +91,7 @@ The corridor at frame 10
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
   | t5 time_passed {"start": 4, "end": 5, "activity": "walking"}
+  | t5 needs_changed {"pc": 1, "thirst": 5, "hunger": 5, "fatigue": 5}
   | t5 pc_moved {"pc": 1, "origin": 12, "destination": 5, "direction": "west", "place_name": "the corridor at frame 10"}
 > w
 You head west to the hydroponics bay.
@@ -95,6 +99,7 @@ The hydroponics bay
 Racks of grow trays climb toward a ceiling of dead lamps. Most of the plants are brown husks, but a few pale shoots still reach for light that isn't coming.
 Paths: east to the corridor at frame 10.
   | t6 time_passed {"start": 5, "end": 6, "activity": "walking"}
+  | t6 needs_changed {"pc": 1, "thirst": 6, "hunger": 6, "fatigue": 6}
   | t6 pc_moved {"pc": 1, "origin": 5, "destination": 13, "direction": "west", "place_name": "the hydroponics bay"}
   | t6 place_visited {"place": 13}
 > e
@@ -103,6 +108,7 @@ The corridor at frame 10
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 14 (twenty minutes), south to the bulkhead, east to the machine shop, west to the hydroponics bay.
   | t7 time_passed {"start": 6, "end": 7, "activity": "walking"}
+  | t7 needs_changed {"pc": 1, "thirst": 7, "hunger": 7, "fatigue": 7}
   | t7 pc_moved {"pc": 1, "origin": 13, "destination": 5, "direction": "east", "place_name": "the corridor at frame 10"}
 > n
 You head north to the corridor at frame 14.
@@ -110,6 +116,7 @@ The corridor at frame 14
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 16 (half an hour), south to the corridor at frame 10 (twenty minutes), west to the med bay.
   | t9 time_passed {"start": 7, "end": 9, "activity": "walking"}
+  | t9 needs_changed {"pc": 1, "thirst": 9, "hunger": 9, "fatigue": 9}
   | t9 pc_moved {"pc": 1, "origin": 5, "destination": 6, "direction": "north", "place_name": "the corridor at frame 14"}
   | t9 place_visited {"place": 6}
 > look
@@ -128,6 +135,7 @@ The corridor at frame 16
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 19, south to the corridor at frame 14 (half an hour), west to the laundry.
   | t12 time_passed {"start": 9, "end": 12, "activity": "walking"}
+  | t12 needs_changed {"pc": 1, "thirst": 12, "hunger": 12, "fatigue": 12}
   | t12 pc_moved {"pc": 1, "origin": 6, "destination": 7, "direction": "north", "place_name": "the corridor at frame 16"}
   | t12 place_visited {"place": 7}
 > n
@@ -136,6 +144,7 @@ The corridor at frame 19
 A long corridor runs fore and aft under failing strip lights. Cold air moves along it, smelling of rust and old water.
 Paths: north to the corridor at frame 21 (twenty minutes), south to the corridor at frame 16, west to the cargo hold, down to the pump room.
   | t13 time_passed {"start": 12, "end": 13, "activity": "walking"}
+  | t13 needs_changed {"pc": 1, "thirst": 13, "hunger": 13, "fatigue": 13}
   | t13 pc_moved {"pc": 1, "origin": 7, "destination": 8, "direction": "north", "place_name": "the corridor at frame 19"}
   | t13 place_visited {"place": 8}
 > where

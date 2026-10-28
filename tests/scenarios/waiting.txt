@@ -10,96 +10,138 @@ Type "help" for the commands.
 > wait
 You wait ten minutes.
   | t1 time_passed {"start": 0, "end": 1, "activity": "waiting"}
+  | t1 needs_changed {"pc": 1, "thirst": 1, "hunger": 1, "fatigue": 1}
 > wait 20 minutes
 You wait twenty minutes.
   | t3 time_passed {"start": 1, "end": 3, "activity": "waiting"}
+  | t3 needs_changed {"pc": 1, "thirst": 3, "hunger": 3, "fatigue": 3}
 > wait 15 minutes
 You wait twenty minutes.
   | t5 time_passed {"start": 3, "end": 5, "activity": "waiting"}
+  | t5 needs_changed {"pc": 1, "thirst": 5, "hunger": 5, "fatigue": 5}
 > status
 Day 1, morning. You are clone 1.
+You feel fine.
 > wait an hour
 You wait an hour.
   | t11 time_passed {"start": 5, "end": 11, "activity": "waiting"}
+  | t11 needs_changed {"pc": 1, "thirst": 11, "hunger": 11, "fatigue": 11}
 > wait 90 minutes
 You wait an hour and a half.
   | t20 time_passed {"start": 11, "end": 20, "activity": "waiting"}
+  | t20 needs_changed {"pc": 1, "thirst": 20, "hunger": 20, "fatigue": 20}
 > wait 2h
 You wait two hours.
   | t32 time_passed {"start": 20, "end": 32, "activity": "waiting"}
+  | t32 needs_changed {"pc": 1, "thirst": 32, "hunger": 32, "fatigue": 32}
 > status
 Day 1, morning. You are clone 1.
+You feel fine.
 > wait 3 hours
 You wait three hours.
 It is now afternoon.
   | t50 time_passed {"start": 32, "end": 50, "activity": "waiting"}
+  | t50 needs_changed {"pc": 1, "thirst": 50, "hunger": 50, "fatigue": 50}
 > status
 Day 1, afternoon. You are clone 1.
+You feel fine.
 > wait 130 minutes
 You wait about two hours.
   | t63 time_passed {"start": 50, "end": 63, "activity": "waiting"}
+  | t63 needs_changed {"pc": 1, "thirst": 63, "hunger": 63, "fatigue": 63}
 > wait 2 hours
-You wait two hours.
+You wait an hour and a half.
 It is now evening.
-  | t75 time_passed {"start": 63, "end": 75, "activity": "waiting"}
+You're getting thirsty.
+You stop waiting.
+  | t72 time_passed {"start": 63, "end": 72, "activity": "waiting"}
+  | t72 needs_changed {"pc": 1, "thirst": 72, "hunger": 72, "fatigue": 72}
 > status
 Day 1, evening. You are clone 1.
+You're thirsty.
 > wait 8 hours
-You wait eight hours.
+You wait four hours.
 It is now night.
-  | t123 time_passed {"start": 75, "end": 123, "activity": "waiting"}
+You're getting tired.
+You stop waiting.
+  | t96 time_passed {"start": 72, "end": 96, "activity": "waiting"}
+  | t96 needs_changed {"pc": 1, "thirst": 96, "hunger": 96, "fatigue": 96}
 > status
 Day 1, night. You are clone 1.
+You're thirsty and tired.
 > wait 4 hours
 You wait four hours.
-It is now day 2, morning.
-  | t147 time_passed {"start": 123, "end": 147, "activity": "waiting"}
+  | t120 time_passed {"start": 96, "end": 120, "activity": "waiting"}
+  | t120 needs_changed {"pc": 1, "thirst": 120, "hunger": 120, "fatigue": 120}
 > status
-Day 2, morning. You are clone 1.
+Day 1, night. You are clone 1.
+You're thirsty and tired.
 > wait a day
-You wait a day.
-It is now day 3, morning.
-  | t291 time_passed {"start": 147, "end": 291, "activity": "waiting"}
+You wait four hours.
+It is now day 2, morning.
+You're very thirsty now.
+You're getting hungry.
+You're very tired now.
+You stop waiting.
+  | t144 time_passed {"start": 120, "end": 144, "activity": "waiting"}
+  | t144 needs_changed {"pc": 1, "thirst": 144, "hunger": 144, "fatigue": 144}
 > wait 2 days
-You wait two days.
-It is now day 5, morning.
-  | t579 time_passed {"start": 291, "end": 579, "activity": "waiting"}
-> status
-Day 5, morning. You are clone 1.
-> wait until noon
-You wait five and a half hours.
-It is now afternoon.
-  | t612 time_passed {"start": 579, "end": 612, "activity": "waiting"}
-> wait till dusk
-You wait six hours.
+You wait 12 hours.
 It is now evening.
-  | t648 time_passed {"start": 612, "end": 648, "activity": "waiting"}
+You're exhausted.
+You stop waiting.
+  | t216 time_passed {"start": 144, "end": 216, "activity": "waiting"}
+  | t216 needs_changed {"pc": 1, "thirst": 216, "hunger": 216, "fatigue": 216}
+> status
+Day 2, evening. You are clone 1.
+You're very thirsty, hungry, and exhausted.
+> wait until noon
+You wait 12 hours.
+It is now day 3, morning.
+You're dying of thirst.
+You stop waiting.
+  | t288 time_passed {"start": 216, "end": 288, "activity": "waiting"}
+  | t288 needs_changed {"pc": 1, "thirst": 288, "hunger": 288, "fatigue": 288}
+> wait till dusk
+You wait 12 hours.
+It is now evening.
+  | t360 time_passed {"start": 288, "end": 360, "activity": "waiting"}
+  | t360 needs_changed {"pc": 1, "thirst": 360, "hunger": 360, "fatigue": 360}
 > wait 'til night
 You wait four hours.
 It is now night.
-  | t672 time_passed {"start": 648, "end": 672, "activity": "waiting"}
+  | t384 time_passed {"start": 360, "end": 384, "activity": "waiting"}
+  | t384 needs_changed {"pc": 1, "thirst": 384, "hunger": 384, "fatigue": 384}
 > wait until midnight
 You wait two hours.
-  | t684 time_passed {"start": 672, "end": 684, "activity": "waiting"}
+  | t396 time_passed {"start": 384, "end": 396, "activity": "waiting"}
+  | t396 needs_changed {"pc": 1, "thirst": 396, "hunger": 396, "fatigue": 396}
 > status
-Day 5, night. You are clone 1.
+Day 3, night. You are clone 1.
+You're dying of thirst, hungry, and exhausted.
 > wait for dawn
 You wait six hours.
-It is now day 6, morning.
-  | t720 time_passed {"start": 684, "end": 720, "activity": "waiting"}
+It is now day 4, morning.
+You're very hungry now.
+  | t432 time_passed {"start": 396, "end": 432, "activity": "waiting"}
+  | t432 needs_changed {"pc": 1, "thirst": 432, "hunger": 432, "fatigue": 432}
 > status
-Day 6, morning. You are clone 1.
+Day 4, morning. You are clone 1.
+You're dying of thirst, very hungry, and exhausted.
 > wait until the evening
 You wait 12 hours.
 It is now evening.
-  | t792 time_passed {"start": 720, "end": 792, "activity": "waiting"}
+  | t504 time_passed {"start": 432, "end": 504, "activity": "waiting"}
+  | t504 needs_changed {"pc": 1, "thirst": 504, "hunger": 504, "fatigue": 504}
 > wait for 2 hours
 You wait two hours.
-  | t804 time_passed {"start": 792, "end": 804, "activity": "waiting"}
+  | t516 time_passed {"start": 504, "end": 516, "activity": "waiting"}
+  | t516 needs_changed {"pc": 1, "thirst": 516, "hunger": 516, "fatigue": 516}
 > wait until noon
 You wait 16 hours.
-It is now day 7, afternoon.
-  | t900 time_passed {"start": 804, "end": 900, "activity": "waiting"}
+It is now day 5, afternoon.
+  | t612 time_passed {"start": 516, "end": 612, "activity": "waiting"}
+  | t612 needs_changed {"pc": 1, "thirst": 612, "hunger": 612, "fatigue": 612}
 > wait until lunch
 Wait until when? Try "wait until noon", "wait until dusk", or "wait until dawn".
 > wait for nothing

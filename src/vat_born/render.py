@@ -9,9 +9,13 @@ from vat_born.events import (
     Activity,
     CloneWoke,
     Event,
+    Interrupted,
     LookReport,
     MapEntry,
     MapReport,
+    NeedLevel,
+    NeedsChanged,
+    NeedWorsened,
     NoPath,
     PathAdded,
     PcMoved,
@@ -26,10 +30,23 @@ from vat_born.events import (
     TimePassed,
     WorldCreated,
 )
+from vat_born.needs import Need
 from vat_born.world import Direction, Exit
 
 _NUMBERS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
 _MINUTES = ("ten minutes", "twenty minutes", "half an hour", "forty minutes", "fifty minutes")
+
+# What each need says as it reaches each level (1 to 3), and how `status` names it there.
+_WORSENING = {
+    Need.THIRST: ("You're getting thirsty.", "You're very thirsty now.", "You're dying of thirst."),
+    Need.HUNGER: ("You're getting hungry.", "You're very hungry now.", "You're starving."),
+    Need.FATIGUE: ("You're getting tired.", "You're very tired now.", "You're exhausted."),
+}
+_NAMED = {
+    Need.THIRST: ("thirsty", "very thirsty", "dying of thirst"),
+    Need.HUNGER: ("hungry", "very hungry", "starving"),
+    Need.FATIGUE: ("tired", "very tired", "exhausted"),
+}
 
 
 def render(event: Event) -> list[str]:
@@ -37,7 +54,7 @@ def render(event: Event) -> list[str]:
     match event:
         case WorldCreated(seed=seed):
             return [f"A new world, seed {seed}."]
-        case PlaceAdded() | PathAdded() | PlaceVisited():
+        case PlaceAdded() | PathAdded() | PlaceVisited() | NeedsChanged():
             return []
         case CloneWoke(place_name=place):
             return [f"You wake in a clone vat in {place}."]
@@ -49,8 +66,8 @@ def render(event: Event) -> list[str]:
             return [f"{describe_odds(odds)}: {'success' if success else 'failure'}."]
         case Resumed(seed=seed, run=run, time=time, place_name=place):
             return [f"Seed {seed}, clone {run}. {describe_time(time)}.", f"You are in {place}."]
-        case StatusReport(time=time, run=run):
-            return [f"{describe_time(time)}. You are clone {run}."]
+        case StatusReport(time=time, run=run, levels=levels):
+            return [f"{describe_time(time)}. You are clone {run}.", _how_you_are(levels)]
         case PlaceReport(place_name=place, route=route):
             line = f"You are in {place}."
             match route:
@@ -70,6 +87,10 @@ def render(event: Event) -> list[str]:
             if after.day == before.day:
                 return [f"It is now {after.phase}."]
             return [f"It is now day {after.day}, {after.phase}."]
+        case NeedWorsened(need=need, level=level):
+            return [_WORSENING[need][level - 1]]
+        case Interrupted(activity=activity):
+            return [_stopped(activity)]
         case _:
             assert_never(event)
 
@@ -113,6 +134,29 @@ def _time_passed(event: TimePassed) -> list[str]:
             return [f"You wait {describe_duration(event.end - event.start)}."]
         case _:
             assert_never(event.activity)
+
+
+def _stopped(activity: Activity) -> str:
+    """What the PC does when an action stops early. A walk never stops, but the words stay exhaustive."""
+    match activity:
+        case Activity.WAITING:
+            return "You stop waiting."
+        case Activity.WALKING:
+            return "You stop walking."
+        case _:
+            assert_never(activity)
+
+
+def _how_you_are(levels: tuple[NeedLevel, ...]) -> str:
+    """The second line of `status`: each need above level 0, named by its level, in `Need` order."""
+    words = [_NAMED[entry.need][entry.level - 1] for entry in levels if entry.level > 0]
+    if not words:
+        return "You feel fine."
+    if len(words) == 1:
+        return f"You're {words[0]}."
+    if len(words) == 2:
+        return f"You're {words[0]} and {words[1]}."
+    return f"You're {', '.join(words[:-1])}, and {words[-1]}."
 
 
 def _paths(exits: tuple[Exit, ...]) -> str:
