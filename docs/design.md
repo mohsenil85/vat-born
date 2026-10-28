@@ -328,7 +328,7 @@ Answers for the first build are noted inline (decided 2026-10-27; **Proposed** m
 5. Do clones remember across runs? (In-fiction meta-knowledge, as in *Outer Wilds* / *Returnal* / *Hades*, vs. amnesia.) **Decided:** places, not details. A new clone keeps the explored map; items, people and hazards must be rediscovered.
 6. Is the ship a revelation (Wolfe-style: inhabitants don't know) or a known premise?
 7. Does the world tick forward between a death and the next vat waking? How much? **Decided:** yes, a seeded 1–3 days, with a "while you were gone" report.
-8. Which worldgen parameters are exposed to the player? **Proposed:** only the seed, for the first build.
+8. Which worldgen parameters are exposed to the player? **Decided:** only the seed, for the first build.
 9. Do shared seeds need identical prose (share the DB), or is identical structure enough?
 
 **Time and odds**
@@ -347,8 +347,8 @@ Answers for the first build are noted inline (decided 2026-10-27; **Proposed** m
 **Characters**
 
 17. Allies: standing orders, autonomous needs, or both? **Decided:** both. Standing orders, overridden by needs and the ally's own goals.
-18. Ally sources beyond other vats. **Proposed:** other vats only, for the first build.
-19. Factions: is the language barrier a mechanic? What is the first faction's disposition and agenda? **Decided:** a wary scavenger clan, neutral at first, that trades and competes for salvage. **Proposed:** the language barrier waits.
+18. Ally sources beyond other vats. **Decided:** other vats only, for the first build.
+19. Factions: is the language barrier a mechanic? What is the first faction's disposition and agenda? **Decided:** a wary scavenger clan, neutral at first, that trades and competes for salvage. **Decided:** the language barrier waits, for the first build.
 
 **Base**
 

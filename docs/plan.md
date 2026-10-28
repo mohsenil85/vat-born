@@ -13,14 +13,14 @@ change.
   to end; the intent parser and narrator are the last milestone. The model-free path stays for replay tests.
 - **One game with clean seams** (§16 Q2). No lore-pack machinery; the setting's content lives in this repo.
 - **Content is TOML** (§16 Q3), read with stdlib `tomllib` and validated into frozen dataclasses at startup. Bad
-  content fails loudly. *Proposed:* it lives in `src/vat_born/content/`.
+  content fails loudly. It lives in `src/vat_born/content/`.
 - **Python** (§16 Q1).
 
 ## Time and actions
 
-- **A tick is 10 minutes**, so a day is 144 ticks. *Proposed:* the phases are morning 06–12, afternoon 12–18, evening
-  18–22, and night 22–06, and day 1 starts at 06:00. A game day runs from 06:00 to 06:00, so a night belongs to the
-  day it began in.
+- **A tick is 10 minutes**, so a day is 144 ticks. The phases are morning 06–12, afternoon 12–18, evening 18–22,
+  and night 22–06, and day 1 starts at 06:00. A game day runs from 06:00 to 06:00, so a night belongs to the day it
+  began in.
 - **Free actions take no time and are unlimited:** `look`, `examine`, `inventory`, `map`, `status`, `where`, and the
   log. They describe only what the PC knows. Every other action costs at least one tick.
 - **The player sees the day, the phase, and plain durations** ("Day 3, evening", "about an hour"), never raw ticks.
@@ -66,12 +66,12 @@ change.
 - **No skills in the slice.** Odds modifiers come from tools, conditions, needs, and injuries. Skills that improve
   with use (§8.1) wait until the playtest shows whether the loop needs them.
 - **Allies follow standing orders unless a need or their own goal wins out**, and the engine decides refusals and
-  desertion (§8.2). *Proposed:* in the slice, allies come only from other vats (§16 Q18).
+  desertion (§8.2). In the slice, allies come only from other vats (§16 Q18).
 - **The faction is a wary scavenger clan.** Neutral at first, they trade, compete for the same salvage, and can tip
-  either way. *Proposed:* no language barrier yet.
+  either way. No language barrier yet.
 - **Set pieces:** the first predator sighting (crossing a threshold region: a glimpse, not a fight) and first contact
   with the scavengers (they find you).
-- *Proposed:* **worldgen takes only a seed** (§16 Q8).
+- **Worldgen takes only a seed** (§16 Q8).
 
 ## How the engine is driven
 
