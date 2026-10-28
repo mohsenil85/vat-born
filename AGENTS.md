@@ -145,9 +145,9 @@ These come from `docs/design.md`, and the engine's structure enforces most of th
 - Same seed and same inputs give the same outcomes. All randomness comes from the world's dice, through the `Txn`:
   `txn.roll(odds, purpose, *key)` for a chance and `txn.stream(purpose, *key)` for any other draw. Each draw is keyed
   by what it's for, so adding one never shifts another. The one chance not rolled through `txn.roll` is a hazard
-  clock's per-tick roll, drawn from a keyed stream and logged only when it fires (see `hazards.py`). `random` and the wall clock are lint errors outside
-  `dice.py`. `hash()` and set iteration order must never affect an outcome, so sort before you iterate; the tests
-  replay every scenario under a second hash seed to catch it.
+  clock's per-tick roll, drawn from a keyed stream and logged only when it fires (see `hazards.py`). `random` and
+  the wall clock are lint errors outside `dice.py`. `hash()` and set iteration order must never affect an outcome,
+  so sort before you iterate; the tests replay every scenario under a second hash seed to catch it.
 - State changes only through `txn.record(fact)`, which applies the fact and appends it to the event log. The schema
   rejects updates and deletes on the log.
 - Free actions get a read-only `View`, and SQLite refuses writes outside a transaction, so a free action can only
